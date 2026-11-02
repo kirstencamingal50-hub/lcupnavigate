@@ -1,0 +1,23 @@
+{
+  "name": "navigate-campus-migration",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "migrate:mysql-to-postgres": "node database/migrate-mysql-to-postgres.mjs",
+    "migrate:uploads-to-blobs": "node database/migrate-uploads-to-blobs.mjs",
+    "dev": "netlify dev",
+    "build": "node scripts/build-netlify.mjs",
+    "test:netlify": "node tests/netlify-api-smoke.mjs"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^11.1.7",
+    "@netlify/database": "^2.0.1",
+    "@netlify/functions": "^6.0.3",
+    "bcryptjs": "^3.0.2",
+    "mysql2": "^3.14.0",
+    "pg": "^8.16.0"
+  },
+  "devDependencies": {
+    "netlify-cli": "^27.16.1"
+  }
+}
