@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campus Announcements - NaviGATE LCUP</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <link rel="stylesheet" href="../assets/css/style.css?v=20261024-complete-details" />
+</head>
+<body class="home-page min-h-screen pb-28 font-sans">
+  <div data-component="header"></div>
+  <main class="home-main announcement-page-main">
+    <section class="announcement-page-section" aria-labelledby="announcements-title">
+      <header class="announcement-page-heading">
+        <div>
+          <span class="announcement-page-eyebrow"><span class="material-symbols-rounded" aria-hidden="true">campaign</span> STAY INFORMED</span>
+          <h1 id="announcements-title">Campus Announcements</h1>
+          <p>Updates and important news from across the LCUP campus.</p>
+        </div>
+        <a class="announcement-back-link" href="../index.html"><span class="material-symbols-rounded" aria-hidden="true">arrow_back</span> Home</a>
+      </header>
+      <div id="announcement-list" class="announcement-list" aria-live="polite"></div>
+    </section>
+  </main>
+  <dialog id="announcement-dialog" class="announcement-dialog" aria-labelledby="announcement-dialog-title">
+    <button type="button" class="announcement-dialog-close" aria-label="Close announcement"><span class="material-symbols-rounded">close</span></button>
+    <div id="announcement-dialog-content"></div>
+  </dialog>
+  <div data-component="bottom-nav"></div>
+  <script src="../assets/js/deployment-config.js"></script>
+  <script src="../assets/js/campus-api.js"></script>
+  <script src="../assets/js/announcements-page.js?v=20261024-complete-details"></script>
+  <script src="../assets/js/app.js?v=20261021-admin-settings"></script>
+</body>
+</html>

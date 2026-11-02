@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login - NaviGATE LCUP</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+  <link rel="stylesheet" href="../../assets/css/style.css?v=20261102-admin-auth">
+  <link rel="stylesheet" href="../../assets/css/admin.css?v=20261102-admin-auth">
+  <script src="../../assets/js/deployment-config.js"></script>
+  <script src="../../assets/js/campus-api.js"></script>
+  <script src="../../assets/js/admin/admin-auth.js?v=20261102-admin-auth"></script>
+</head>
+<body class="admin-login-page">
+  <main class="admin-login-panel" aria-labelledby="auth-heading">
+    <header class="admin-auth-heading">
+      <a class="admin-auth-brand" href="../../index.html" aria-label="NaviGATE home">
+        <span class="material-symbols-rounded" aria-hidden="true">admin_panel_settings</span>
+      </a>
+      <p class="admin-auth-eyebrow">NaviGATE LCUP</p>
+      <h1 id="auth-heading">Welcome back</h1>
+      <p id="auth-description">Sign in to manage campus information and administrator accounts.</p>
+    </header>
+
+    <div id="auth-views">
+      <div class="admin-auth-tabs" role="tablist" aria-label="Administrator account">
+        <button type="button" id="login-tab" class="is-active" role="tab" aria-selected="true" aria-controls="login-form" data-auth-view="login">Log In</button>
+        <button type="button" id="signup-tab" role="tab" aria-selected="false" aria-controls="signup-form" data-auth-view="signup">Sign Up</button>
+      </div>
+
+      <form id="login-form" class="admin-auth-form" role="tabpanel" aria-labelledby="login-tab">
+        <label for="username">Email address</label>
+        <input type="email" id="username" name="username" autocomplete="username" maxlength="254" required>
+
+        <div class="admin-auth-label-row">
+          <label for="password">Password</label>
+          <button type="button" class="admin-auth-text-button" data-show-recovery>Forgot password?</button>
+        </div>
+        <div class="admin-auth-password">
+          <input type="password" id="password" name="password" autocomplete="current-password" required>
+          <button type="button" data-password-toggle aria-label="Show password" aria-pressed="false">
+            <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
+          </button>
+        </div>
+        <button type="submit" class="admin-auth-primary">Continue</button>
+        <p id="login-status" class="admin-auth-status" role="status" aria-live="polite"></p>
+      </form>
+
+      <form id="signup-form" class="admin-auth-form" role="tabpanel" aria-labelledby="signup-tab" hidden>
+        <label for="signup-username">Username</label>
+        <input type="text" id="signup-username" name="username" autocomplete="username" minlength="3" maxlength="80" pattern="[A-Za-z0-9_.-]{3,80}" required>
+        <label for="signup-email">Email address</label>
+        <input type="email" id="signup-email" name="email" autocomplete="email" maxlength="254" required>
+        <label for="signup-password">Password</label>
+        <div class="admin-auth-password">
+          <input type="password" id="signup-password" name="password" autocomplete="new-password" minlength="12" aria-describedby="signup-password-hint" required>
+          <button type="button" data-password-toggle aria-label="Show password" aria-pressed="false">
+            <span class="material-symbols-rounded" aria-hidden="true">visibility</span>
+          </button>
+        </div>
+        <p id="signup-password-hint" class="admin-auth-hint">At least 12 characters with uppercase, lowercase, a number, and a symbol.</p>
+        <button type="submit" class="admin-auth-primary">Continue</button>
+        <p id="signup-status" class="admin-auth-status" role="status" aria-live="polite"></p>
+        <p class="admin-auth-footnote">Already have an account? <button type="button" class="admin-auth-text-button" data-auth-view="login">Log in</button></p>
+      </form>
+
+      <form id="recovery-form" class="admin-auth-form" hidden>
+        <p class="admin-auth-hint">Enter your administrator account email. If an active account matches, we’ll send a verification code.</p>
+        <label for="recovery-email">Email address</label>
+        <input type="email" id="recovery-email" name="email" autocomplete="email" maxlength="254" required>
+        <button type="submit" class="admin-auth-primary">Send recovery code</button>
+        <p id="recovery-status" class="admin-auth-status" role="status" aria-live="polite"></p>
+        <button type="button" class="admin-auth-text-button" data-auth-view="login">Back to Log In</button>
+      </form>
+
+      <div class="admin-auth-divider"><span>Or</span></div>
+      <div id="google-auth-area" class="admin-auth-google" hidden>
+        <div id="google-button"></div>
+        <p id="google-status" class="admin-auth-status" role="status" aria-live="polite"></p>
+      </div>
+      <p id="google-unavailable" class="admin-auth-hint" hidden>Google sign-in is not configured. Continue with email and password.</p>
+
+      <div class="admin-auth-approval-note">
+        New accounts require email verification and administrator approval before access is enabled.
+      </div>
+    </div>
+
+    <section id="otp-screen" class="admin-auth-otp" aria-labelledby="otp-heading" hidden>
+      <span class="material-symbols-rounded admin-auth-otp-icon" aria-hidden="true">mark_email_read</span>
+      <h2 id="otp-heading">Check your email</h2>
+      <p id="otp-description"></p>
+      <form id="otp-form" class="admin-auth-form">
+        <label for="otp-1">Six-digit verification code</label>
+        <div class="admin-otp-inputs" role="group" aria-label="Six-digit verification code">
+          <input id="otp-1" name="otp" type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" autocomplete="one-time-code" aria-label="Digit 1" required>
+          <input name="otp" type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="Digit 2" required>
+          <input name="otp" type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="Digit 3" required>
+          <input name="otp" type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="Digit 4" required>
+          <input name="otp" type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="Digit 5" required>
+          <input name="otp" type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" aria-label="Digit 6" required>
+        </div>
+        <label id="reset-password-label" for="reset-password" hidden>New password</label>
+        <input id="reset-password" type="password" autocomplete="new-password" minlength="12" hidden>
+        <p id="reset-password-hint" class="admin-auth-hint" hidden>At least 12 characters with uppercase, lowercase, a number, and a symbol.</p>
+        <button type="submit" class="admin-auth-primary">Verify</button>
+        <p id="otp-status" class="admin-auth-status" role="status" aria-live="polite"></p>
+      </form>
+      <button id="resend-code" type="button" class="admin-auth-text-button" disabled>Resend code in 60s</button>
+      <button type="button" class="admin-auth-text-button admin-auth-back" data-auth-back>Back to Log In</button>
+    </section>
+
+    <div class="admin-auth-setup">
+      <button id="show-admin-setup" type="button" aria-controls="admin-setup-form" aria-expanded="false" hidden class="admin-auth-setup-toggle">
+        Create Admin Account
+      </button>
+      <form id="admin-setup-form" class="admin-auth-form" hidden>
+        <h2>Create the first administrator</h2>
+        <p class="admin-auth-hint">One-time setup is available only before an administrator account has been created.</p>
+        <label>Full name
+          <input name="full_name" required maxlength="160" autocomplete="name">
+        </label>
+        <label>Username
+          <input name="username" required minlength="3" maxlength="80" pattern="[A-Za-z0-9_.-]{3,80}" autocomplete="username">
+        </label>
+        <label>Email address
+          <input name="email" type="email" required maxlength="254" autocomplete="email">
+        </label>
+        <label>One-time setup secret
+          <input name="setup_key" type="password" required minlength="32" maxlength="512" autocomplete="off">
+        </label>
+        <label>Password
+          <input name="password" type="password" required minlength="12" autocomplete="new-password" aria-describedby="admin-setup-password-hint">
+        </label>
+        <label>Confirm password
+          <input name="confirm_password" type="password" required minlength="12" autocomplete="new-password">
+        </label>
+        <p id="admin-setup-password-hint" class="admin-auth-hint">Use at least 12 characters with uppercase, lowercase, a number, and a symbol.</p>
+        <button type="submit" class="admin-auth-primary">Create first administrator</button>
+        <p id="admin-setup-status" class="admin-auth-status" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+    <a href="../../index.html?choose-role=1" class="admin-auth-home">Back to Role Selection</a>
+  </main>
+</body>
+</html>

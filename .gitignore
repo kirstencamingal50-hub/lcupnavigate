@@ -3,5 +3,31 @@
 !.env.example
 node_modules/
 dist/
+backups/
+uploads/
 npm-debug.log*
 *.sql.gz
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Local development and database backups
+.vscode/*.log
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.bak
+.DS_Store
+Thumbs.db
+
+# Local development and database backups
+*.dump
+*.bak
+*.sqlite
+*.sqlite3
+*.db
+*.log
+.DS_Store
+Thumbs.db

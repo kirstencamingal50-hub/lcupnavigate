@@ -1,0 +1,72 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Announcements - Admin</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <link rel="stylesheet" href="../../assets/css/style.css?v=20261024-complete-details" />
+  <link rel="stylesheet" href="../../assets/css/admin.css?v=20261024-complete-details" />
+  <script src="../../assets/js/deployment-config.js"></script>
+  <script src="../../assets/js/campus-api.js"></script>
+  <script src="../../assets/js/admin/admin-auth.js"></script>
+</head>
+<body class="admin-page min-h-screen">
+  <div data-component="header"></div>
+  <main class="admin-main">
+    <div class="admin-page-heading">
+      <div><h1 class="text-xl font-bold">Announcements and Events</h1><p>Create updates, schedule events, and choose what is published on the public campus site.</p></div>
+      <a href="dashboard.html">Back to Dashboard</a>
+    </div>
+
+    <section class="admin-form-panel rounded-2xl p-5 mb-5" aria-labelledby="add-announcement-title">
+      <h2 id="add-announcement-title" class="text-sm font-bold">Create an announcement or event</h2>
+      <form id="announcement-form" class="mt-4 grid gap-3 md:grid-cols-2">
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Announcement Title
+          <input name="title" required maxlength="180" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Announcement Image (optional)
+          <input name="photo" type="file" accept="image/png,image/jpeg,image/webp" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <img data-photo-preview hidden alt="Announcement preview" class="mt-2 max-h-40 rounded-lg object-cover" />
+          <span class="mt-1 block text-[10px] font-normal normal-case text-slate-400">Images appear when the announcement is featured. You can keep the current image when editing.</span>
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Publication status
+          <select name="status" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"><option value="draft">Draft</option><option value="published">Published</option><option value="unpublished">Unpublished</option></select>
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Campus location (optional)
+          <select name="location_id" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"><option value="">No location</option></select>
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Publish at (optional)
+          <input name="publish_at" type="datetime-local" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+        </label>
+        <label id="event-fields" class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Event starts (optional)
+          <input name="event_start" type="datetime-local" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Event ends (optional)
+          <input name="event_end" type="datetime-local" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500 md:col-span-2">Details
+          <textarea name="details" rows="5" required maxlength="10000" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></textarea>
+        </label>
+        <label class="md:col-span-2 flex cursor-pointer items-start gap-2 rounded-xl border border-blue-100 bg-blue-50 p-3 text-xs text-slate-700">
+          <input name="pinned" type="checkbox" class="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+          <span><strong class="block text-slate-900">Pin this announcement</strong><span class="mt-0.5 block">Pinned announcements appear larger and can include a photo. Regular announcements are compact text cards.</span></span>
+        </label>
+        <div class="md:col-span-2 flex items-center justify-between gap-3">
+          <p id="announcement-form-status" class="text-xs text-slate-500" role="status" aria-live="polite"></p>
+          <div class="flex gap-2"><button id="cancel-announcement-edit" type="button" hidden class="admin-button-secondary">Cancel edit</button><button type="submit" class="admin-button-primary">Save announcement</button></div>
+        </div>
+      </form>
+    </section>
+
+    <section aria-labelledby="announcement-list-title">
+      <h2 id="announcement-list-title" class="sr-only">Saved announcements and events</h2>
+      <div id="admin-announcement-list" class="admin-announcement-list"></div>
+    </section>
+  </main>
+  <script src="../../assets/js/admin/admin-photos.js"></script>
+  <script src="../../assets/js/admin/manage-announcements.js"></script>
+  <script src="../../assets/js/app.js?v=20261021-admin-settings"></script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Map - Admin</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <link rel="stylesheet" href="../../assets/css/style.css?v=20261024-complete-details" />
+  <link rel="stylesheet" href="../../assets/css/admin.css?v=20261024-complete-details" />
+  <script src="../../assets/js/deployment-config.js"></script>
+  <script src="../../assets/js/campus-api.js"></script>
+  <script src="../../assets/js/admin/admin-auth.js"></script>
+</head>
+<body class="admin-page min-h-screen">
+  <div data-component="header"></div>
+  <main class="admin-main">
+    <div class="admin-page-heading">
+      <div><h1 class="text-xl font-bold">Campus Map and Routes</h1><p>Place location markers, draw walking routes, and manage building floor plans.</p></div>
+      <a href="dashboard.html">Back to Dashboard</a>
+    </div>
+    <section class="admin-form-panel rounded-2xl p-5 mb-5"><h2 class="text-sm font-bold">Campus map base</h2><p class="mt-1 text-xs text-slate-500">The current SVG is served as a project asset. Confirm its official status and scale before changing it; marker positions below are stored separately in MySQL.</p></section>
+    <section id="route-builder" class="admin-form-panel rounded-2xl p-5 mb-5" aria-labelledby="route-builder-title">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div><h2 id="route-builder-title" class="text-base font-extrabold">Visual Route Builder</h2><p class="mt-1 max-w-3xl text-xs leading-relaxed text-slate-600">Choose mapped start and destination locations, then plot the path on the campus map. Save a private draft or publish a route to guest navigation. Publication does not require location, marker, or walkway verification.</p></div>
+        <span class="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold text-blue-800">Shared walkway network</span>
+      </div>
+      <form id="route-builder-form" class="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500 xl:col-span-2">Route name<input name="name" required maxlength="120" placeholder="e.g. Main Gate to Library" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm normal-case" /></label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Accessibility information<select name="accessibility_status" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm normal-case"><option value="">Unspecified</option><option value="1">Accessible</option><option value="0">Not accessible</option></select></label>
+        <div class="relative min-w-0 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+          <label for="route-start-search">Start location</label>
+          <input id="route-start-search" type="search" autocomplete="off" placeholder="Search campus locations" role="combobox" aria-autocomplete="list" aria-controls="route-start-suggestions" aria-expanded="false" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm normal-case text-slate-900" />
+          <ul id="route-start-suggestions" role="listbox" class="hidden absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 text-slate-900 shadow-xl"></ul>
+          <select name="start_marker_id" class="hidden" aria-hidden="true" tabindex="-1"></select>
+        </div>
+        <div class="relative min-w-0 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+          <label for="route-end-search">Destination</label>
+          <input id="route-end-search" type="search" autocomplete="off" placeholder="Search campus locations" role="combobox" aria-autocomplete="list" aria-controls="route-end-suggestions" aria-expanded="false" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm normal-case text-slate-900" />
+          <ul id="route-end-suggestions" role="listbox" class="hidden absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 text-slate-900 shadow-xl"></ul>
+          <select name="destination_marker_id" class="hidden" aria-hidden="true" tabindex="-1"></select>
+        </div>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500 md:col-span-2 xl:col-span-4">Notes or directions<textarea name="notes" rows="2" maxlength="1000" placeholder="Optional navigation notes" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm normal-case"></textarea></label>
+      </form>
+      <div class="route-builder-layout mt-4">
+        <div>
+          <div id="route-editor-map" class="route-editor-map" role="application" aria-label="Campus map route editor. Click walkway positions to add ordered waypoints.">
+            <img src="../../assets/images/campus-map.svg" alt="LCUP campus map" draggable="false" />
+            <svg id="route-editor-svg" viewBox="0 0 1330 1620" preserveAspectRatio="none" aria-hidden="true"><g id="route-existing-paths"></g><polyline id="route-draft-line" points="" /></svg>
+            <div id="route-editor-endpoints" class="route-editor-layer"></div>
+            <div id="route-editor-waypoints" class="route-editor-layer"></div>
+          </div>
+          <p class="mt-2 text-[11px] leading-relaxed text-slate-500">Click the map to add path points and drag them to adjust. Review each plotted segment before publishing the route.</p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <button type="button" id="route-undo" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700">Undo</button>
+            <button type="button" id="route-redo" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700">Redo</button>
+            <button type="button" id="route-clear" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700">Clear route</button>
+          </div>
+        </div>
+        <aside class="route-waypoint-panel">
+          <h3 class="text-sm font-bold text-slate-900">Route waypoints</h3>
+          <ol id="route-waypoint-list" class="mt-3 grid gap-2"></ol>
+          <div id="route-distance-preview" class="mt-3 rounded-lg bg-slate-50 p-3 text-xs text-slate-600" aria-live="polite">Choose endpoints and add points to preview the route.</div>
+          <div class="mt-3 rounded-lg border border-slate-200 p-3 text-[11px] leading-relaxed text-slate-600">The SVG map has no defined scale. Distance is shown in map units only; walking time is unavailable until a scale is added.</div>
+        </aside>
+      </div>
+      <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <p id="route-builder-status" class="text-xs text-slate-600" role="status" aria-live="polite"></p>
+        <div class="flex flex-wrap gap-2"><button type="button" id="route-cancel-edit" hidden class="rounded-lg border border-slate-300 px-4 py-2 text-xs font-bold text-slate-700">Cancel edit</button><button type="button" id="route-save-draft" data-route-status="draft" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">Save Private Draft</button><button type="button" id="route-publish" data-route-status="active" class="rounded-lg bg-blue-700 px-4 py-2 text-xs font-bold text-white hover:bg-blue-800">Publish Route</button></div>
+      </div>
+      <div class="mt-6 border-t border-slate-200 pt-5">
+        <div class="mb-3 flex flex-wrap items-center justify-between gap-3"><div><h3 class="text-sm font-bold text-slate-900">Saved routes</h3><p class="mt-1 text-[11px] text-slate-500">Draft and incomplete routes stay private. Only completed routes appear in navigation.</p></div><input id="route-list-filter" type="search" placeholder="Filter routes" class="w-full max-w-xs rounded-lg border border-slate-300 px-3 py-2 text-xs" /></div>
+        <div id="saved-routes-list" class="admin-data-panel p-2 sm:p-4"><p class="p-4 text-center text-xs text-slate-500">Loading saved routes…</p></div>
+      </div>
+    </section>
+    <section class="admin-form-panel rounded-2xl p-5 mb-5" aria-labelledby="add-landmark-title">
+      <h2 id="add-landmark-title" class="text-sm font-bold">Add Pin Landmark</h2>
+      <p class="mt-1 text-xs text-slate-500">Enter a landmark name, then click its location on the map. Existing pins are shown to help you place it.</p>
+      <form id="add-landmark-form" class="mt-4 grid max-w-2xl gap-3">
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Campus record
+          <select name="location_id" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></select>
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Walkway point (optional)
+          <select name="route_node_id" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></select>
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Entrance accessibility information<select name="accessibility_status" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm normal-case"><option value="">Unspecified</option><option value="1">Accessible</option><option value="0">Not accessible</option></select></label>
+        <div id="landmark-map-picker" role="button" tabindex="0" aria-label="Click the map to choose the landmark location" class="relative w-full max-w-[520px] overflow-hidden rounded-xl border-2 border-slate-300 bg-slate-100 shadow-sm" style="aspect-ratio: 1330 / 1620; cursor: crosshair; touch-action: manipulation;">
+          <img id="landmark-map-image" alt="Map for selecting a landmark location" class="absolute inset-0 h-full w-full select-none" draggable="false" style="object-fit: fill;" />
+          <div id="landmark-map-pins" class="pointer-events-none absolute inset-0"></div>
+          <div id="landmark-map-selection" class="pointer-events-none absolute hidden h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-white bg-blue-600 shadow-lg ring-2 ring-blue-700"></div>
+        </div>
+        <input name="x" type="hidden" />
+        <input name="y" type="hidden" />
+        <p id="landmark-picker-status" class="text-xs text-slate-500" role="status" aria-live="polite">Click the map to choose a location.</p>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <p id="landmark-form-status" class="text-xs text-slate-500" role="status" aria-live="polite"></p>
+          <div class="flex gap-2">
+            <button id="cancel-landmark-edit" type="button" hidden class="rounded-lg border border-slate-300 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">Cancel</button>
+            <button id="save-landmark" type="submit" class="rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700">Add Landmark</button>
+          </div>
+        </div>
+      </form>
+    </section>
+    <section class="admin-form-panel rounded-2xl p-5 mb-5" aria-labelledby="floorplan-title">
+      <h2 id="floorplan-title" class="text-sm font-bold">Floor plans</h2>
+      <form id="floorplan-form" class="mt-4 grid gap-3 md:grid-cols-4">
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Building<select name="building_id" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></select></label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Floor number<input name="floor_number" type="number" min="0" value="0" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">PDF or image<input name="file" type="file" accept="application/pdf,image/png,image/jpeg,image/webp" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>
+        <button class="rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white">Upload floor plan</button>
+      </form>
+      <p id="floorplan-status" class="mt-3 text-xs text-slate-500" role="status" aria-live="polite"></p>
+      <div id="floorplans-list" class="mt-4 grid gap-2"></div>
+    </section>
+    <div id="landmarks-list" class="admin-data-panel p-2 sm:p-4"></div>
+    <section class="admin-settings-panel mt-6" aria-labelledby="map-connections-title">
+      <div class="admin-settings-heading"><div><h2 id="map-connections-title">Walkway graph connections</h2><p>Connections are separate from saved route descriptions. Only verified active connections are used for visitor path calculations. Distances are map units.</p></div></div>
+      <form id="map-connection-form" class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <input type="hidden" name="id">
+        <label class="admin-settings-label">From node<select name="from_node_id" required></select></label>
+        <label class="admin-settings-label">To node<select name="to_node_id" required></select></label>
+        <label class="admin-settings-label">Distance or cost<input name="weight" type="number" min="0.01" step="0.01" required></label>
+        <label class="admin-settings-label">Connection type<select name="connection_type" required><option value="walkway">Walkway</option><option value="stairs">Stairs</option><option value="ramp">Ramp</option><option value="elevator">Elevator</option></select></label>
+        <label class="admin-settings-label">Accessibility<select name="accessible"><option value="">Unknown</option><option value="1">Accessible</option><option value="0">Not accessible</option></select></label>
+        <label class="admin-settings-check"><input name="verified" type="checkbox"> Confirm and verify this campus connection</label>
+        <div class="flex flex-wrap gap-2 md:col-span-2 xl:col-span-3"><button type="submit" class="admin-button-primary">Add connection</button><button id="cancel-map-connection" type="button" hidden class="admin-button-secondary">Cancel edit</button></div>
+        <p id="map-connection-status" class="md:col-span-2 xl:col-span-3 text-sm" role="status" aria-live="polite"></p>
+      </form>
+      <div id="map-connection-list" class="mt-4 grid gap-3" aria-live="polite"><p class="admin-empty-state">Loading connections…</p></div>
+    </section>
+  </main>
+  <script src="../../assets/js/admin/manage-map.js"></script>
+  <script src="../../assets/js/admin/route-builder.js?v=20261024-complete-details"></script>
+  <script src="../../assets/js/app.js?v=20261021-admin-settings"></script>
+  <script src="../../assets/js/admin/map-connections.js?v=20261022-verified-graph"></script>
+</body>
+</html>
