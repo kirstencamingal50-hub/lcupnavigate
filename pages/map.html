@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Map - NaviGATE</title>
+  
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" />
+  <link rel="stylesheet" href="../assets/css/style.css?v=20261024-complete-details" />
+
+  <style>
+    html, body {
+      height: 100%;
+      height: 100dvh;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    #map-wrapper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+    #map {
+      width: 100%;
+      height: 100%;
+      border-radius: 1rem;
+      background-color: #ffffff;
+      z-index: 1;
+    }
+    .leaflet-container {
+      background: #ffffff !important;
+    }
+    .np { position: relative; width: 34px; height: 48px; }
+    .np-dot { width: 34px; height: 34px; border-radius: 50%; background: #d8323c; border: 2.5px solid #fff; color: #fff; font: 700 14px/29px Inter, sans-serif; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,.4); transition: transform .15s; }
+    .np-dot::after { content: ''; display: block; width: 10px; height: 10px; border-radius: 50%; background: #fff; margin: 9px auto 0; }
+    .np-stem { position: absolute; left: 15px; top: 32px; width: 4px; height: 14px; border-radius: 2px; background: #d8323c; }
+    .leaflet-marker-icon:hover .np-dot, .np-on .np-dot { transform: scale(1.2); }
+    .np-on .np-dot { background: #111; border-color: #ffd23f; }
+  </style>
+</head>
+<body class="bg-[#0f172a] text-white font-sans flex flex-col h-screen overflow-hidden">
+
+  <!-- Header Section -->
+  <div data-component="header" class="relative z-40 shrink-0"></div>
+
+  <!-- Top Action & Navigation Bar -->
+  <div id="topbar" class="bg-slate-900 border-b border-slate-800 px-3 py-2 flex flex-col gap-2 relative z-30 shrink-0">
+    
+    <!-- Row 1: Search & Category Filters -->
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <div class="relative flex-1 min-w-[140px] max-w-xs">
+        <input id="searchBox" type="text" placeholder="Search name or pin number..." class="w-full bg-slate-800 border border-slate-700 text-xs text-white rounded-xl px-3 py-1.5 outline-none focus:border-blue-500" autocomplete="off" />
+        <div id="suggestions" class="absolute top-9 left-0 right-0 bg-white text-slate-900 rounded-xl shadow-xl max-h-56 overflow-y-auto hidden z-50 text-xs"></div>
+      </div>
+
+      <!-- Facility Category Filters -->
+      <div class="flex gap-1 overflow-x-auto py-0.5 no-scrollbar" id="filterContainer">
+        <button class="filter-btn active px-2.5 py-1 rounded-xl bg-blue-600 text-xs font-bold text-white shrink-0" data-cat="all">All</button>
+        <button class="filter-btn px-2.5 py-1 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 hover:text-white shrink-0" data-cat="building">Buildings</button>
+        <button class="filter-btn px-2.5 py-1 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 hover:text-white shrink-0" data-cat="facility">Facilities</button>
+      </div>
+    </div>
+
+    <!-- Row 2: Route Finder -->
+    <div id="routePanel" class="bg-slate-800/80 border border-slate-700/60 rounded-xl p-2 flex flex-wrap items-center justify-between gap-2 text-xs">
+      <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-start gap-2 flex-1 min-w-[220px]">
+        <div class="relative min-w-0">
+          <label for="fromSearch" class="block mb-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">Start Location</label>
+          <input id="fromSearch" type="search" placeholder="Search buildings, rooms, offices..." autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="fromSuggestions" aria-expanded="false" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg pl-2.5 pr-8 py-2 text-[11px] outline-none focus:border-blue-500">
+          <span class="material-symbols-rounded pointer-events-none absolute right-2 top-[30px] text-base text-slate-400">arrow_drop_down</span>
+          <ul id="fromSuggestions" role="listbox" class="hidden absolute left-0 right-0 top-full z-[1100] mt-1 max-h-56 overflow-y-auto rounded-lg border border-slate-600 bg-slate-900 py-1 shadow-xl"></ul>
+        </div>
+        <select id="fromSelect" class="hidden" aria-hidden="true" tabindex="-1"></select>
+        <span class="text-slate-400 font-bold shrink-0">→</span>
+        <div class="relative min-w-0">
+          <label for="toSearch" class="block mb-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">Destination</label>
+          <input id="toSearch" type="search" placeholder="Search buildings, rooms, offices..." autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="toSuggestions" aria-expanded="false" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg pl-2.5 pr-8 py-2 text-[11px] outline-none focus:border-blue-500">
+          <span class="material-symbols-rounded pointer-events-none absolute right-2 top-[30px] text-base text-slate-400">arrow_drop_down</span>
+          <ul id="toSuggestions" role="listbox" class="hidden absolute left-0 right-0 top-full z-[1100] mt-1 max-h-56 overflow-y-auto rounded-lg border border-slate-600 bg-slate-900 py-1 shadow-xl"></ul>
+        </div>
+        <select id="toSelect" class="hidden" aria-hidden="true" tabindex="-1"></select>
+      </div>
+
+      <div class="flex items-center gap-1.5 shrink-0 ml-auto">
+        <button id="findRouteBtn" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1 rounded-lg transition-all text-xs shrink-0">Find Routes</button>
+        <button id="clearRouteBtn" class="bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold px-3 py-1 rounded-lg hidden text-xs shrink-0">Clear</button>
+      </div>
+
+      <div class="w-full flex items-center justify-between gap-2 mt-0.5 pt-1 border-t border-slate-700/50 text-[11px]">
+        <div id="routeInfo" class="text-slate-300">Select locations to calculate routes</div>
+        <div class="flex items-center gap-2 shrink-0">
+          <label class="flex items-center gap-1 text-slate-400 cursor-pointer">
+            <input type="checkbox" id="accessibleRouteOnly" class="rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-0 w-3 h-3"> Accessible only
+          </label>
+          <label class="flex items-center gap-1 text-slate-400 cursor-pointer">
+            <input type="checkbox" id="netToggleBox" checked class="rounded bg-slate-900 border-slate-700 text-blue-600 focus:ring-0 w-3 h-3"> Walkways
+          </label>
+        </div>
+      </div>
+
+      <div id="routeOptions" class="w-full hidden grid grid-cols-1 md:grid-cols-2 gap-2 mt-1"></div>
+      <section id="routeDirections" class="w-full hidden rounded-lg border border-slate-700 bg-slate-900/80 p-2 text-[11px] text-slate-200" aria-live="polite" data-speech-panel>
+        <p id="routeDirectionsText"></p>
+        <div class="mt-2 flex gap-1"><button type="button" data-speech-action="play" id="routeSpeak" class="rounded border border-slate-600 px-2 py-1">Read directions</button><button type="button" data-speech-action="pause" class="rounded border border-slate-600 px-2 py-1">Pause</button><button type="button" data-speech-action="resume" class="rounded border border-slate-600 px-2 py-1">Resume</button><button type="button" data-speech-action="stop" class="rounded border border-slate-600 px-2 py-1">Stop</button></div>
+        <p data-speech-status role="status" class="mt-1 text-slate-400"></p>
+      </section>
+      <div id="routeNotice" class="w-full hidden text-[11px] rounded-lg border px-2.5 py-2"></div>
+    </div>
+
+  </div>
+
+  <!-- Main Map Display -->
+  <main class="relative flex-1 w-full px-2 pt-2 pb-20 overflow-hidden min-h-0 bg-white">
+    <div id="map-wrapper">
+      <div id="map" class="border border-slate-200"></div>
+
+      <!-- Zoom / full-map controls -->
+      <div class="absolute top-3 left-3 flex flex-col gap-2 z-[1000]">
+        <button id="zoomInBtn" type="button" aria-label="Zoom in" class="w-10 h-10 rounded-xl bg-white text-slate-800 border border-slate-300 shadow font-bold text-xl leading-none">+</button>
+        <button id="zoomOutBtn" type="button" aria-label="Zoom out" class="w-10 h-10 rounded-xl bg-white text-slate-800 border border-slate-300 shadow font-bold text-xl leading-none">−</button>
+        <button id="fullMapBtn" type="button" aria-label="View full map" title="View full map" class="w-10 h-10 rounded-xl bg-blue-600 text-white shadow flex items-center justify-center"><span class="material-symbols-rounded">fit_screen</span></button>
+      </div>
+      <!-- Show All Floating Button -->
+      <button id="showAllBtn" class="absolute top-3 right-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-3.5 py-2 rounded-full shadow-xl hidden items-center gap-1.5 z-20 transition-all">
+        <span>← Show All</span>
+      </button>
+    </div>
+  </main>
+
+  <!-- Building Information Sidebar -->
+  <aside id="buildingSidebar" aria-label="Selected campus location details" aria-hidden="true" class="fixed top-0 right-0 h-full w-80 bg-slate-900 border-l border-slate-800 shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
+    <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+      <h2 id="sidebarTitle" class="text-white font-bold text-base">Building Information</h2>
+      <button id="closeSidebar" type="button" aria-label="Close location details" class="text-slate-400 hover:text-white p-1 rounded-lg">
+        <span class="material-symbols-rounded">close</span>
+      </button>
+    </div>
+    <div id="sidebarContent" class="map-place-details p-4 overflow-y-auto flex-1 text-xs text-slate-300 space-y-3"></div>
+  </aside>
+
+  <!-- Bottom Navigation Container -->
+  <div data-component="bottom-nav" class="fixed bottom-0 left-0 right-0 z-40"></div>
+
+  <script src="../assets/js/accessibility.js?v=20261022-accessibility"></script>
+  <script src="../assets/js/app.js?v=20261021-admin-settings"></script>
+  <script src="../assets/js/campus-api.js"></script>
+  
+  <!-- Main Script Logic using ES Module -->
+  <script type="module">
+    const MAP_W = 1330, MAP_H = 1620;
+    let storedMap;
+    let savedRoutes = [];
+    let storedDirectory = { rooms: [] };
+    try { storedMap = await window.CampusApi.get('map'); try { storedDirectory = await window.CampusApi.get('directory'); } catch {} try { savedRoutes = await window.CampusApi.get('routes/available'); } catch {} }
+    catch (error) { document.getElementById('routeInfo').textContent = error.message; document.getElementById('routeNotice').textContent = 'Map data could not be loaded from the campus database.'; document.getElementById('routeNotice').classList.remove('hidden'); throw error; }
+    const mapPins = storedMap.markers.map(row => {const record=(storedDirectory.locations||[]).find(item=>String(item.id)===String(row.location_id))||{};return { ...record,id:String(row.location_id), markerId:Number(row.id), num:null, name:row.name, category:row.category, kind:row.kind, cat:row.kind, px:[Number(row.x),Number(row.y)], floor:Number(row.floor_number||0), routeNodeId:row.route_node_id?`n:${row.route_node_id}`:null, accessibilityValue:row.accessibility_value, description:row.description };});
+    const roomLocations = (storedDirectory.rooms || []).flatMap(room => {
+      const building = mapPins.find(loc => loc.id === String(room.buildingId));
+      if (!building) return [];
+      return [{ ...room,id:`room-${room.id}`,recordId:String(room.id),markerId:building.markerId,name:`${room.name}${room.roomNumber ? ` (${room.roomNumber})` : ''}`,category:`Room · ${room.category || building.name}`,buildingName:building.name,kind:'room',cat:'room',floor:Number(room.floorNumber || 0),px:[...building.px],routeNodeId:building.routeNodeId,accessibilityValue:room.accessibilityStatus,description:room.description || room.functionDescription || '' }];
+    });
+    const locations = [...mapPins, ...roomLocations];
+    let junctions = Object.fromEntries(storedMap.nodes.map(node=>[`n:${node.id}`,[Number(node.x),Number(node.y)]]));
+    let mapBackbone = storedMap.connections.map(edge=>[`n:${edge.from_node_id}`,`n:${edge.to_node_id}`,Number(edge.weight),Number(edge.accessibility_value)===1]);
+    const W = MAP_W, H = MAP_H;
+    const bounds = [[0,0], [H,W]];
+
+    const map = L.map('map', { 
+      crs: L.CRS.Simple, 
+      minZoom: -3,
+      maxZoom: 3, 
+      zoomSnap: 0.25,
+      zoomControl: false,
+      maxBounds: L.latLngBounds(bounds).pad(0.15),
+      maxBoundsViscosity: 0.8
+    });
+    
+    L.imageOverlay('../assets/images/campus-map.svg', bounds).addTo(map);
+    const fitFull = (animate = false) => {
+      map.invalidateSize();
+      const z = map.getBoundsZoom(bounds, false, L.point(16, 16));
+      map.setMinZoom(z - 0.5);
+      map.setView(L.latLngBounds(bounds).getCenter(), z, { animate });
+    };
+    fitFull();
+    setTimeout(fitFull, 200);
+    window.addEventListener('resize', () => fitFull());
+    new ResizeObserver(() => fitFull()).observe(document.getElementById('map'));
+    document.getElementById('zoomInBtn').addEventListener('click', () => map.zoomIn(0.5));
+    document.getElementById('zoomOutBtn').addEventListener('click', () => map.zoomOut(0.5));
+    document.getElementById('fullMapBtn').addEventListener('click', () => fitFull(true));
+
+    function toLatLng(px) { return [H - px[1], px[0]]; }
+
+    function makeIcon(num) {
+      return L.divIcon({
+        className: '',
+        html: `<div class="np"><div class="np-dot"></div><div class="np-stem"></div></div>`,
+        iconSize: [34, 48], iconAnchor: [17, 46]
+      });
+    }
+
+    const sidebar = document.getElementById('buildingSidebar');
+    const sidebarTitle = document.getElementById('sidebarTitle');
+    const sidebarContent = document.getElementById('sidebarContent');
+    const closeSidebarBtn = document.getElementById('closeSidebar');
+
+    closeSidebarBtn.addEventListener('click', () => {
+      window.CampusAccessibility?.stop();
+      sidebar.classList.add('translate-x-full');
+      sidebar.setAttribute('aria-hidden','true');
+    });
+
+    const markers = [];
+    const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    function openPin(loc) {
+      sidebarTitle.textContent = loc.name;
+      const description=[loc.name,loc.category,loc.buildingName,loc.building_number,loc.floorLabel||loc.floor,loc.roomNumber,loc.description,loc.functionDescription,loc.departmentName,loc.departmentHead,loc.contactInfo,loc.contactEmail,loc.contactPhone,loc.websiteUrl,loc.serviceHours,loc.accessHours,loc.daysOpen,loc.lunchBreak,loc.services,loc.nearbyLandmarks,loc.accessibilityDetails].filter(Boolean).join('. ');
+      const photos=loc.photos?.length?loc.photos:(loc.image?[{image:loc.image,altText:`Photo of ${loc.name}`,caption:''}]:[]);
+      const accessibility=loc.accessibilityStatus===null||loc.accessibilityStatus===undefined?'Accessibility information not recorded.':Number(loc.accessibilityStatus)===1?'Marked accessible in the campus directory.':'Marked not accessible in the campus directory.';
+      const featureLabels={wheelchair_entrance:'Wheelchair-accessible entrance',elevator:'Elevator',ramp:'Ramp',accessible_restroom:'Accessible restroom',accessible_parking:'Accessible parking',handrails:'Handrails',tactile_paving:'Tactile paving',braille_signage:'Braille signage',hearing_assistance:'Hearing assistance'};
+      const features=loc.kind==='building'&&Array.isArray(loc.accessibilityFeatures)?loc.accessibilityFeatures.filter(feature=>featureLabels[feature]):[];
+      const info=[['Building',loc.buildingName],['Building number',loc.building_number],['Room number',loc.roomNumber],['Room function',loc.functionDescription],['Floors',loc.floor_count],['Capacity',loc.capacity],['Department',loc.departmentName],['Department head',loc.departmentHead],['Contact information',loc.contactInfo],['Floor',loc.floorLabel||loc.floor],['Service hours',loc.serviceHours],['Access hours',loc.accessHours],['Days open',loc.daysOpen],['Lunch break',loc.lunchBreak],['Services',loc.services],['Nearby landmarks',loc.nearbyLandmarks],['Website',loc.websiteUrl],['Accessibility',accessibility],['Accessibility details',loc.accessibilityDetails]].filter(([,value])=>value!==null&&value!==undefined&&value!=='');
+      sidebarContent.innerHTML = `
+        <div class="map-place-panel" data-speech-panel>
+          ${photos.length?`<div class="map-place-gallery"><figure><img class="map-place-cover" src="../${escapeHtml(photos[0].image)}" alt="${escapeHtml(photos[0].altText||`Photo of ${loc.name}`)}">${photos[0].caption?`<figcaption class="map-place-caption">${escapeHtml(photos[0].caption)}</figcaption>`:''}</figure>${photos.length>1?`<div class="map-place-thumbnails">${photos.slice(1).map(photo=>`<figure><img src="../${escapeHtml(photo.image)}" alt="${escapeHtml(photo.altText||`Photo of ${loc.name}`)}" loading="lazy">${photo.caption?`<figcaption class="map-place-caption">${escapeHtml(photo.caption)}</figcaption>`:''}</figure>`).join('')}</div>`:''}</div>`:`<div class="map-place-photo-empty"><span class="material-symbols-rounded" aria-hidden="true">${loc.kind==='facility'?'storefront':'location_city'}</span><span>No photo available</span></div>`}
+          <div class="map-place-summary"><span>${escapeHtml(loc.kind==='facility'?'Facility':loc.kind==='room'?'Room':'Building')}</span><span>${escapeHtml(loc.category||'Campus')}</span></div>
+          <p class="map-place-description">${escapeHtml(loc.description||loc.functionDescription||'Description unavailable.')}</p>
+          ${loc.contactEmail||loc.contactPhone?`<div class="map-place-contact">${loc.contactEmail?`<a href="mailto:${escapeHtml(loc.contactEmail)}"><span class="material-symbols-rounded" aria-hidden="true">mail</span>${escapeHtml(loc.contactEmail)}</a>`:''}${loc.contactPhone?`<a href="tel:${escapeHtml(loc.contactPhone)}"><span class="material-symbols-rounded" aria-hidden="true">call</span>${escapeHtml(loc.contactPhone)}</a>`:''}</div>`:''}
+          ${features.length?`<section class="map-place-accessibility"><h3>Building accessibility</h3><ul>${features.map(feature=>`<li><span class="material-symbols-rounded" aria-hidden="true">accessible</span>${escapeHtml(featureLabels[feature])}</li>`).join('')}</ul></section>`:''}
+          ${info.length?`<dl class="map-place-info">${info.map(([label,value])=>`<div><dt>${escapeHtml(label)}</dt><dd>${label==='Website'?`<a href="${escapeHtml(value)}" target="_blank" rel="noopener noreferrer">${escapeHtml(value)}</a>`:escapeHtml(value)}</dd></div>`).join('')}</dl>`:''}
+          <div class="map-place-tools"><a href="${loc.kind==='room'?'office.html':'building.html'}?id=${encodeURIComponent(loc.recordId||loc.id)}">Full profile <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></a><div class="flex flex-wrap gap-1"><button type="button" data-speech-action="play" data-speech-text="${escapeHtml(description)}" class="rounded border border-slate-600 px-2 py-1">Play</button><button type="button" data-speech-action="pause" class="rounded border border-slate-600 px-2 py-1">Pause</button><button type="button" data-speech-action="resume" class="rounded border border-slate-600 px-2 py-1">Resume</button><button type="button" data-speech-action="stop" class="rounded border border-slate-600 px-2 py-1">Stop</button></div></div>
+          <p data-speech-status role="status" aria-live="polite"></p>
+        </div>`;
+      sidebar.classList.remove('translate-x-full');
+      sidebar.setAttribute('aria-hidden','false');
+      markers.forEach(m => m.getElement()?.classList.toggle('np-on', m._loc === loc));
+      window.CampusAccessibility?.speak(description,{automatic:true,status:sidebarContent.querySelector('[data-speech-status]')});
+    }
+    mapPins.forEach(loc => {
+      const marker = L.marker(toLatLng(loc.px), { icon: makeIcon(loc.num), keyboard: true, title: loc.name }).addTo(map);
+      marker.on('click', () => openPin(loc));
+      marker._loc = loc;
+      marker._cat = loc.cat;
+      marker._name = loc.name;
+      markers.push(marker);
+    });
+
+    map.on('click', () => {
+      window.CampusAccessibility?.stop();
+      sidebar.classList.add('translate-x-full');
+      sidebar.setAttribute('aria-hidden','true');
+    });
+
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach(b => {
+          b.classList.remove('active', 'bg-blue-600', 'text-white');
+          b.classList.add('bg-slate-800', 'text-slate-300');
+        });
+
+        btn.classList.add('active', 'bg-blue-600', 'text-white');
+        btn.classList.remove('bg-slate-800', 'text-slate-300');
+
+        const cat = btn.getAttribute('data-cat');
+        markers.forEach(marker => {
+          if (cat === 'all' || marker._cat === cat) {
+            map.addLayer(marker);
+          } else {
+            map.removeLayer(marker);
+          }
+        });
+      });
+    });
+
+    const graph = {};
+    function dist(a, b) { return Math.hypot(a[0] - b[0], a[1] - b[1]); }
+    function addNode(id, px) { if (!graph[id]) graph[id] = { px, neighbors: {}, accessibleNeighbors: {} }; }
+    function addEdge(idA, idB, weight = null, accessible = false) {
+      const w = Number(weight) > 0 ? Number(weight) : dist(graph[idA].px, graph[idB].px);
+      graph[idA].neighbors[idB] = w;
+      graph[idB].neighbors[idA] = w;
+      graph[idA].accessibleNeighbors[idB] = !!accessible;
+      graph[idB].accessibleNeighbors[idA] = !!accessible;
+    }
+
+    function rebuildRouteGraph() {
+      Object.keys(graph).forEach(id=>delete graph[id]);
+      junctions=Object.fromEntries(storedMap.nodes.map(node=>[`n:${node.id}`,[Number(node.x),Number(node.y)]]));
+      mapBackbone=storedMap.connections.map(edge=>[`n:${edge.from_node_id}`,`n:${edge.to_node_id}`,Number(edge.weight),Number(edge.accessibility_value)===1]);
+      Object.entries(junctions).forEach(([id,px])=>addNode(id,px));
+      mapBackbone.forEach(([a,b,weight,accessible])=>addEdge(a,b,weight,accessible));
+      locations.forEach(loc=>{
+        const locId=routeId(loc);addNode(locId,loc.px);
+        if(loc.routeNodeId&&graph[loc.routeNodeId])addEdge(locId,loc.routeNodeId,null,Number(loc.accessibilityValue)===1);
+      });
+    }
+    rebuildRouteGraph();
+
+    let mapPreferences = {};
+    try { mapPreferences = JSON.parse(localStorage.getItem('navigatorate.visitor.preferences') || '{}') || {}; } catch {}
+    let accessibleOnly = mapPreferences.routeType === 'accessible';
+    document.getElementById('accessibleRouteOnly').checked = accessibleOnly;
+
+    function routeId(loc) { return `loc:${loc.id}:${loc.floor}`; }
+
+    function edgeKey(a, b) { return [a, b].sort().join('||'); }
+
+    function dijkstra(startId, endId, blockedEdges = new Set()) {
+      const dists = {}, prev = {};
+      Object.keys(graph).forEach(id => dists[id] = Infinity);
+      dists[startId] = 0;
+      const pq = new Set(Object.keys(graph));
+
+      while (pq.size) {
+        let u = null, best = Infinity;
+        pq.forEach(id => { if (dists[id] < best) { best = dists[id]; u = id; } });
+        if (u === null || u === endId) break;
+        pq.delete(u);
+
+        Object.entries(graph[u].neighbors).forEach(([v, w]) => {
+          if (blockedEdges.has(edgeKey(u, v))) return;
+          if (accessibleOnly && !graph[u].accessibleNeighbors[v]) return;
+          const alt = dists[u] + w;
+          if (alt < dists[v]) { dists[v] = alt; prev[v] = u; }
+        });
+      }
+
+      if (dists[endId] === Infinity) return null;
+      const path = [];
+      let cur = endId;
+      while (cur) { path.unshift(cur); cur = prev[cur]; }
+      return { path, distance: dists[endId] };
+    }
+
+    function samePath(a, b) {
+      if (!a || !b || a.length !== b.length) return false;
+      return a.every((node, i) => node === b[i]);
+    }
+
+    function getAlternativeResult(startId, endId, shortest) {
+      if (!shortest || shortest.path.length < 3) return null;
+      let bestAlt = null;
+      for (let i = 1; i < shortest.path.length - 2; i++) {
+        const blocked = new Set([edgeKey(shortest.path[i], shortest.path[i + 1])]);
+        const candidate = dijkstra(startId, endId, blocked);
+        if (!candidate || samePath(candidate.path, shortest.path)) continue;
+        if (!bestAlt || candidate.distance < bestAlt.distance) bestAlt = candidate;
+      }
+      return bestAlt;
+    }
+
+    function routeGeometryKey(path) {
+      const raw=path.map(id=>graph[id]?.px).filter(Boolean).map(([x,y])=>`${Math.round(x*10)/10},${Math.round(y*10)/10}`);
+      const points=raw.filter((point,index)=>index===0||point!==raw[index-1]);
+      const forward=points.join('|'),reverse=[...points].reverse().join('|');
+      return forward<reverse?forward:reverse;
+    }
+
+    const fromSelect = document.getElementById('fromSelect');
+    const toSelect = document.getElementById('toSelect');
+    const fromSearch = document.getElementById('fromSearch');
+    const toSearch = document.getElementById('toSearch');
+    const fromSuggestions = document.getElementById('fromSuggestions');
+    const toSuggestions = document.getElementById('toSuggestions');
+    const routeInfo = document.getElementById('routeInfo');
+    const routeOptions = document.getElementById('routeOptions');
+    const routeNotice = document.getElementById('routeNotice');
+    const findRouteBtn = document.getElementById('findRouteBtn');
+    const clearRouteBtn = document.getElementById('clearRouteBtn');
+
+    fromSelect.add(new Option('Select a start location', ''));
+    toSelect.add(new Option('Select a destination', ''));
+    locations.forEach(loc => {
+      const option = `<option value="${routeId(loc)}">${escapeHtml(loc.name)}${loc.floor ? ` · Floor ${loc.floor}` : ''}</option>`;
+      fromSelect.insertAdjacentHTML('beforeend', option);
+      toSelect.insertAdjacentHTML('beforeend', option);
+    });
+    const locationLabels = new Map();
+    locations.forEach(loc => {
+      const label = `${loc.name}${loc.category ? ` · ${loc.category}` : ''}${loc.floor ? ` · Floor ${loc.floor}` : ''}`;
+      locationLabels.set(label, routeId(loc));
+    });
+    const labelFor = id => [...locationLabels.entries()].find(([, locationId]) => locationId === id)?.[0] || '';
+    fromSearch.value = '';
+    toSearch.value = '';
+
+    let routeLine = null;
+    let routeMarkers = [];
+    let animationFrame = null;
+    let currentRoutes = {};
+
+    function clearRoute() {
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+      animationFrame = null;
+      if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+      routeMarkers.forEach(m => map.removeLayer(m));
+      routeMarkers = [];
+      currentRoutes = {};
+      routeOptions.innerHTML = '';
+      routeOptions.classList.add('hidden');
+      routeNotice.innerHTML = '';
+      routeNotice.classList.add('hidden');
+      routeInfo.textContent = 'Select locations to calculate routes';
+      document.getElementById('routeDirections').classList.add('hidden');
+      window.CampusAccessibility?.stop();
+      clearRouteBtn.classList.add('hidden');
+    }
+
+    const dropdowns = [
+      { input:fromSearch, select:fromSelect, other:toSelect, list:fromSuggestions, label:'start location' },
+      { input:toSearch, select:toSelect, other:fromSelect, list:toSuggestions, label:'destination' }
+    ];
+    const closeSuggestions = list => { list.classList.add('hidden'); list.closest('[class~="relative"]')?.querySelector('[role="combobox"]')?.setAttribute('aria-expanded','false'); };
+    const renderSuggestions = (control, open = true) => {
+      const query = control.input.value.trim().toLocaleLowerCase();
+      const matches = locations.filter(loc => `${loc.name} ${loc.category || ''} ${loc.buildingName || ''} ${loc.kind || ''} ${loc.description || ''} ${loc.functionDescription || ''} ${loc.building_number || ''} ${loc.roomNumber || ''} ${loc.floor || ''} ${loc.floorLabel || ''} ${loc.departmentName || ''} ${loc.departmentHead || ''} ${loc.contactInfo || ''} ${loc.contactEmail || ''} ${loc.contactPhone || ''} ${loc.services || ''} ${loc.nearbyLandmarks || ''}`.toLocaleLowerCase().includes(query)).slice(0, 50);
+      control.list.innerHTML = matches.length ? matches.map(loc => {
+        const label = labelFor(routeId(loc));
+        const alreadySelected = control.other.value === routeId(loc);
+        return `<li role="option" aria-selected="false"><button type="button" data-location-id="${escapeHtml(routeId(loc))}" class="w-full px-3 py-2 text-left text-[11px] ${alreadySelected ? 'text-slate-500' : 'text-slate-100 hover:bg-blue-600/30'}"><span class="block font-semibold">${escapeHtml(loc.name)}</span><span class="block mt-0.5 text-[10px] text-slate-400">${escapeHtml(loc.category || loc.kind || 'Campus location')}${loc.floor ? ` · Floor ${loc.floor}` : ''}${alreadySelected ? ' · Already selected' : ''}</span></button></li>`;
+      }).join('') : '<li class="px-3 py-2 text-[11px] text-slate-400">No matching campus locations.</li>';
+      if (open) { control.list.classList.remove('hidden'); control.input.setAttribute('aria-expanded','true'); }
+    };
+    dropdowns.forEach(control => {
+      control.input.addEventListener('focus', () => { control.input.select(); renderSuggestions(control); });
+      control.input.addEventListener('input', () => { control.select.value = ''; clearRoute(); updateRouteButton(); renderSuggestions(control); });
+      control.input.addEventListener('keydown', event => {
+        if (event.key === 'Escape') { closeSuggestions(control.list); return; }
+        if (event.key === 'ArrowDown') { event.preventDefault(); renderSuggestions(control); control.list.querySelector('button[data-location-id]')?.focus(); }
+        if (event.key === 'Enter') { const first = control.list.querySelector('button[data-location-id]'); if (!control.list.classList.contains('hidden') && first) { event.preventDefault(); first.click(); } }
+      });
+      control.list.addEventListener('pointerdown', event => event.preventDefault());
+      control.list.addEventListener('click', event => {
+        const button = event.target.closest('button[data-location-id]');
+        if (!button) return;
+        const loc = locations.find(item => routeId(item) === button.dataset.locationId);
+        if (!loc) return;
+        if (control.other.value === routeId(loc)) {
+          setNotice('Start location and destination must be different. Choose another ' + control.label + '.', 'error');
+          control.input.focus();
+          return;
+        }
+        control.select.value = routeId(loc);
+        control.input.value = labelFor(routeId(loc));
+        closeSuggestions(control.list);
+        routeNotice.classList.add('hidden');
+        updateRouteButton();
+        routeInfo.textContent = fromSelect.value && toSelect.value ? 'Locations selected. Find a route when ready.' : 'Select both a start location and a destination.';
+      });
+    });
+    document.addEventListener('click', event => dropdowns.forEach(control => {
+      if (!control.list.parentElement.contains(event.target)) closeSuggestions(control.list);
+    }));
+    function updateRouteButton() {
+      findRouteBtn.disabled = !(fromSelect.value && toSelect.value);
+      findRouteBtn.classList.toggle('opacity-50', findRouteBtn.disabled);
+      findRouteBtn.classList.toggle('cursor-not-allowed', findRouteBtn.disabled);
+    }
+    updateRouteButton();
+
+    function animateRoute(latlngs, color = '#3b82f6') {
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+      if (routeLine) map.removeLayer(routeLine);
+      routeLine = L.polyline([], {
+        color, weight: 6, opacity: 0.95, dashArray: '8,8', lineCap: 'round', lineJoin: 'round'
+      }).addTo(map);
+
+      // Slow, smooth drawing: the line grows along the path at a steady speed.
+      // Change ROUTE_SPEED (pixels per second) to make it faster or slower.
+      const ROUTE_SPEED = 90;
+      const segLen = [0];
+      for (let k = 1; k < latlngs.length; k++) {
+        segLen.push(segLen[k - 1] + map.options.crs.distance(L.latLng(latlngs[k - 1]), L.latLng(latlngs[k])));
+      }
+      const total = segLen[segLen.length - 1] || 1;
+      const duration = Math.min(Math.max(total / ROUTE_SPEED, 3), 14) * 1000;
+      const start = performance.now();
+
+      const drawStep = (now) => {
+        const t = Math.min((now - start) / duration, 1);
+        const d = t * total;
+        let k = 1;
+        while (k < segLen.length - 1 && segLen[k] < d) k++;
+        const pts = latlngs.slice(0, k);
+        if (latlngs.length > 1) {
+          const span = (segLen[k] - segLen[k - 1]) || 1;
+          const f = Math.min(Math.max((d - segLen[k - 1]) / span, 0), 1);
+          const a = L.latLng(latlngs[k - 1]), b = L.latLng(latlngs[k]);
+          pts.push(L.latLng(a.lat + (b.lat - a.lat) * f, a.lng + (b.lng - a.lng) * f));
+        }
+        routeLine.setLatLngs(pts);
+        animationFrame = t < 1 ? requestAnimationFrame(drawStep) : null;
+      };
+      animationFrame = requestAnimationFrame(drawStep);
+    }
+
+    function showRouteMarkers(latlngs) {
+      routeMarkers.forEach(m => map.removeLayer(m));
+      routeMarkers = [];
+      if (!latlngs.length) return;
+      const start = L.circleMarker(latlngs[0], { radius: 7, color: '#fff', weight: 2, fillColor: '#16a34a', fillOpacity: 1 }).addTo(map);
+      const end = L.circleMarker(latlngs[latlngs.length - 1], { radius: 7, color: '#fff', weight: 2, fillColor: '#ef4444', fillOpacity: 1 }).addTo(map);
+      routeMarkers.push(start, end);
+    }
+
+    function setNotice(message, type = 'warning') {
+      routeNotice.textContent = message;
+      routeNotice.classList.remove('hidden', 'border-amber-500/50', 'bg-amber-500/10', 'text-amber-200', 'border-red-500/50', 'bg-red-500/10', 'text-red-200');
+      if (type === 'error') {
+        routeNotice.classList.add('border-red-500/50', 'bg-red-500/10', 'text-red-200');
+      } else {
+        routeNotice.classList.add('border-amber-500/50', 'bg-amber-500/10', 'text-amber-200');
+      }
+    }
+
+    function renderRouteOptions() {
+      routeOptions.innerHTML = '';
+      Object.entries(currentRoutes).forEach(([id, option]) => {
+        const label = option.name || (id === 'shortest' ? 'Shortest Route' : 'Alternative Route');
+        const badge = option.saved ? 'Saved route' : 'Available';
+        const border = 'border-slate-700 bg-slate-900/70';
+        const status = 'text-emerald-300';
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = `map-route-option text-left rounded-lg border ${border} p-2.5 transition-all hover:border-blue-500/60`;
+        card.innerHTML = `
+          <div class="flex items-center justify-between gap-2">
+            <div class="min-w-0 break-words font-bold text-white text-[11px] [overflow-wrap:anywhere]">${escapeHtml(label)}</div>
+            <span class="text-[10px] font-bold ${status}">${badge}</span>
+          </div>
+          ${option.savedName ? `<div class="text-[10px] text-slate-400 mt-1">${escapeHtml(option.savedName)}</div>` : ''}
+          <div class="text-[10px] text-slate-400 mt-1">~${Math.round(option.distance)} map units • ${option.path.length - 1} segments</div>
+        `;
+        card.addEventListener('click', () => selectRoute(id));
+        routeOptions.appendChild(card);
+      });
+      routeOptions.classList.toggle('hidden', Object.keys(currentRoutes).length === 0);
+    }
+
+    function selectRoute(id) {
+      const selected = currentRoutes[id];
+      if (!selected) return;
+      const latlngs = selected.path.map(nodeId => toLatLng(graph[nodeId].px));
+      const color = selected.color || (id === 'shortest' ? '#3b82f6' : '#8b5cf6');
+      animateRoute(latlngs, color);
+      showRouteMarkers(latlngs);
+      map.fitBounds(L.latLngBounds(latlngs), { padding: [60, 60] });
+      routeInfo.innerHTML = `<b>${escapeHtml(selected.name || (id === 'shortest' ? 'Shortest' : 'Alternative') + ' route')} selected:</b> ~${Math.round(selected.distance)} map units.`;
+      const start=locations.find(loc=>routeId(loc)===fromSelect.value),destination=locations.find(loc=>routeId(loc)===toSelect.value);
+      const junctions=selected.path.slice(1,-1).filter(nodeId=>nodeId.startsWith('n:')).map(nodeId=>storedMap.nodes.find(node=>`n:${node.id}`===nodeId)?.node_key).filter(Boolean);
+      const savedDirections=[selected.notes,...(selected.pointNotes||[])].filter(Boolean);
+      const directions=`Start at ${start?.name||'your selected location'}. Follow the highlighted campus route${junctions.length?` through ${junctions.map((name,index)=>`junction ${index+1}, ${name}`).join('; ')}`:''}. Arrive at ${destination?.name||'your selected destination'}.${savedDirections.length?` Route notes: ${savedDirections.join('. ')}`:''} ${accessibleOnly?'Only verified connections and endpoints recorded as accessible are included.':''}`;
+      const directionsText=document.getElementById('routeDirectionsText');
+      directionsText.textContent=directions;
+      document.getElementById('routeSpeak').dataset.speechText=directions;
+      document.getElementById('routeDirections').classList.remove('hidden');
+      clearRouteBtn.classList.remove('hidden');
+      routeNotice.classList.add('hidden');
+    }
+
+    async function calculateRoutes() {
+      clearRoute();
+      const startId = fromSelect.value;
+      const endId = toSelect.value;
+      if (!startId || !endId) {
+        setNotice('Choose both a start location and a destination.', 'warning');
+        return;
+      }
+      if (startId === endId) {
+        setNotice('Start location and destination must be different.', 'error');
+        return;
+      }
+
+      // Route records can be deleted or deactivated while this map tab stays open.
+      // Re-read them for each search so stale saved options are not offered.
+      try {
+        storedMap = await window.CampusApi.get('map');
+        savedRoutes = await window.CampusApi.get('routes/available');
+        rebuildRouteGraph();
+      } catch (error) {
+        setNotice(error.message || 'Saved routes could not be refreshed.', 'error');
+        return;
+      }
+
+      const startLocation = locations.find(loc => routeId(loc) === startId);
+      const endLocation = locations.find(loc => routeId(loc) === endId);
+      const available = {};
+      const shownGeometry = new Set();
+      const shortest = dijkstra(startId, endId);
+      if (shortest) {
+        available.shortest = { ...shortest, name:'Shortest Route', color:'#3b82f6' };
+        shownGeometry.add(routeGeometryKey(shortest.path));
+        const alternative = getAlternativeResult(startId, endId, shortest);
+        if (alternative && !shownGeometry.has(routeGeometryKey(alternative.path))) {
+          available.alternative = { ...alternative, name:'Alternative Route', color:'#8b5cf6' };
+          shownGeometry.add(routeGeometryKey(alternative.path));
+        }
+      }
+      const savedOptions = savedRoutes.filter(route => route.status === 'active').sort((a,b)=>Number(a.id)-Number(b.id)).flatMap(route => {
+        if (accessibleOnly && Number(route.accessible_confirmed) !== 1) return [];
+        const forward = Number(route.start_marker_id) === Number(startLocation?.markerId) && Number(route.destination_marker_id) === Number(endLocation?.markerId);
+        const reverse = Number(route.start_marker_id) === Number(endLocation?.markerId) && Number(route.destination_marker_id) === Number(startLocation?.markerId);
+        if (!forward && !reverse) return [];
+        let points = (route.points || []).filter(point => point.node_id && graph[`n:${point.node_id}`]);
+        if (reverse) points = points.reverse();
+        const path = points.map(point => `n:${point.node_id}`);
+        if (path.length < 2) return [];
+        const geometryKey=routeGeometryKey(path);
+        if(shownGeometry.has(geometryKey))return [];
+        shownGeometry.add(geometryKey);
+        const distance = Number(route.distance_map_units) || path.slice(1).reduce((sum, nodeId, index) => sum + dist(graph[path[index]].px, graph[nodeId].px), 0);
+        const pointNotes=points.map(point=>point.notes).filter(Boolean);
+        return [[`saved:${route.id}`, { path, distance, name:route.name, savedName:route.name, saved:true, notes:route.notes, pointNotes, color:'#0f9f87' }]];
+      });
+      const savedNameTotals=new Map(),savedNameIndexes=new Map();
+      savedOptions.forEach(([,option])=>savedNameTotals.set(option.name,(savedNameTotals.get(option.name)||0)+1));
+      savedOptions.forEach(([,option])=>{
+        const total=savedNameTotals.get(option.name)||0;
+        if(total>1){const index=(savedNameIndexes.get(option.name)||0)+1;savedNameIndexes.set(option.name,index);option.name+=` · Path ${index}`;}
+      });
+      savedOptions.forEach(([,option],index)=>{option.name=`Path ${index+1}`;});
+      Object.assign(available, Object.fromEntries(savedOptions));
+      if (!Object.keys(available).length) {
+        setNotice(accessibleOnly ? 'No route can be confirmed accessible from the recorded data. Unknown or unverified accessibility is excluded; try standard routing or ask campus staff for assistance.' : 'No route is available between these locations. Check that the locations are connected in the route builder.', 'error');
+        routeInfo.textContent = 'No path found';
+        return;
+      }
+      currentRoutes = available;
+      renderRouteOptions();
+
+      selectRoute(shortest ? 'shortest' : Object.keys(available)[0]);
+    }
+
+    findRouteBtn.addEventListener('click', calculateRoutes);
+    clearRouteBtn.addEventListener('click', clearRoute);
+
+    document.getElementById('accessibleRouteOnly').addEventListener('change', event => {
+      accessibleOnly = event.currentTarget.checked;
+      if (fromSelect.value && toSelect.value) calculateRoutes();
+    });
+
+    const netToggleBox = document.getElementById('netToggleBox');
+    // All walkways are shown faintly (transparent blue) so people can see where routes can go.
+    // The chosen route is still drawn on top in solid blue with the slow animation.
+    let networkLayer = null;
+    function showWalkways() {
+      // The main Gate 2 to Gate 1 road is not drawn as a faint line (routes can still use it).
+      const gateSpine = new Set(['j:g2','j:a','j:b','j:c','j:d','j:e','j:f','j:s1','j:s2','j:s3','j:s4','j:i','j:g1','j:g1c','j:g1b']);
+      const lines = [];
+      Object.keys(graph).forEach(id => {
+        if (!id.startsWith('j:')) return;
+        Object.keys(graph[id].neighbors).forEach(nId => {
+          if (nId.startsWith('j:') && id < nId && !(gateSpine.has(id) && gateSpine.has(nId))) lines.push([toLatLng(graph[id].px), toLatLng(graph[nId].px)]);
+        });
+      });
+      networkLayer = L.layerGroup(lines.map(line =>
+        L.polyline(line, { color: '#3b82f6', weight: 6, opacity: 0.28, lineCap: 'round', lineJoin: 'round', interactive: false })
+      )).addTo(map);
+      networkLayer.eachLayer(l => l.bringToBack());
+    }
+    netToggleBox.addEventListener('change', () => {
+      if (netToggleBox.checked) showWalkways();
+      else if (networkLayer) { map.removeLayer(networkLayer); networkLayer = null; }
+    });
+    if (netToggleBox.checked) showWalkways();
+
+    // Search by pin number
+    const searchBox = document.getElementById('searchBox');
+    const suggestions = document.getElementById('suggestions');
+    searchBox.addEventListener('input', () => {
+      const q = searchBox.value.trim().toLowerCase();
+      const hits = q ? locations.filter(l => `${l.name} ${l.category || ''} ${l.buildingName || ''} ${l.building_number || ''} ${l.roomNumber || ''} ${l.floorLabel || ''} ${l.departmentName || ''} ${l.departmentHead || ''} ${l.contactEmail || ''} ${l.contactPhone || ''} ${l.services || ''} ${l.nearbyLandmarks || ''} ${l.description || ''} ${l.functionDescription || ''}`.toLocaleLowerCase().includes(q)).slice(0, 8) : [];
+      suggestions.innerHTML = hits.map(l => `<button type="button" data-id="${l.id}" class="block w-full text-left px-3 py-2 hover:bg-slate-100">${escapeHtml(l.name)}</button>`).join('');
+      suggestions.classList.toggle('hidden', !hits.length);
+    });
+    suggestions.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      const loc = locations.find(l => String(l.id) === b.dataset.id);
+      suggestions.classList.add('hidden'); searchBox.value = loc.name;
+      map.setView(toLatLng(loc.px), 1, { animate: true });
+      openPin(loc);
+    });
+
+    const initialSearch = new URLSearchParams(location.search).get('search')?.trim().toLowerCase();
+    if (initialSearch) {
+      const match = locations.find(loc => `${loc.name} ${loc.buildingName || ''} ${loc.building_number || ''} ${loc.roomNumber || ''} ${loc.floorLabel || ''} ${loc.departmentName || ''} ${loc.contactEmail || ''} ${loc.services || ''} ${loc.nearbyLandmarks || ''}`.toLocaleLowerCase().includes(initialSearch));
+      if (match) {
+        searchBox.value = match.name;
+        map.setView(toLatLng(match.px), 1, { animate: false });
+        openPin(match);
+      }
+    }
+
+    clearRoute();
+  </script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Categories - Admin</title>
+
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <link rel="stylesheet" href="../../assets/css/style.css?v=20261024-complete-details" />
+  <link rel="stylesheet" href="../../assets/css/admin.css?v=20261105-admin-ux" />
+  <script src="../../assets/js/campus-api.js"></script>
+  <script src="../../assets/js/admin/admin-auth.js"></script>
+</head>
+<body class="admin-page min-h-screen">
+  <div data-component="header"></div>
+
+  <main class="admin-main">
+    <div class="admin-page-heading">
+      <div>
+        <h1 class="text-xl font-bold">Campus Categories</h1>
+        <p class="mt-1 text-xs text-slate-500">Categories are shared by buildings, facilities, and rooms. A category in use cannot be removed.</p>
+      </div>
+      <a href="dashboard.html" class="shrink-0 text-xs text-blue-600 font-bold hover:underline">Back to Dashboard</a>
+    </div>
+
+    <section class="admin-form-panel max-w-2xl p-5" aria-labelledby="campus-categories-title">
+      <h2 id="campus-categories-title" class="text-base font-bold">Shared categories</h2>
+      <form class="mt-4 flex gap-2" data-category-form="campus">
+        <label class="sr-only" for="new-campus-category">New campus category</label>
+        <input id="new-campus-category" name="category" required maxlength="80" placeholder="Add a campus category" class="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+        <button type="submit" class="shrink-0 rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700">Add</button>
+      </form>
+      <div id="categories-list" class="mt-4 space-y-2"></div>
+    </section>
+    <p id="category-status" class="min-h-5 text-xs text-slate-500" role="status" aria-live="polite"></p>
+  </main>
+
+  <script src="../../assets/js/admin/catalog.js?v=20261024-complete-details"></script>
+  <script src="../../assets/js/app.js?v=20261105-admin-ux"></script>
+</body>
+</html>

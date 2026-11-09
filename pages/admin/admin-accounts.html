@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Accounts - NaviGATE LCUP</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0,1,-50..200" />
+  <link rel="stylesheet" href="../../assets/css/style.css?v=20261024-complete-details"><link rel="stylesheet" href="../../assets/css/admin.css?v=20261105-admin-ux">
+  <script src="../../assets/js/campus-api.js"></script><script src="../../assets/js/admin/admin-auth.js"></script>
+</head><body class="admin-page min-h-screen">
+  <div data-component="header"></div>
+  <main class="admin-main">
+    <div class="admin-page-heading"><div><h1 class="text-xl font-bold">Admin Accounts</h1><p>Review administrator access. Account creation is managed through the authorized backend process.</p></div></div>
+    <section class="admin-settings-panel" aria-labelledby="admin-account-list-title"><div class="admin-settings-heading"><div><h2 id="admin-account-list-title">Existing accounts</h2><p>Disable access or change the assigned role. Your own account cannot be disabled or demoted here.</p></div></div><div id="admin-account-list" aria-live="polite">Loading administrator accounts…</div></section>
+  </main>
+  <script src="../../assets/js/admin/admin-accounts.js?v=20261021-saved-accounts"></script><script src="../../assets/js/app.js?v=20261105-admin-ux"></script>
+</body></html>

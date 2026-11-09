@@ -1,0 +1,134 @@
+﻿`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>NaviGATE LCUP - Campus Navigation</title>
+  
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <link rel="stylesheet" href="assets/css/style.css?v=20261022-mobile-home-layout-2310" />
+</head>
+<body class="home-page min-h-screen pb-28 font-sans">
+
+  <section id="role-splash" class="role-splash role-splash-checking" role="dialog" aria-modal="true" aria-labelledby="role-splash-title">
+    <div class="role-splash-inner">
+      <a href="index.html" class="splash-brand" aria-label="NaviGATE home">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-copy"><strong>Navi<span>GATE</span></strong><small>La Consolacion University Philippines</small></span>
+      </a>
+      <div class="role-splash-content">
+        <div class="role-splash-copy">
+          <span class="campus-map-label"><span class="material-symbols-rounded">map</span> LCUP Campus Map</span>
+          <h1 id="role-splash-title">Welcome to<br>Navi<span>GATE</span></h1>
+          <p>Choose how you would like to enter the campus guide.</p>
+        </div>
+        <div class="role-options" aria-label="Choose a role">
+          <button type="button" class="role-option" data-role-choice="student-guest">
+            <span class="role-option-icon"><span class="material-symbols-rounded">explore</span></span>
+            <span class="role-option-copy"><strong>Student / Guest</strong><small>Explore campus buildings, offices, and facilities</small></span>
+            <span class="material-symbols-rounded role-option-arrow">chevron_right</span>
+          </button>
+          <a class="role-option" data-role-choice="admin" href="pages/admin/login.html">
+            <span class="role-option-icon admin"><span class="material-symbols-rounded">admin_panel_settings</span></span>
+            <span class="role-option-copy"><strong>Admin</strong><small>Manage campus locations and information</small></span>
+            <span class="material-symbols-rounded role-option-arrow">chevron_right</span>
+          </a>
+        </div>
+      </div>
+      <p id="role-splash-status" class="role-splash-footer" role="status" aria-live="polite"></p>
+      <p class="role-splash-footer">La Consolacion University Philippines</p>
+    </div>
+  </section>
+
+  <div data-component="header"></div>
+
+  <main class="home-main">
+    <section class="welcome-panel" aria-labelledby="welcome-title">
+      <div class="welcome-content">
+        <span class="campus-map-label"><span class="material-symbols-rounded">map</span> LCUP Campus Map</span>
+          <h1 id="welcome-title" tabindex="-1">Welcome to<br>Navi<span>GATE</span></h1>
+        <p>Your interactive guide to explore buildings, offices, and campus updates in real time.</p>
+        <form id="home-search" class="home-search" role="search">
+          <label class="sr-only" for="home-search-input">Search campus buildings, rooms, and facilities</label>
+          <span class="material-symbols-rounded" aria-hidden="true">search</span>
+          <input id="home-search-input" name="q" type="search" placeholder="Where do you want to go?" autocomplete="off" />
+          <button type="submit">Search</button>
+        </form>
+        <a href="pages/map.html" class="map-cta">
+          <span class="material-symbols-rounded">explore</span>
+          Open Interactive Map
+          <span class="material-symbols-rounded cta-arrow">chevron_right</span>
+        </a>
+        <div class="welcome-pagination" aria-label="Featured campus highlights">
+          <span class="is-current"></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+      <div class="welcome-features" aria-label="Campus map features">
+        <a href="pages/directory.html?type=building" class="welcome-feature">
+          <span class="feature-icon material-symbols-rounded">location_on</span>
+          <span><strong>Explore</strong><small>Campus Places</small></span>
+        </a>
+        <a href="pages/map.html" class="welcome-feature">
+          <span class="feature-icon material-symbols-rounded">alt_route</span>
+          <span><strong>Navigate</strong><small>Find Routes</small></span>
+        </a>
+        <a href="pages/directory.html?type=facility" class="welcome-feature">
+          <span class="feature-icon material-symbols-rounded">domain</span>
+          <span><strong>Discover</strong><small>Facilities</small></span>
+        </a>
+        <a href="pages/directory.html" class="welcome-feature">
+          <span class="feature-icon material-symbols-rounded">notifications</span>
+          <span><strong>Stay Updated</strong><small>Campus Directory</small></span>
+        </a>
+      </div>
+    </section>
+
+    <section class="home-section" aria-labelledby="quick-access-title">
+      <div class="section-heading">
+        <h2 id="quick-access-title">Quick Access</h2>
+        <a href="pages/directory.html">See all <span class="material-symbols-rounded">chevron_right</span></a>
+      </div>
+      <div class="quick-access-grid directory-grid">
+        <a href="pages/directory.html?type=building" class="directory-card home-directory-card">
+          <span class="directory-card-image"><span class="material-symbols-rounded" aria-hidden="true">location_city</span></span>
+          <span class="directory-card-body"><span class="directory-card-meta"><span class="directory-kind">Quick access</span><span>Campus places</span></span><strong>Buildings</strong><span class="directory-card-description">Browse academic and campus buildings.</span></span>
+          <span class="directory-card-actions"><span><span class="material-symbols-rounded" aria-hidden="true">apartment</span>Browse buildings</span><span>Details <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></span></span>
+        </a>
+        <a href="pages/directory.html?category=Administrative" class="directory-card home-directory-card">
+          <span class="directory-card-image home-directory-image--green"><span class="material-symbols-rounded" aria-hidden="true">badge</span></span>
+          <span class="directory-card-body"><span class="directory-card-meta"><span class="directory-kind">Quick access</span><span>Departments &amp; services</span></span><strong>Administrative</strong><span class="directory-card-description">Find campus offices and administrative services.</span></span>
+          <span class="directory-card-actions"><span><span class="material-symbols-rounded" aria-hidden="true">business_center</span>Browse offices</span><span>Details <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></span></span>
+        </a>
+        <a href="pages/announcements.html" class="directory-card home-directory-card">
+          <span class="directory-card-image home-directory-image--violet"><span class="material-symbols-rounded" aria-hidden="true">campaign</span></span>
+          <span class="directory-card-body"><span class="directory-card-meta"><span class="directory-kind">Quick access</span><span>News &amp; updates</span></span><strong>Announcements</strong><span class="directory-card-description">Read the latest campus updates and events.</span></span>
+          <span class="directory-card-actions"><span><span class="material-symbols-rounded" aria-hidden="true">notifications</span>View updates</span><span>Details <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></span></span>
+        </a>
+      </div>
+    </section>
+
+    <section class="home-section" aria-labelledby="home-announcements-title">
+      <div class="section-heading"><h2 id="home-announcements-title">Campus Announcements and Events</h2><a href="pages/announcements.html">View all <span class="material-symbols-rounded">chevron_right</span></a></div>
+      <div id="home-announcements" class="grid grid-cols-1 md:grid-cols-2 gap-3"><p class="text-sm text-slate-500">Loading campus updatesâ€¦</p></div>
+    </section>
+
+    <section class="home-section categories-section" id="explore-categories" aria-labelledby="categories-title">
+      <div class="section-heading">
+        <h2 id="categories-title">Explore by Category</h2>
+        <a href="pages/directory.html">Browse directory <span class="material-symbols-rounded">chevron_right</span></a>
+      </div>
+      <div class="category-grid directory-grid" id="home-category-links"></div>
+    </section>
+  </main>
+
+  <div data-component="bottom-nav"></div>
+
+  <script src="assets/js/campus-api.js"></script>
+  <script src="assets/js/home-data.js?v=20261022-home-category-allowlist-2305"></script>
+  <script src="assets/js/app.js?v=20261109-role-selection"></script>
+</body>
+</html>

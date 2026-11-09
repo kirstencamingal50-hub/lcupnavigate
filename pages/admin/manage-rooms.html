@@ -1,0 +1,113 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Classrooms - Admin</title>
+  
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <link rel="stylesheet" href="../../assets/css/style.css?v=20261024-complete-details" />
+  <link rel="stylesheet" href="../../assets/css/admin.css?v=20261105-admin-ux" />
+  <script src="../../assets/js/campus-api.js"></script>
+  <script src="../../assets/js/admin/admin-auth.js"></script>
+</head>
+<body class="admin-page min-h-screen">
+
+  <div data-component="header"></div>
+
+  <main class="admin-main">
+    <div class="admin-page-heading">
+      <div>
+        <h1 class="text-xl font-bold">Rooms and Classrooms</h1>
+        <p class="mt-1 text-xs text-slate-500">Add rooms with a building, floor, room number, category, and details.</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <a href="manage-categories.html" class="text-xs text-blue-600 font-bold hover:underline">Manage Categories</a>
+        <a href="dashboard.html" class="text-xs text-blue-600 font-bold hover:underline">Back to Dashboard</a>
+      </div>
+    </div>
+    <section class="admin-form-panel rounded-2xl p-5" aria-labelledby="add-classroom-title">
+      <h2 id="add-classroom-title" class="text-sm font-bold">Add Classroom</h2>
+      <form id="add-classroom-form" class="mt-4 grid gap-3 md:grid-cols-2">
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Classroom Name
+          <input name="name" required maxlength="150" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Building
+          <select name="buildingId" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"></select>
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Category
+          <select name="category" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"></select>
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Floor
+          <input name="floor" required maxlength="60" value="Ground Level" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Room Number
+          <input name="room" required maxlength="50" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Maximum capacity
+          <input name="capacity" type="number" min="0" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Department Head
+          <input name="head" maxlength="120" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Contact Info
+          <input name="contact" maxlength="180" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Department
+          <input name="department_name" maxlength="160" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Contact email
+          <input name="contact_email" type="email" maxlength="254" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Contact phone
+          <input name="contact_phone" type="tel" maxlength="40" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Official website
+          <input name="website_url" type="url" maxlength="500" placeholder="https://" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Service hours
+          <input name="service_hours" maxlength="500" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Days open
+          <input name="days_open" maxlength="160" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Lunch break
+          <input name="lunch_break" maxlength="160" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Nearby landmarks
+          <input name="nearby_landmarks" maxlength="1000" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Accessibility information
+          <select name="accessibility_status" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"><option value="">Not recorded</option><option value="1">Accessible</option><option value="0">Not accessible</option></select>
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Classroom Photo
+          <input name="photo" type="file" accept="image/*" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
+          <img data-photo-preview hidden alt="Classroom photo preview" class="mt-2 max-h-40 rounded-lg object-cover" />
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500 md:col-span-2">Full description
+          <textarea name="description" rows="4" maxlength="4000" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"></textarea>
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500 md:col-span-2">Room function
+          <textarea name="function_description" rows="2" maxlength="1000" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"></textarea>
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500 md:col-span-2">Services
+          <textarea name="services" rows="3" maxlength="4000" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"></textarea>
+        </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500 md:col-span-2">Accessibility details
+          <textarea name="accessibility_details" rows="2" maxlength="1000" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"></textarea>
+        </label>
+        <div class="md:col-span-2 flex items-center justify-between gap-3">
+          <p id="classroom-form-status" class="text-xs text-slate-500" role="status" aria-live="polite"></p>
+          <button type="submit" class="rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700">Add Classroom</button>
+        </div>
+      </form>
+    </section>
+    <div id="classrooms-list" class="admin-data-panel p-2 sm:p-4"></div>
+  </main>
+
+  <script src="../../assets/js/admin/admin-photos.js"></script>
+  <script src="../../assets/js/admin/catalog.js?v=20261024-complete-details"></script>
+  <script src="../../assets/js/app.js?v=20261105-admin-ux"></script>
+</body>
+</html>

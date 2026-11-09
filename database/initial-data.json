@@ -1,0 +1,1450 @@
+{
+  "source": "legacy project files; pending campus review",
+  "locations": [
+    {
+      "legacy_id": "saint-augustine-building",
+      "name": "Saint Augustine Building",
+      "kind": "building",
+      "category": "Academic",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "college-of-medicine",
+      "name": "College of Medicine",
+      "kind": "building",
+      "category": "Academic",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "mother-rita-building",
+      "name": "Mother Rita Building",
+      "kind": "building",
+      "category": "Academic",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "sto-nino-building",
+      "name": "Sto. Niño Building",
+      "kind": "building",
+      "category": "Academic",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "padre-pio-building",
+      "name": "Padre Pio Building",
+      "kind": "building",
+      "category": "Academic",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "clinic",
+      "name": "Clinic",
+      "kind": "facility",
+      "category": "Medical",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "barcie-international-center",
+      "name": "BarCIE International Center",
+      "kind": "building",
+      "category": "Events and Conference",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "kalinangan-auditorium",
+      "name": "Kalinangan Auditorium",
+      "kind": "facility",
+      "category": "Events and Conference",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "carthage-activity-center",
+      "name": "Carthage Activity Center",
+      "kind": "facility",
+      "category": "Events and Conference",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "canteen",
+      "name": "Canteen",
+      "kind": "facility",
+      "category": "Food and Dining",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "adeodatus-swimming-pool",
+      "name": "Adeodatus Swimming Pool",
+      "kind": "facility",
+      "category": "Sports and Recreation",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "andrada-court",
+      "name": "Andrada Court",
+      "kind": "facility",
+      "category": "Sports and Recreation",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "cassicasium-court",
+      "name": "Cassicasium Court",
+      "kind": "facility",
+      "category": "Sports and Recreation",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "thagaste-miniforest",
+      "name": "Thagaste Miniforest",
+      "kind": "facility",
+      "category": "Outdoor",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-1",
+      "name": "Mary Mediatrix Building",
+      "kind": "building",
+      "category": "Academic",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-2",
+      "name": "Sto. Niño Garden",
+      "kind": "building",
+      "category": "Outdoor",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-3",
+      "name": "Grotto of Our Lady of Lourdes",
+      "kind": "building",
+      "category": "Outdoor",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-4",
+      "name": "Villa Santa Monica Building",
+      "kind": "building",
+      "category": "Academic",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-5",
+      "name": "Barcelo Cafe Malolos",
+      "kind": "building",
+      "category": "Food and Dining",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-6",
+      "name": "Agostino - CITHM Office",
+      "kind": "building",
+      "category": "Administrative",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-7",
+      "name": "Our Lady of Consolacion Rotonda",
+      "kind": "building",
+      "category": "Outdoor",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-9",
+      "name": "UBMSS Fabrication Area",
+      "kind": "building",
+      "category": null,
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-10",
+      "name": "VMC Open Stage",
+      "kind": "building",
+      "category": "Outdoor",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-11",
+      "name": "St. Augustine Administration Building",
+      "kind": "building",
+      "category": "Administrative",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-12",
+      "name": "Tagaste Mini Forest",
+      "kind": "building",
+      "category": "Outdoor",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-14",
+      "name": "Motor Pool",
+      "kind": "building",
+      "category": "Sports and Recreation",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-15",
+      "name": "Adeodatus Mini Olympic Swimming Pool",
+      "kind": "building",
+      "category": "Sports and Recreation",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-16",
+      "name": "Mo. Theresa Andrada OSA Gymnasium",
+      "kind": "building",
+      "category": "Sports and Recreation",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-17",
+      "name": "Venerable Mo. Consuelo Academic Building",
+      "kind": "building",
+      "category": "Academic",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-18",
+      "name": "Chapel of Our Lady of Consolation",
+      "kind": "building",
+      "category": null,
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-19",
+      "name": "Cloister",
+      "kind": "building",
+      "category": null,
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-20",
+      "name": "Agustino Farm",
+      "kind": "building",
+      "category": "Outdoor",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-21",
+      "name": "St. Ezekiel Moreno Building",
+      "kind": "building",
+      "category": "Academic",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-22",
+      "name": "Kiosk",
+      "kind": "building",
+      "category": null,
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-23",
+      "name": "Ostia Student Lounge",
+      "kind": "building",
+      "category": null,
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-24",
+      "name": "Cafe Monica Building",
+      "kind": "building",
+      "category": "Food and Dining",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-25",
+      "name": "Our Lady of Good Counsel Building",
+      "kind": "building",
+      "category": "Academic",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-26",
+      "name": "Mo. Rita Barcelo Building",
+      "kind": "building",
+      "category": "Academic",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-27",
+      "name": "St. Augustine Inner Garden",
+      "kind": "building",
+      "category": "Outdoor",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-28",
+      "name": "Our Lady of Consolation Building",
+      "kind": "building",
+      "category": "Academic",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-29",
+      "name": "Our Lady of Grace Building",
+      "kind": "building",
+      "category": "Academic",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-30",
+      "name": "Madaura Student Lounge",
+      "kind": "building",
+      "category": null,
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-31",
+      "name": "Milan Student Lounge",
+      "kind": "building",
+      "category": null,
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-32",
+      "name": "Hippo Student Lounge",
+      "kind": "building",
+      "category": null,
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-33",
+      "name": "Cassiciacum Student Center",
+      "kind": "building",
+      "category": "Academic",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-34",
+      "name": "Sto. Nino Building",
+      "kind": "building",
+      "category": "Academic",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-35",
+      "name": "Sto. Nino Grounds",
+      "kind": "building",
+      "category": "Outdoor",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-36",
+      "name": "St. Rita de Casia Student Lounge",
+      "kind": "building",
+      "category": null,
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "pin-37",
+      "name": "St. Padre Pio Building",
+      "kind": "building",
+      "category": "Academic",
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "gate-1",
+      "name": "Gate 1",
+      "kind": "facility",
+      "category": null,
+      "description": null,
+      "verified": false
+    },
+    {
+      "legacy_id": "gate-2",
+      "name": "Gate 2",
+      "kind": "facility",
+      "category": null,
+      "description": null,
+      "verified": false
+    }
+  ],
+  "rooms": [
+    {
+      "building_name": "Saint Augustine Building",
+      "room_number": "SA-1",
+      "name": "Registrar",
+      "floor_number": 0,
+      "floor_label": null,
+      "capacity": null,
+      "description": null,
+      "verified": false
+    },
+    {
+      "building_name": "Saint Augustine Building",
+      "room_number": "SA-2",
+      "name": "Finance",
+      "floor_number": 0,
+      "floor_label": null,
+      "capacity": null,
+      "description": null,
+      "verified": false
+    },
+    {
+      "building_name": "Saint Augustine Building",
+      "room_number": "SA-3",
+      "name": "President’s Office",
+      "floor_number": 0,
+      "floor_label": null,
+      "capacity": null,
+      "description": null,
+      "verified": false
+    },
+    {
+      "building_name": "Saint Augustine Building",
+      "room_number": "SA-4",
+      "name": "CITE Office",
+      "floor_number": 0,
+      "floor_label": null,
+      "capacity": null,
+      "description": null,
+      "verified": false
+    },
+    {
+      "building_name": "Saint Augustine Building",
+      "room_number": "SA-5",
+      "name": "Truth Courier",
+      "floor_number": 0,
+      "floor_label": null,
+      "capacity": null,
+      "description": null,
+      "verified": false
+    },
+    {
+      "building_name": "Saint Augustine Building",
+      "room_number": "SA-AVR",
+      "name": "SA AVR",
+      "floor_number": 0,
+      "floor_label": null,
+      "capacity": null,
+      "description": null,
+      "verified": false
+    },
+    {
+      "building_name": "College of Medicine",
+      "room_number": "COM-1",
+      "name": "COM AVR",
+      "floor_number": 0,
+      "floor_label": null,
+      "capacity": null,
+      "description": null,
+      "verified": false
+    },
+    {
+      "building_name": "College of Medicine",
+      "room_number": "COM-2",
+      "name": "COM Laboratory",
+      "floor_number": 0,
+      "floor_label": null,
+      "capacity": null,
+      "description": null,
+      "verified": false
+    },
+    {
+      "building_name": "College of Medicine",
+      "room_number": "COM-3",
+      "name": "Human Anatomy Laboratory",
+      "floor_number": 0,
+      "floor_label": null,
+      "capacity": null,
+      "description": null,
+      "verified": false
+    },
+    {
+      "building_name": "Mother Rita Building",
+      "room_number": "MR-1",
+      "name": "BED Library",
+      "floor_number": 0,
+      "floor_label": null,
+      "capacity": null,
+      "description": null,
+      "verified": false
+    },
+    {
+      "building_name": "Mother Rita Building",
+      "room_number": "MR-2",
+      "name": "BED Science Lab",
+      "floor_number": 0,
+      "floor_label": null,
+      "capacity": null,
+      "description": null,
+      "verified": false
+    },
+    {
+      "building_name": "Mother Rita Building",
+      "room_number": "MR-3",
+      "name": "BED Computer Lab",
+      "floor_number": 0,
+      "floor_label": null,
+      "capacity": null,
+      "description": null,
+      "verified": false
+    },
+    {
+      "building_name": "BarCIE International Center",
+      "room_number": "BC-1",
+      "name": "Main Lobby",
+      "floor_number": 0,
+      "floor_label": null,
+      "capacity": null,
+      "description": null,
+      "verified": false
+    },
+    {
+      "building_name": "BarCIE International Center",
+      "room_number": "BC-2",
+      "name": "Rambutan Hall",
+      "floor_number": 0,
+      "floor_label": null,
+      "capacity": null,
+      "description": null,
+      "verified": false
+    },
+    {
+      "building_name": "BarCIE International Center",
+      "room_number": "BC-3",
+      "name": "Bayabas Hall",
+      "floor_number": 0,
+      "floor_label": null,
+      "capacity": null,
+      "description": null,
+      "verified": false
+    },
+    {
+      "building_name": "BarCIE International Center",
+      "room_number": "BC-4",
+      "name": "Langka Coffee Shop",
+      "floor_number": 0,
+      "floor_label": null,
+      "capacity": null,
+      "description": null,
+      "verified": false
+    },
+    {
+      "building_name": "BarCIE International Center",
+      "room_number": "BC-5",
+      "name": "Mini Pool and Cottage",
+      "floor_number": 0,
+      "floor_label": null,
+      "capacity": null,
+      "description": null,
+      "verified": false
+    }
+  ],
+  "markers": [
+    {
+      "location_name": "Gate 1",
+      "x": 630,
+      "y": 1560,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Gate 2",
+      "x": 521,
+      "y": 165,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Mary Mediatrix Building",
+      "x": 703,
+      "y": 1355,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Sto. Niño Garden",
+      "x": 762,
+      "y": 1295,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Grotto of Our Lady of Lourdes",
+      "x": 890,
+      "y": 1295,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Villa Santa Monica Building",
+      "x": 1086,
+      "y": 1295,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Barcelo Cafe Malolos",
+      "x": 354,
+      "y": 1145,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Agostino - CITHM Office",
+      "x": 499,
+      "y": 1145,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Our Lady of Consolacion Rotonda",
+      "x": 617,
+      "y": 1145,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Kalinangan Auditorium",
+      "x": 930,
+      "y": 1145,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "UBMSS Fabrication Area",
+      "x": 1175,
+      "y": 1145,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "VMC Open Stage",
+      "x": 278,
+      "y": 903,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "St. Augustine Administration Building",
+      "x": 368,
+      "y": 933,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Tagaste Mini Forest",
+      "x": 638,
+      "y": 933,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Carthage Activity Center",
+      "x": 746,
+      "y": 933,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Motor Pool",
+      "x": 880,
+      "y": 933,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Adeodatus Mini Olympic Swimming Pool",
+      "x": 1042,
+      "y": 933,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Mo. Theresa Andrada OSA Gymnasium",
+      "x": 188,
+      "y": 768,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Venerable Mo. Consuelo Academic Building",
+      "x": 368,
+      "y": 767,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Chapel of Our Lady of Consolation",
+      "x": 746,
+      "y": 767,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Cloister",
+      "x": 876,
+      "y": 767,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Agustino Farm",
+      "x": 1038,
+      "y": 767,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "St. Ezekiel Moreno Building",
+      "x": 188,
+      "y": 640,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Kiosk",
+      "x": 480,
+      "y": 640,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Ostia Student Lounge",
+      "x": 241,
+      "y": 545,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Cafe Monica Building",
+      "x": 391,
+      "y": 545,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Our Lady of Good Counsel Building",
+      "x": 526,
+      "y": 545,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Mo. Rita Barcelo Building",
+      "x": 648,
+      "y": 545,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "St. Augustine Inner Garden",
+      "x": 770,
+      "y": 545,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Our Lady of Consolation Building",
+      "x": 528,
+      "y": 437,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Our Lady of Grace Building",
+      "x": 528,
+      "y": 346,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Madaura Student Lounge",
+      "x": 603,
+      "y": 229,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Milan Student Lounge",
+      "x": 646,
+      "y": 229,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Hippo Student Lounge",
+      "x": 691,
+      "y": 229,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Cassiciacum Student Center",
+      "x": 794,
+      "y": 229,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Sto. Nino Building",
+      "x": 904,
+      "y": 229,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "Sto. Nino Grounds",
+      "x": 945,
+      "y": 307,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "St. Rita de Casia Student Lounge",
+      "x": 1007,
+      "y": 307,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "St. Padre Pio Building",
+      "x": 1136,
+      "y": 307,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    },
+    {
+      "location_name": "BarCIE International Center",
+      "x": 91,
+      "y": 933,
+      "floor_number": 0,
+      "map_key": "campus",
+      "verified": false
+    }
+  ],
+  "nodes": [
+    {
+      "node_key": "j:g2",
+      "x": 449,
+      "y": 187,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:a",
+      "x": 559,
+      "y": 278,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:b",
+      "x": 619,
+      "y": 344,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:c",
+      "x": 610,
+      "y": 499,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:d",
+      "x": 597,
+      "y": 714,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:sm1",
+      "x": 630,
+      "y": 726,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:an",
+      "x": 905,
+      "y": 726,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:e",
+      "x": 594,
+      "y": 825,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:f",
+      "x": 597,
+      "y": 958,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:s1",
+      "x": 659,
+      "y": 1009,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:s2",
+      "x": 725,
+      "y": 1072,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:s3",
+      "x": 703,
+      "y": 1137,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:s4",
+      "x": 666,
+      "y": 1186,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:rot",
+      "x": 656,
+      "y": 1120,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:i",
+      "x": 654,
+      "y": 1238,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:g1",
+      "x": 662,
+      "y": 1319,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:g1c",
+      "x": 652,
+      "y": 1380,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:g1b",
+      "x": 635,
+      "y": 1535,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:ne1",
+      "x": 905,
+      "y": 422,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:ne2",
+      "x": 1088,
+      "y": 422,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:ne3",
+      "x": 1088,
+      "y": 280,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:w1",
+      "x": 380,
+      "y": 700,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:w2",
+      "x": 230,
+      "y": 700,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:w3",
+      "x": 235,
+      "y": 790,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:bw3",
+      "x": 212,
+      "y": 865,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:bw2",
+      "x": 212,
+      "y": 1085,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:bw1",
+      "x": 430,
+      "y": 1085,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:be1",
+      "x": 715,
+      "y": 1026,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:be2",
+      "x": 980,
+      "y": 1026,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:pk3",
+      "x": 970,
+      "y": 960,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:pk1",
+      "x": 960,
+      "y": 880,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:pk2",
+      "x": 940,
+      "y": 752,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:vs1",
+      "x": 880,
+      "y": 1238,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:vs2",
+      "x": 1025,
+      "y": 1238,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:be3",
+      "x": 1100,
+      "y": 1265,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:g3",
+      "x": 1145,
+      "y": 1400,
+      "floor_number": 0,
+      "verified": false
+    },
+    {
+      "node_key": "j:e1",
+      "x": 885,
+      "y": 1325,
+      "floor_number": 0,
+      "verified": false
+    }
+  ],
+  "connections": [
+    {
+      "from_node_key": "j:g2",
+      "to_node_key": "j:a",
+      "weight": 142.76203977248292,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:a",
+      "to_node_key": "j:b",
+      "weight": 89.19641248391102,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:b",
+      "to_node_key": "j:c",
+      "weight": 155.2610704587599,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:c",
+      "to_node_key": "j:d",
+      "weight": 215.39266468475662,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:d",
+      "to_node_key": "j:e",
+      "weight": 111.04053313993049,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:e",
+      "to_node_key": "j:f",
+      "weight": 133.0338302838793,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:f",
+      "to_node_key": "j:s1",
+      "weight": 80.28075734570521,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:s1",
+      "to_node_key": "j:s2",
+      "weight": 91.2414379544733,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:s2",
+      "to_node_key": "j:s3",
+      "weight": 68.62215385719105,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:s3",
+      "to_node_key": "j:s4",
+      "weight": 61.400325732035,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:s4",
+      "to_node_key": "j:i",
+      "weight": 53.36665625650534,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:rot",
+      "to_node_key": "j:s3",
+      "weight": 49.979995998399204,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:s2",
+      "to_node_key": "j:be1",
+      "weight": 47.07440918375928,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:i",
+      "to_node_key": "j:g1",
+      "weight": 81.39410298049853,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:g1",
+      "to_node_key": "j:g1c",
+      "weight": 61.81423784210237,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:g1c",
+      "to_node_key": "j:g1b",
+      "weight": 155.92947123619706,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:d",
+      "to_node_key": "j:sm1",
+      "weight": 35.11409973215888,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:sm1",
+      "to_node_key": "j:an",
+      "weight": 275,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:an",
+      "to_node_key": "j:ne1",
+      "weight": 304,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:ne1",
+      "to_node_key": "j:ne2",
+      "weight": 183,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:ne2",
+      "to_node_key": "j:ne3",
+      "weight": 142,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:d",
+      "to_node_key": "j:w1",
+      "weight": 217.45114393812693,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:w1",
+      "to_node_key": "j:w2",
+      "weight": 150,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:w2",
+      "to_node_key": "j:w3",
+      "weight": 90.13878188659973,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:w3",
+      "to_node_key": "j:bw3",
+      "weight": 78.44743462982075,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:bw3",
+      "to_node_key": "j:bw2",
+      "weight": 220,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:bw2",
+      "to_node_key": "j:bw1",
+      "weight": 218,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:bw1",
+      "to_node_key": "j:rot",
+      "weight": 228.69411885748178,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:be1",
+      "to_node_key": "j:be2",
+      "weight": 265,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:be2",
+      "to_node_key": "j:pk3",
+      "weight": 66.75327707311455,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:pk3",
+      "to_node_key": "j:pk1",
+      "weight": 80.62257748298549,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:pk1",
+      "to_node_key": "j:pk2",
+      "weight": 129.55307792561317,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:pk2",
+      "to_node_key": "j:an",
+      "weight": 43.600458713183286,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:be2",
+      "to_node_key": "j:vs2",
+      "weight": 216.72332592501436,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:i",
+      "to_node_key": "j:vs1",
+      "weight": 226,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:vs1",
+      "to_node_key": "j:vs2",
+      "weight": 145,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:vs2",
+      "to_node_key": "j:be3",
+      "weight": 79.71198153351854,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:be3",
+      "to_node_key": "j:g3",
+      "weight": 142.30249470757707,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:g1",
+      "to_node_key": "j:e1",
+      "weight": 223.0807028857494,
+      "verified": false,
+      "accessible": null
+    },
+    {
+      "from_node_key": "j:e1",
+      "to_node_key": "j:vs1",
+      "weight": 87.14355971613736,
+      "verified": false,
+      "accessible": null
+    }
+  ]
+}

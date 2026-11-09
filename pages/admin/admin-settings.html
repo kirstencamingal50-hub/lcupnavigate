@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Settings - NaviGATE LCUP</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0,1,-50..200" />
+  <link rel="stylesheet" href="../../assets/css/style.css?v=20261024-complete-details"><link rel="stylesheet" href="../../assets/css/admin.css?v=20261105-admin-ux">
+  <script src="../../assets/js/campus-api.js"></script><script src="../../assets/js/admin/admin-auth.js"></script>
+</head><body class="admin-page min-h-screen">
+  <div data-component="header"></div>
+  <main class="admin-main">
+    <div class="admin-page-heading"><div><h1 class="text-xl font-bold">Admin Settings</h1><p>Manage your administrator profile, security, and display preferences.</p></div></div>
+    <div class="admin-settings-grid">
+      <section class="admin-settings-panel"><div class="admin-settings-heading"><div><h2>Admin Profile</h2><p>Update the name and contact details shown to administrators.</p></div></div>
+        <form id="admin-profile-form" class="admin-settings-form"><label class="admin-settings-label">Full name<input name="full_name" required maxlength="160"></label><label class="admin-settings-label">Username<input name="username" required minlength="3" maxlength="80" pattern="[A-Za-z0-9_.-]{3,80}"></label><label class="admin-settings-label">Email address<input name="email" type="email" required maxlength="254"></label><div class="admin-settings-actions"><p id="profile-status" role="status" aria-live="polite"></p><button class="admin-button-primary" type="submit">Save profile</button></div></form>
+      </section>
+      <section class="admin-settings-panel"><div class="admin-settings-heading"><div><h2>Change Password</h2><p>Confirm your current password before setting a new one.</p></div></div>
+        <form id="admin-password-form" class="admin-settings-form"><label class="admin-settings-label">Current password<input name="current_password" type="password" required autocomplete="current-password"></label><label class="admin-settings-label">New password<input name="password" type="password" required minlength="12" autocomplete="new-password"></label><label class="admin-settings-label">Confirm new password<input name="confirm_password" type="password" required minlength="12" autocomplete="new-password"></label><p class="text-xs text-slate-500">At least 12 characters with uppercase, lowercase, a number, and a symbol.</p><div class="admin-settings-actions"><p id="password-status" role="status" aria-live="polite"></p><button class="admin-button-primary" type="submit">Change password</button></div></form>
+      </section>
+      <section class="admin-settings-panel"><div class="admin-settings-heading"><div><h2>System Preferences</h2><p>These display preferences are saved in this browser.</p></div></div>
+        <div class="admin-settings-form"><label class="admin-settings-label">Theme<select data-admin-pref="theme"><option value="light">Light</option><option value="dark">Dark</option><option value="system">Follow system</option></select></label><label class="admin-settings-label">Dashboard density<select data-admin-pref="density"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></label><label class="admin-settings-label">Text size<select data-admin-pref="textSize"><option value="normal">Default</option><option value="large">Large</option></select></label><label class="admin-settings-check"><input type="checkbox" data-admin-pref="highContrast"> High contrast</label><label class="admin-settings-check"><input type="checkbox" data-admin-pref="reduceMotion"> Reduce animations</label><label class="admin-settings-check"><input type="checkbox" data-admin-pref="autoReadDescriptions"> Automatically read facility descriptions</label><label class="admin-settings-label">Speech language<select data-admin-pref="speechLanguage"><option value="en-US">English (United States)</option><option value="en-GB">English (United Kingdom)</option><option value="fil-PH">Filipino (Philippines)</option></select></label><label class="admin-settings-label">Device voice<select data-admin-pref="speechVoice"><option value="">Default device voice</option></select></label><label class="admin-settings-label">Speech rate<input type="range" data-admin-pref="speechRate" min="0.5" max="2" step="0.1" value="1" aria-label="Speech rate"></label></div><p class="mt-3 text-xs text-slate-500">Automatic speech is off by default. Available voices depend on this device.</p>
+      </section>
+      <section class="admin-settings-panel"><div class="admin-settings-heading"><div><h2>System Information</h2><p>Operational details for authorized administrators.</p></div></div><dl id="admin-system-info" class="admin-system-info"><div><dt>Application</dt><dd>Loading…</dd></div></dl><div class="admin-settings-actions"><span></span><button type="button" data-admin-logout class="admin-button-secondary">Secure logout</button></div></section>
+    </div>
+  </main>
+  <script src="../../assets/js/accessibility.js?v=20261022-accessibility"></script><script src="../../assets/js/admin/admin-settings.js?v=20261022-accessibility"></script><script src="../../assets/js/app.js?v=20261105-admin-ux"></script>
+</body></html>
