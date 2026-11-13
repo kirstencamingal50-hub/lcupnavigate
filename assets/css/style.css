@@ -187,7 +187,6 @@ html[data-theme="dark"] .home-category-copy small { color:#c4d1e2; }
 /* Entry chooser overlay: guest action must reveal the actual home page. */
 .role-splash { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; overflow-y: auto; padding: max(1.25rem, env(safe-area-inset-top)) 1rem max(1.25rem, env(safe-area-inset-bottom)); background: radial-gradient(ellipse at 80% 10%, rgba(62,137,213,.28), transparent 35%), linear-gradient(135deg, #0b1428, #102c50 65%, #174f7e); transition: opacity .22s ease, visibility .22s ease; }
 .role-splash-dismissed { visibility: hidden; opacity: 0; pointer-events: none; }
-.role-splash-checking { visibility: hidden; }
 .role-splash-inner { width: min(100%, 660px); padding: clamp(1.25rem, 5vw, 2.75rem); border: 1px solid rgba(255,255,255,.16); border-radius: 26px; background: rgba(255,255,255,.07); box-shadow: 0 25px 80px rgba(0,0,0,.24); backdrop-filter: blur(14px); }
 .splash-brand { display: inline-flex; align-items: center; gap: .7rem; color: #fff; text-decoration: none; }
 .brand-mark { display: block; width: 37px; height: 37px; border: 2px solid #8bc9ff; border-radius: 12px; background: linear-gradient(145deg, #75bdff, #2166ad); box-shadow: inset 0 0 0 5px rgba(255,255,255,.12); }

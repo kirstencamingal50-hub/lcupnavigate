@@ -108,48 +108,13 @@ function renderSharedUI() {
   const guestChoice = document.querySelector('[data-role-choice="student-guest"]');
   const roleSplash = document.getElementById('role-splash');
   if (guestChoice && roleSplash) {
-    const adminChoice = document.querySelector('[data-role-choice="admin"]');
-    const navigationEntry = performance.getEntriesByType?.('navigation')?.[0];
-    const isReload = navigationEntry?.type === 'reload';
-    let sameOriginReferrer = false;
-    try { sameOriginReferrer = !!document.referrer && new URL(document.referrer).origin === location.origin; } catch {}
-    const isFreshLaunch = !isReload && !sameOriginReferrer;
-    const forceRoleSelection = new URLSearchParams(location.search).get('choose-role') === '1';
-    const status = document.getElementById('role-splash-status');
     const dismissRoleSplash = () => {
       roleSplash.classList.add('role-splash-dismissed');
       roleSplash.setAttribute('aria-hidden', 'true');
       roleSplash.setAttribute('inert', '');
       document.getElementById('welcome-title')?.focus({ preventScroll: true });
     };
-    const revealRoleSplash = () => {
-      roleSplash.classList.remove('role-splash-checking');
-      roleSplash.removeAttribute('aria-hidden');
-      roleSplash.removeAttribute('inert');
-    };
-    roleSplash.setAttribute('aria-hidden', 'true');
-    roleSplash.setAttribute('inert', '');
-    window.CampusApi.get('auth/entry').then(state => {
-      if (state.role === 'admin' && adminChoice) adminChoice.href = 'pages/admin/dashboard.html';
-      if (forceRoleSelection || isFreshLaunch) revealRoleSplash();
-      else dismissRoleSplash();
-    }).catch(() => {
-      if (forceRoleSelection || isFreshLaunch) revealRoleSplash();
-      else dismissRoleSplash();
-    });
-    guestChoice.addEventListener('click', async () => {
-      guestChoice.disabled = true;
-      if (status) status.textContent = 'Starting visitor session…';
-      try {
-        await window.CampusApi.request('auth/entry', { method: 'POST', body: { role: 'visitor' } });
-        try { localStorage.setItem('navigatorate.entry.choice', 'visitor'); } catch {}
-        if (forceRoleSelection) history.replaceState({}, '', location.pathname);
-        dismissRoleSplash();
-      } catch (error) {
-        if (status) status.textContent = error.message;
-        guestChoice.disabled = false;
-      }
-    });
+    guestChoice.addEventListener('click', dismissRoleSplash);
   }
 }
 
