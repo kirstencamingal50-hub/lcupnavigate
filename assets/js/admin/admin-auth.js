@@ -3,13 +3,17 @@
   const loginPath = 'login.html';
   let challengeToken = '';
   let challengeMode = '';
+  let recoveryAccessToken = '';
   let resendTimer = null;
 
   async function check() {
     try {
       const state = await window.CampusApi.get('auth/me');
       if (isLogin) {
-        const openingEmailAction = location.hash.startsWith('#verify=') || location.hash.startsWith('#reset=');
+        const emailAction = new URLSearchParams(location.hash.slice(1));
+        const openingEmailAction = location.hash.startsWith('#verify=') ||
+          location.hash.startsWith('#reset=') ||
+          (emailAction.has('access_token') && ['signup', 'recovery'].includes(emailAction.get('type')));
         if (state.user && !openingEmailAction) {
           location.replace('dashboard.html');
           return false;
@@ -89,6 +93,10 @@
             headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf.token },
             body: JSON.stringify(Object.fromEntries(data))
           }));
+          await window.CampusApi.request('auth/login', {
+            method: 'POST',
+            body: { username: data.get('email'), password: data.get('password') }
+          });
           setupStatus.textContent = 'Administrator account created. Opening the admin dashboard…';
           location.replace('dashboard.html');
         } catch (error) {
@@ -220,7 +228,10 @@
       resendButton.disabled = true;
       statusFor('otp-status').textContent = 'Sending a new code…';
       try {
-        const result = await window.CampusApi.request('auth/resend-code', { method: 'POST', body: { challenge_token: challengeToken } });
+        const result = await window.CampusApi.request('auth/resend-code', {
+          method: 'POST',
+          body: { challenge_token: challengeToken, email: challengeToken, purpose: challengeMode }
+        });
         statusFor('otp-status').textContent = challengeMode === 'recovery'
           ? 'If an active account matches that email, a new code has been sent.'
           : 'A new code has been sent.';
@@ -251,7 +262,12 @@
           method: 'POST',
           body: Object.fromEntries(new FormData(signupForm))
         });
-        showOtp('signup', signupForm.elements.email.value.trim(), result);
+        if (result.email_confirmation_required === false) {
+          statusFor('signup-status').textContent = 'Your account was created and is pending administrator approval.';
+          signupForm.reset();
+        } else {
+          showOtp('signup', signupForm.elements.email.value.trim(), result);
+        }
       } catch (error) {
         statusFor('signup-status').textContent = error.message;
       } finally {
@@ -297,12 +313,18 @@
         const result = challengeMode === 'reset-link'
           ? await window.CampusApi.request('auth/reset-link', {
               method: 'POST',
-              body: { challenge_token: challengeToken, password: statusFor('reset-password').value }
+              body: {
+                challenge_token: challengeToken,
+                access_token: recoveryAccessToken || undefined,
+                password: statusFor('reset-password').value
+              }
             })
           : await window.CampusApi.request('auth/verify-code', {
               method: 'POST',
               body: {
                 challenge_token: challengeToken,
+                email: challengeToken,
+                purpose: challengeMode,
                 code,
                 ...(challengeMode === 'recovery' ? { password: statusFor('reset-password').value } : {})
               }
@@ -334,13 +356,17 @@
     const emailLink = new URLSearchParams(location.hash.slice(1));
     const verifyToken = emailLink.get('verify');
     const resetToken = emailLink.get('reset');
-    if (verifyToken || resetToken) {
+    const accessToken = emailLink.get('access_token');
+    const linkType = emailLink.get('type');
+    const verifyAccessToken = accessToken && linkType === 'signup' ? accessToken : '';
+    const resetAccessToken = accessToken && linkType === 'recovery' ? accessToken : '';
+    if (verifyToken || resetToken || verifyAccessToken || resetAccessToken) {
       history.replaceState(null, '', location.pathname + location.search);
       authViews.hidden = true;
       otpScreen.hidden = false;
       statusFor('otp-description').textContent = '';
       statusFor('otp-status').textContent = '';
-      if (verifyToken) {
+      if (verifyToken || verifyAccessToken) {
         heading.textContent = 'Verify your email';
         statusFor('otp-heading').textContent = 'Verifying your email';
         statusFor('auth-otp-fields').hidden = true;
@@ -355,7 +381,10 @@
         try {
           const result = await window.CampusApi.request('auth/verify-link', {
             method: 'POST',
-            body: { challenge_token: verifyToken }
+            body: {
+              challenge_token: verifyToken,
+              access_token: verifyAccessToken || undefined
+            }
           });
           showLoginWithMessage(result.pending_approval
             ? 'Email verified. Your account is pending administrator approval before access is enabled.'
@@ -366,7 +395,8 @@
         }
         return;
       }
-      challengeToken = resetToken;
+      challengeToken = resetToken || '';
+      recoveryAccessToken = resetAccessToken;
       challengeMode = 'reset-link';
       statusFor('otp-heading').textContent = 'Choose a new password';
       statusFor('otp-description').textContent = 'Enter and confirm a new password for your administrator account.';

@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!form || !picker) return;
 
   const W = 1330, H = 1620;
-  let locations = [], map = {markers:[],nodes:[],connections:[]}, plans = [], editing = null;
+  let locations = [], map = {markers:[],nodes:[],connections:[]}, plans = [], editing = null, netlifyBackend = false;
   image.src = '../../assets/images/campus-map.svg';
 
   const fill = (select, rows, value, label) => {
@@ -28,10 +28,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const render = () => {
     pins.innerHTML = map.markers.map(marker => `<span title="${esc(marker.name)}" class="absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-blue-600 shadow" style="left:${Number(marker.x)/W*100}%;top:${Number(marker.y)/H*100}%"></span>`).join('');
     list.innerHTML = map.markers.length ? `<div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead><tr><th class="p-3">Campus location</th><th class="p-3">Position</th><th class="p-3">Route endpoint</th><th class="p-3">Accessibility</th><th class="p-3 text-right">Actions</th></tr></thead><tbody>${map.markers.map(marker => `<tr class="border-t"><td class="p-3 font-bold">${esc(marker.name)}</td><td class="p-3">${esc(marker.x)}, ${esc(marker.y)}</td><td class="p-3">${esc(map.nodes.find(node => String(node.id) === String(marker.route_node_id))?.node_key || 'None')}</td><td class="p-3">${marker.accessibility_value === null ? 'Unspecified' : Number(marker.accessibility_value) ? 'Accessible' : 'Not accessible'}</td><td class="p-3 text-right"><button data-action="edit-marker" data-id="${esc(marker.id)}" class="mr-3 text-blue-600 font-bold">Edit</button><button data-action="delete-marker" data-id="${esc(marker.id)}" class="text-red-600 font-bold">Remove</button></td></tr>`).join('')}</tbody></table></div>` : '<p class="p-5 text-center text-xs text-slate-500">No markers are stored.</p>';
-    $('floorplans-list').innerHTML = plans.map(plan => `<div class="flex flex-wrap items-center gap-3 rounded-lg border p-3 text-xs"><span class="flex-1">${esc(plan.original_name)} · Floor ${esc(plan.floor_number)}</span><a class="text-blue-600 underline" target="_blank" rel="noopener" href="../../${esc(plan.file_url)}">View</a><button data-action="delete-plan" data-id="${esc(plan.id)}" class="text-red-600 font-bold">Remove</button></div>`).join('') || '<p class="text-xs text-slate-500">No floor plans uploaded.</p>';
+    $('floorplans-list').innerHTML = plans.map(plan => {
+      const reviewLabel = plan.verified === undefined ? '' : ` · ${Number(plan.verified)?'Verified':'Review needed'}`;
+      return `<div class="flex flex-wrap items-center gap-3 rounded-lg border p-3 text-xs"><span class="flex-1">${esc(plan.original_name)} · Floor ${esc(plan.floor_number)}${reviewLabel}</span><a class="text-blue-600 underline" target="_blank" rel="noopener" href="../../${esc(plan.file_url)}">View</a>${netlifyBackend?`<button data-action="toggle-plan" data-id="${esc(plan.id)}" class="font-bold text-blue-700">${Number(plan.verified)?'Unverify':'Verify'}</button>`:''}<button data-action="delete-plan" data-id="${esc(plan.id)}" class="text-red-600 font-bold">Remove</button></div>`;
+    }).join('') || '<p class="text-xs text-slate-500">No floor plans uploaded.</p>';
   };
   const refresh = async () => {
     [locations, map, plans] = await Promise.all([CampusApi.get('locations'), CampusApi.get('map/admin'), CampusApi.get('floorplans')]);
+    netlifyBackend = await CampusApi.isNetlify();
     fillSelects(); render();
     window.dispatchEvent(new CustomEvent('campusMapDataChanged', {detail:map}));
   };
@@ -98,6 +102,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!await window.AdminUI.confirm({title:'Remove floor plan?',message:`Remove “${plan?.original_name||'this floor plan'}”? Building and route data will not be deleted.`,confirmLabel:'Remove floor plan',danger:true})) return;
         await CampusApi.remove('floorplans', id); await refresh();
         window.AdminUI?.toast('Floor plan removed.');
+      }
+      if (button.dataset.action === 'toggle-plan') {
+        const plan = plans.find(item => Number(item.id) === id);
+        if (!plan) return;
+        const verified = !Number(plan.verified);
+        if (verified && !await window.AdminUI.confirm({title:'Verify floor plan?',message:`Confirm that “${plan.original_name}” is accurate and approved for public viewing.`,confirmLabel:'Verify floor plan'})) return;
+        await CampusApi.request('floorplans', {method:'PUT',body:{id,verified}});
+        await refresh();
+        window.AdminUI?.toast(verified?'Floor plan verified.':'Floor plan returned to review.');
       }
     } catch (error) { status.textContent = error.message;window.AdminUI?.toast(error.message,'error'); }
     finally { button.disabled = false; }

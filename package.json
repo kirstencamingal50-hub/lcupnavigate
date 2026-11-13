@@ -1,0 +1,23 @@
+{
+  "name": "capstone---copy",
+  "version": "1.0.0",
+  "description": "This project is a PHP 8.2 and MySQL/MariaDB application served by Apache. It uses the existing HTML, CSS, and JavaScript pages, with a same-origin JSON API in `api/` and persistent data in `database/schema.sql`.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "node --test",
+    "test:supabase-schema": "node --test tests/supabase-schema.test.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.4"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.3.14"
+  }
+}

@@ -2,6 +2,8 @@
 
 This project is a PHP 8.2 and MySQL/MariaDB application served by Apache. It uses the existing HTML, CSS, and JavaScript pages, with a same-origin JSON API in `api/` and persistent data in `database/schema.sql`.
 
+The original PHP/MySQL installation remains intact for local XAMPP use. An additive Netlify/Supabase deployment foundation and its setup, validation, and migration limitations are documented in [NETLIFY_SUPABASE_DEPLOYMENT.md](NETLIFY_SUPABASE_DEPLOYMENT.md).
+
 ## Local setup (XAMPP on Windows)
 
 1. Start Apache and MySQL in the XAMPP Control Panel.
