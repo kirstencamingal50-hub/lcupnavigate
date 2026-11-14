@@ -53,7 +53,7 @@ async function getDirectory() {
       .order('name'),
 
     db.from('rooms')
-      .select('*, building:locations!rooms_building_id_fkey(name,active), category:categories(name)')
+      .select('*, category:categories(name)')
       .eq('active', true)
       .order('floor_number')
       .order('room_number'),
@@ -106,20 +106,23 @@ async function getDirectory() {
     photos: locationPhotos.get(String(row.id)) || []
   }));
 
-  const activeBuildingIds = new Set(
+  const buildingById = new Map(
     locations
-      .filter(row => row.kind === 'building')
-      .map(row => String(row.id))
+      .filter(row => row.kind === 'building' && row.active)
+      .map(row => [String(row.id), row])
   );
 
+  const activeBuildingIds = new Set(buildingById.keys());
+
   const rooms = roomRows
-    .filter(row => row.building?.active)
+    .filter(row => activeBuildingIds.has(String(row.building_id)))
     .map(row => ({
       ...row,
+      building: buildingById.get(String(row.building_id)),
       buildingId: row.building_id,
       floorNumber: row.floor_number,
-      building_name: row.building?.name || null,
-      buildingName: row.building?.name || null,
+      building_name: buildingById.get(String(row.building_id))?.name || null,
+      buildingName: buildingById.get(String(row.building_id))?.name || null,
       category: row.category?.name || null,
       image_path: row.image_path ? mediaUrl(row.image_path) : null,
       image: row.image_path ? mediaUrl(row.image_path) : null,
