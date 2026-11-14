@@ -25,15 +25,26 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
       - name: Run complete automated test suite
+        id: full_tests
+        continue-on-error: true
         run: npm test
       - name: Validate Supabase schema and policies
+        id: schema
+        if: always()
+        continue-on-error: true
         run: npm run test:supabase-schema
       - name: Validate campus map consistency
+        id: map
+        if: always()
+        continue-on-error: true
         run: npm run test:map-consistency
       - name: Build Netlify deployment
+        id: build
+        if: always()
+        continue-on-error: true
         run: npm run build:netlify
       - name: Verify deployment output excludes server-only files
-        shell: bash
+        if: always() && steps.build.outcome == 'success'
         run: |
           test -d dist
           if find dist -type f \( -name '*.php' -o -name '.env' \) | grep -q .; then
@@ -44,3 +55,16 @@ jobs:
             echo "Unexpected private/server directory found in dist."
             exit 1
           fi
+      - name: Require all validation stages to pass
+        if: always()
+        env:
+          FULL_TESTS: ${{ steps.full_tests.outcome }}
+          SCHEMA_TESTS: ${{ steps.schema.outcome }}
+          MAP_TESTS: ${{ steps.map.outcome }}
+          NETLIFY_BUILD: ${{ steps.build.outcome }}
+        run: |
+          printf 'Full test suite: %s\nSupabase schema: %s\nMap consistency: %s\nNetlify build: %s\n' "$FULL_TESTS" "$SCHEMA_TESTS" "$MAP_TESTS" "$NETLIFY_BUILD" >> "$GITHUB_STEP_SUMMARY"
+          test "$FULL_TESTS" = success
+          test "$SCHEMA_TESTS" = success
+          test "$MAP_TESTS" = success
+          test "$NETLIFY_BUILD" = success
