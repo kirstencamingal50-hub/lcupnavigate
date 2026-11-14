@@ -535,6 +535,11 @@ async function authResource(event, resource, method, body) {
 
   if (resource === 'auth/logout' && method === 'POST') {
     await currentUser(event, true);
+    const token = bearerToken(event);
+    const { error } = await db.auth.admin.signOut(token, 'local');
+    if (error) {
+      throw new HttpError(503, 'Your session could not be revoked. Please try again.');
+    }
     return success({ logged_out: true });
   }
 
