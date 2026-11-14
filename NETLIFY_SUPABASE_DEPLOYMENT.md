@@ -23,7 +23,7 @@ Keep the original PHP and MySQL files in the repository. Do not copy `.env`, `ve
 
 1. **Back up the original system.** Export the real MySQL schema and records and inventory/copy the existing image and floor-plan files. Keep the original database and uploads unchanged until the migration is verified.
 2. **Prepare the data mapping.** The Supabase schema preserves the campus entities and relationships, but no real data-import script has been run. Verify ID mappings and relationships for categories, locations, rooms, markers/nodes/connections, routes, announcements, admin accounts, and file references before importing. Do not import prototype seed data in place of production records.
-3. **Create a Supabase project.** In SQL Editor, apply the three SQL migrations in filename order: initial schema, admin_users alignment, then route-save RPC. Confirm all three execute successfully. The first migration creates private `campus-photos` and `floor-plans` buckets and their editor-only object policies.
+3. **Create a Supabase project.** In SQL Editor, apply the three SQL migrations in this order: initial schema, admin_users alignment, then route-save RPC. Confirm all three execute successfully. The first migration creates private `campus-photos` and `floor-plans` buckets and their editor-only object policies.
 4. **Configure Supabase Auth.**
    - Set the site URL to the deployed HTTPS origin.
    - Add `https://YOUR-SITE/pages/admin/login.html` to the Auth redirect URL allow-list. Add the Netlify deploy-preview domain only if previews need authentication.
