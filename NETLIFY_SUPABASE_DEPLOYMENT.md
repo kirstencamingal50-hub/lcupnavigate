@@ -4,13 +4,13 @@
 
 This is an additive deployment path. The original PHP/MySQL application, its database schema, uploads, and local XAMPP workflow are retained; Netlify publishes only the static HTML/CSS/JavaScript site and the new Functions.
 
-The Netlify Functions and Supabase schema are a migration foundation, not a verified production migration. The existing MySQL export and uploads inventory have not been supplied, and there is no configured Supabase project or deployed Netlify site available to test. Do not switch production traffic until the data and media migration is completed and the live checks below pass. `database/initial-data.json` is pending prototype data; it is not a substitute for the actual database export.
+The Netlify Functions and Supabase schema are a migration foundation, not a verified production migration. The existing MySQL export and uploads inventory have not been supplied, and a live Supabase project and a complete Netlify + Supabase production deployment have not yet been verified. Do not switch production traffic until the data and media migration is completed and the live checks below pass. `database/initial-data.json` is pending prototype data; it is not a substitute for the actual database export.
 
 The function API currently covers public directory/map/announcement reads; admin authentication and account profile operations; campus CRUD; map markers, nodes, connections, and route graph writes; announcements; and Storage metadata/media delivery. The original PHP endpoints remain unchanged. Live authentication, CRUD, storage, and cross-device behavior still require a configured project.
 
 ## Deployment files
 
-- `netlify.toml` configures the static build, Functions, Node 20, and PHP-style API rewrites.
+- `netlify.toml` configures the static build, Functions, Node 22, and PHP-style API rewrites.
 - `scripts/build-netlify.mjs` copies only `index.html`, `assets/`, `data/`, and `pages/` to `dist/`. PHP, `.env`, `database/`, `vendor/`, and local uploads are not published.
 - `netlify/functions/` contains the API and shared authorization, Supabase, mutation, and media handlers.
 - `supabase/migrations/20261113230000_initial_navigate_schema.sql` creates the PostgreSQL data model, RLS policies, auth profile triggers, one-time first-admin RPC, and private Storage buckets.
@@ -47,7 +47,7 @@ Use the exact variable names. Do not add a service-role key to HTML, JavaScript,
 
 ## Connect GitHub and deploy
 
-1. Commit and push the changes to the intended GitHub repository. The local project folder used for this work did not contain Git metadata, so no commit or push was performed here. Confirm you are working in the correct clone before copying files or committing.
+1. Use the GitHub pull request for the audit branch to review the changes before merging them into `main`. The repository now has a GitHub Actions workflow at `.github/workflows/ci.yml`; it runs the test suite and Netlify build on pushes and pull requests. Do not merge while any required check is failing.
 2. In Netlify, select **Add new site → Import an existing project**, authorize GitHub, and select the NaviGATE repository.
 3. Set the base directory to the repository root. Use:
    - Build command: `node scripts/build-netlify.mjs`
