@@ -192,8 +192,8 @@ async function getMap(admin = false) {
         verified,
         accessibility_status,
         active,
-        from_node:map_nodes!map_connections_from_node_id_fkey(floor_number),
-        to_node:map_nodes!map_connections_to_node_id_fkey(floor_number)
+        from_node:map_nodes!fk_connection_from(floor_number),
+        to_node:map_nodes!fk_connection_to(floor_number)
       `)
       .eq('active', true)
       .order('id')
