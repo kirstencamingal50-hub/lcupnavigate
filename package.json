@@ -1,19 +1,18 @@
+
 {
-  "name": "capstone---copy",
+  "name": "lcup-navigate",
   "version": "1.0.0",
-  "description": "This project is a PHP 8.2 and MySQL/MariaDB application served by Apache. It uses the existing HTML, CSS, and JavaScript pages, with a same-origin JSON API in `api/` and persistent data in `database/schema.sql`.",
-  "main": "index.js",
-  "directories": {
-    "test": "tests"
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
   },
   "scripts": {
-    "test": "node --test",
-    "test:supabase-schema": "node --test tests/supabase-schema.test.mjs"
+    "build:netlify": "node scripts/build-netlify.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "test:supabase-schema": "node --test tests/supabase-schema.test.mjs",
+    "test:map-consistency": "node --test tests/map-consistency.test.mjs"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4"
   },
