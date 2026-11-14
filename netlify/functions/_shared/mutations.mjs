@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { currentUser } from './authorization.mjs';
 import { storageObjectPath } from './media.mjs';
 import { getServiceClient } from './supabase.mjs';
@@ -267,17 +268,28 @@ async function mapNodes(event, method, body, query) {
     if (points.some(point => point.route?.status === 'active')) {
       throw new HttpError(409, 'This node is used by an active route. Edit or deactivate those routes first.');
     }
+    unwrap(await database.from('map_connections')
+      .update({ active: false })
+      .or(`from_node_id.eq.${id},to_node_id.eq.${id}`)
+      .eq('active', true));
     await updateById('map_nodes', id, { active: false }, 'Walkway node not found.');
     await audit(user, 'archive', 'map_node', id);
     return success({ id, connections_archived: true });
   }
   if (!['POST', 'PUT'].includes(method)) throw new HttpError(405, 'Method not allowed.');
   const x = Number(body.x), y = Number(body.y), floor = Number(body.floor_number) || 0;
-  if (!Number.isFinite(x) || !Number.isFinite(y) || x < 0 || x > 1330 || y < 0 || y > 1620) {
+  if (!Number.isFinite(x) || !Number.isFinite(y) || x < 0 || x > 1330 || y < 0 || y > 1620 ||
+      !Number.isSafeInteger(floor) || floor < 0 || floor > 200) {
     throw new HttpError(400, 'Node coordinates are outside the campus map bounds.');
   }
-  const fields = { node_key: requiredText(body.node_key, 'Node key', 80), x, y, floor_number: floor, active: true };
   const id = method === 'PUT' ? positiveId(body.id ?? query.id) : null;
+  const existing = id
+    ? unwrap(await database.from('map_nodes').select('id,node_key').eq('id', id).maybeSingle())
+    : null;
+  if (id && !existing) throw new HttpError(404, 'Walkway node not found.');
+  const suppliedKey = optionalText(body.node_key, 'Node key', 80);
+  const nodeKey = suppliedKey || existing?.node_key || `node-${randomUUID()}`;
+  const fields = { node_key: nodeKey, x, y, floor_number: floor, active: true };
   const savedId = id
     ? await updateById('map_nodes', id, fields, 'Walkway node not found.')
     : unwrap(await database.from('map_nodes').insert(fields).select('id').single()).id;
@@ -307,9 +319,14 @@ async function mapMarkers(event, method, body, query) {
   const location = unwrap(await database.from('locations').select('id,active').eq('id', locationId).maybeSingle());
   if (!location?.active) throw new HttpError(400, 'Marker location does not exist or is inactive.');
   const id = method === 'PUT' ? positiveId(body.id ?? query.id) : null;
+  const routeNodeId = nullableId(body.route_node_id, 'Route node ID');
+  if (routeNodeId) {
+    const node = unwrap(await database.from('map_nodes').select('id,active').eq('id', routeNodeId).maybeSingle());
+    if (!node?.active) throw new HttpError(400, 'Select an active walkway node for this marker.');
+  }
   const fields = {
     location_id: locationId,
-    route_node_id: nullableId(body.route_node_id, 'Route node ID'),
+    route_node_id: routeNodeId,
     x,
     y,
     floor_number: Math.max(0, Number(body.floor_number) || 0),
@@ -362,7 +379,8 @@ async function mapConnections(event, method, body, query) {
   if (nodes[0].floor_number !== nodes[1].floor_number && !['stairs', 'ramp', 'elevator'].includes(type)) {
     throw new HttpError(400, 'Floor changes require a stairs, ramp, or elevator connection.');
   }
-  if (body.verified && body.confirm_walkway !== true) {
+  const verified = booleanValue(body.verified, 'Verification status') ?? false;
+  if (verified && body.confirm_walkway !== true) {
     throw new HttpError(400, 'Confirm that this connection follows the selected campus path before verifying it.');
   }
   if (from > to) [from, to] = [to, from];
@@ -381,7 +399,7 @@ async function mapConnections(event, method, body, query) {
     to_node_id: to,
     weight,
     connection_type: type,
-    verified: Boolean(body.verified),
+    verified,
     accessibility_status: booleanValue(body.accessible, 'Accessibility status'),
     active: true
   };
