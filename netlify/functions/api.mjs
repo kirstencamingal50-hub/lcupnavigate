@@ -47,16 +47,7 @@ async function getDirectory() {
 
   const [locationResult, roomResult, photoResult, planResult] = await Promise.all([
     db.from('locations')
-      .select(`
-        *,
-        category:categories(name),
-        parent_building:locations!fk_locations_parent(
-          id,
-          name,
-          kind,
-          active
-        )
-      `)
+      .select(`\n        *,\n        category:categories(name)\n      `)
       .eq('active', true)
       .order('kind')
       .order('name'),
