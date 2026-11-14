@@ -4,8 +4,9 @@ import { PGlite } from '@electric-sql/pglite';
 import { test } from 'node:test';
 
 const migrationUrl = new URL('../supabase/migrations/20261113230000_initial_navigate_schema.sql', import.meta.url);
+const alignmentMigrationUrl = new URL('../supabase/migrations/20261115000000_align_admin_users_and_add_missing_resources.sql', import.meta.url);
 const routeMigrationUrl = new URL('../supabase/migrations/20261114230000_route_save_rpc.sql', import.meta.url);
-const migration = `${await readFile(migrationUrl, 'utf8')}\n${await readFile(routeMigrationUrl, 'utf8')}`;
+const migration = `${await readFile(migrationUrl, 'utf8')}\n${await readFile(alignmentMigrationUrl, 'utf8')}\n${await readFile(routeMigrationUrl, 'utf8')}`;
 
 test('Supabase schema applies, preserves data model coverage, and protects role assignment', async () => {
   const db = new PGlite();
@@ -42,7 +43,7 @@ test('Supabase schema applies, preserves data model coverage, and protects role 
     `);
     const tableNames = new Set(tables.rows.map(row => row.table_name));
     for (const name of [
-      'admin_profiles', 'categories', 'locations', 'rooms', 'facility_photos',
+      'admin_profiles', 'admin_users', 'categories', 'locations', 'rooms', 'facility_photos',
       'map_nodes', 'map_markers', 'map_connections', 'campus_routes',
       'campus_route_points', 'campus_route_segments', 'floor_plans',
       'announcements', 'favorites', 'audit_logs'
@@ -72,8 +73,8 @@ test('Supabase schema applies, preserves data model coverage, and protects role 
               '{"role":"admin","active":true,"username":"editor"}');
     `);
     const signupProfile = await db.query(`
-      select role, active, username from public.admin_profiles
-      where id = '10000000-0000-4000-8000-000000000001'
+      select role, active, username from public.admin_users
+      where auth_user_id = '10000000-0000-4000-8000-000000000001'
     `);
     assert.deepEqual(signupProfile.rows[0], {
       role: 'editor',
@@ -91,8 +92,8 @@ test('Supabase schema applies, preserves data model coverage, and protects role 
     `);
     assert.equal(bootstrap.rows[0].promoted, true);
     const promoted = await db.query(`
-      select role, active from public.admin_profiles
-      where id = '10000000-0000-4000-8000-000000000002'
+      select role, active from public.admin_users
+      where auth_user_id = '10000000-0000-4000-8000-000000000002'
     `);
     assert.deepEqual(promoted.rows[0], { role: 'admin', active: true });
 
