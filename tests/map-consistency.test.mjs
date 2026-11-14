@@ -25,22 +25,22 @@ test('map frontend keeps database nodes, legacy junctions, and API loading align
 });
 
 test('Netlify map queries use schema foreign keys and frontend-compatible directory fields', () => {
-  assert.match(api, /locations!locations_parent_building_id_fkey/);
-  assert.match(api, /locations!rooms_building_id_fkey/);
-  assert.match(api, /locations!map_markers_location_id_fkey/);
+  assert.match(api, /locations!fk_locations_parent/);
+  assert.match(api, /locations!fk_rooms_building/);
+  assert.match(api, /locations!fk_marker_location/);
   assert.match(api, /map_markers!campus_routes_start_marker_id_fkey/);
   assert.match(api, /map_markers!campus_routes_destination_marker_id_fkey/);
   assert.match(api, /buildingId:\s*row\.building_id/);
   assert.match(api, /floorNumber:\s*row\.floor_number/);
-  assert.match(api, /node:map_nodes\(id,node_key,x,y,floor_number,active\)/);
+  assert.match(api, /node:map_nodes\(id,node_key,x,y,floor_number\)/);
   assert.match(api, /accessible_confirmed:\s*accessibleConfirmed/);
-  assert.match(api, /return admin \|\| \(isValidFloorTransition && edge\.verified\)/);
+  assert.match(api, /edge => admin \|\| \(edge\.isValidFloorTransition && edge\.verified\)/);
 });
 
 test('mapping mutations generate and preserve node keys and call the route RPC contract', () => {
   assert.match(mutations, /`node-\$\{randomUUID\(\)\}`/);
   assert.match(mutations, /existing\?\.node_key/);
-  assert.match(mutations, /map_connections'\)\s*\.update\(\{ active: false \}\)/);
+  assert.match(mutations, /updateById\('map_connections', id, \{ active: false \}, 'Connection not found\.'\)/);
   assert.match(mutations, /database\.rpc\('save_campus_route',\s*\{/);
   for (const parameter of [
     'p_route_id', 'p_name', 'p_start_marker_id', 'p_destination_marker_id',

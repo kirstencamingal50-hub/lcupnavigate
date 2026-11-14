@@ -52,7 +52,7 @@ async function mediaIsPublic(bucket, name) {
       const location = unwrap(await database.from('locations').select('id').eq('id', photo.location_id).eq('active', true).maybeSingle());
       if (location) return true;
     } else if (photo.room_id) {
-      const room = unwrap(await database.from('rooms').select('id,building:locations!rooms_building_id_fkey(active)').eq('id', photo.room_id).eq('active', true).maybeSingle());
+      const room = unwrap(await database.from('rooms').select('id,building:locations!fk_rooms_building(active)').eq('id', photo.room_id).eq('active', true).maybeSingle());
       if (room?.building?.active) return true;
     }
   }

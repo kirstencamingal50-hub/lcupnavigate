@@ -900,8 +900,8 @@ async function adminAccounts(event, method, body, query) {
 
   if (method === 'GET') {
     const rows = unwrap(await database
-      .from('admin_profiles')
-      .select('id,legacy_admin_id,full_name,username,email,role,active,created_at')
+      .from('admin_users')
+      .select('id,auth_user_id,full_name,username,email,role,active,created_at')
       .order('created_at', { ascending: false })) || [];
 
     return success(rows.map(publicAdminAccount));
@@ -918,12 +918,12 @@ async function adminAccounts(event, method, body, query) {
   }
 
   const targetQuery = database
-    .from('admin_profiles')
-    .select('id,legacy_admin_id,role,active,username');
+    .from('admin_users')
+    .select('id,auth_user_id,role,active,username');
 
   const target = typeof id === 'string' && id.includes('-')
-    ? unwrap(await targetQuery.eq('id', id).maybeSingle())
-    : unwrap(await targetQuery.eq('legacy_admin_id', positiveId(id)).maybeSingle());
+    ? unwrap(await targetQuery.eq('auth_user_id', id).maybeSingle())
+    : unwrap(await targetQuery.eq('id', positiveId(id)).maybeSingle());
 
   if (!target) {
     throw new HttpError(404, 'Administrator account not found.');
@@ -941,13 +941,13 @@ async function adminAccounts(event, method, body, query) {
     throw new HttpError(400, 'Account status must be active or inactive.');
   }
 
-  if (target.id === actor.auth_id && (!active || role !== 'admin')) {
+  if (target.auth_user_id === actor.auth_id && (!active || role !== 'admin')) {
     throw new HttpError(409, 'You cannot deactivate or demote your own account.');
   }
 
   if (target.role === 'admin' && target.active && (!active || role !== 'admin')) {
     const countResult = await database
-      .from('admin_profiles')
+      .from('admin_users')
       .select('id', { count: 'exact', head: true })
       .eq('role', 'admin')
       .eq('active', true);
@@ -960,19 +960,19 @@ async function adminAccounts(event, method, body, query) {
   }
 
   unwrap(await database
-    .from('admin_profiles')
+    .from('admin_users')
     .update({ role, active })
     .eq('id', target.id)
     .select('id')
     .single());
 
-  await audit(actor, 'update', 'admin_account', target.legacy_admin_id, {
+  await audit(actor, 'update', 'admin_account', target.id, {
     role,
     active
   });
 
   return success({
-    id: target.legacy_admin_id ?? target.id,
+    id: target.id,
     role,
     active
   });
@@ -980,7 +980,7 @@ async function adminAccounts(event, method, body, query) {
 
 function publicAdminAccount(profile) {
   return {
-    id: profile.legacy_admin_id ?? profile.id,
+    id: profile.id,
     full_name: profile.full_name,
     username: profile.username,
     email: profile.email,
@@ -1050,7 +1050,7 @@ async function adminOverview(event) {
 
   const activity = unwrap(await database
     .from('audit_logs')
-    .select('action,entity_type,entity_id,created_at,admin:admin_profiles!audit_logs_admin_legacy_id_fkey(username)')
+    .select('action,entity_type,entity_id,created_at,admin:admin_users!audit_logs_admin_legacy_id_fkey(username)')
     .order('created_at', { ascending: false })
     .limit(8)) || [];
 
