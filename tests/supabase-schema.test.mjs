@@ -54,7 +54,7 @@ test('Supabase schema applies, preserves data model coverage, and protects role 
     `);
     const relationshipNames = new Set(relationships.rows.map(row => row.conname));
     for (const name of [
-      'rooms_building_id_fkey', 'map_markers_location_id_fkey',
+      'locations_parent_building_id_fkey', 'rooms_building_id_fkey', 'map_markers_location_id_fkey',
       'campus_routes_start_marker_id_fkey', 'campus_routes_destination_marker_id_fkey',
       'campus_route_points_route_id_fkey', 'floor_plans_building_id_fkey',
       'audit_logs_admin_legacy_id_fkey'

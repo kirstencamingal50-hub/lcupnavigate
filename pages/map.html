@@ -158,7 +158,11 @@
     let storedMap;
     let savedRoutes = [];
     let storedDirectory = { rooms: [] };
-    try { storedMap = await window.CampusApi.get('map'); try { storedDirectory = await window.CampusApi.get('directory'); } catch {} try { savedRoutes = await window.CampusApi.get('routes/available'); } catch {} }
+    try {
+      storedMap = await window.CampusApi.get('map');
+      storedDirectory = await window.CampusApi.get('directory');
+      savedRoutes = await window.CampusApi.get('routes/available');
+    }
     catch (error) { document.getElementById('routeInfo').textContent = error.message; document.getElementById('routeNotice').textContent = 'Map data could not be loaded from the campus database.'; document.getElementById('routeNotice').classList.remove('hidden'); throw error; }
     const mapPins = storedMap.markers.map(row => {const record=(storedDirectory.locations||[]).find(item=>String(item.id)===String(row.location_id))||{};return { ...record,id:String(row.location_id), markerId:Number(row.id), num:null, name:row.name, category:row.category, kind:row.kind, cat:row.kind, px:[Number(row.x),Number(row.y)], floor:Number(row.floor_number||0), routeNodeId:row.route_node_id?`n:${row.route_node_id}`:null, accessibilityValue:row.accessibility_value, description:row.description };});
     const roomLocations = (storedDirectory.rooms || []).flatMap(room => {
@@ -294,10 +298,17 @@
 
     function rebuildRouteGraph() {
       Object.keys(graph).forEach(id=>delete graph[id]);
-      junctions=Object.fromEntries(storedMap.nodes.map(node=>[`n:${node.id}`,[Number(node.x),Number(node.y)]]));
-      mapBackbone=storedMap.connections.map(edge=>[`n:${edge.from_node_id}`,`n:${edge.to_node_id}`,Number(edge.weight),Number(edge.accessibility_value)===1]);
+      const databaseNodes = new Map((storedMap.nodes || []).map(node => [String(node.id), node]));
+      junctions=Object.fromEntries([...databaseNodes.values()]
+        .filter(node => Number.isFinite(Number(node.x)) && Number.isFinite(Number(node.y)))
+        .map(node=>[`n:${node.id}`,[Number(node.x),Number(node.y)]]));
+      mapBackbone=(storedMap.connections || [])
+        .filter(edge => databaseNodes.has(String(edge.from_node_id)) && databaseNodes.has(String(edge.to_node_id)))
+        .map(edge=>[`n:${edge.from_node_id}`,`n:${edge.to_node_id}`,Number(edge.weight),Number(edge.accessibility_value)===1]);
       Object.entries(junctions).forEach(([id,px])=>addNode(id,px));
-      mapBackbone.forEach(([a,b,weight,accessible])=>addEdge(a,b,weight,accessible));
+      mapBackbone.forEach(([a,b,weight,accessible])=>{
+        if(graph[a]&&graph[b])addEdge(a,b,weight,accessible);
+      });
       locations.forEach(loc=>{
         const locId=routeId(loc);addNode(locId,loc.px);
         if(loc.routeNodeId&&graph[loc.routeNodeId])addEdge(locId,loc.routeNodeId,null,Number(loc.accessibilityValue)===1);
@@ -548,7 +559,10 @@
 
     function selectRoute(id) {
       const selected = currentRoutes[id];
-      if (!selected) return;
+      if (!selected || selected.path.some(nodeId => !graph[nodeId])) {
+        setNotice('This route is no longer available on the current map. Search again to refresh route data.', 'error');
+        return;
+      }
       const latlngs = selected.path.map(nodeId => toLatLng(graph[nodeId].px));
       const color = selected.color || (id === 'shortest' ? '#3b82f6' : '#8b5cf6');
       animateRoute(latlngs, color);
@@ -586,6 +600,7 @@
         storedMap = await window.CampusApi.get('map');
         savedRoutes = await window.CampusApi.get('routes/available');
         rebuildRouteGraph();
+        if (netToggleBox.checked) showWalkways();
       } catch (error) {
         setNotice(error.message || 'Saved routes could not be refreshed.', 'error');
         return;
@@ -653,13 +668,21 @@
     // The chosen route is still drawn on top in solid blue with the slow animation.
     let networkLayer = null;
     function showWalkways() {
-      // The main Gate 2 to Gate 1 road is not drawn as a faint line (routes can still use it).
+      if (networkLayer) map.removeLayer(networkLayer);
+      // The main Gate 2 to Gate 1 road is omitted only for legacy static junctions.
       const gateSpine = new Set(['j:g2','j:a','j:b','j:c','j:d','j:e','j:f','j:s1','j:s2','j:s3','j:s4','j:i','j:g1','j:g1c','j:g1b']);
       const lines = [];
+      const drawnEdges = new Set();
       Object.keys(graph).forEach(id => {
-        if (!id.startsWith('j:')) return;
         Object.keys(graph[id].neighbors).forEach(nId => {
-          if (nId.startsWith('j:') && id < nId && !(gateSpine.has(id) && gateSpine.has(nId))) lines.push([toLatLng(graph[id].px), toLatLng(graph[nId].px)]);
+          const databaseEdge = id.startsWith('n:') && nId.startsWith('n:');
+          const legacyStaticEdge = id.startsWith('j:') && nId.startsWith('j:');
+          if (!databaseEdge && !legacyStaticEdge) return;
+          if (legacyStaticEdge && gateSpine.has(id) && gateSpine.has(nId)) return;
+          const key = [id, nId].sort().join('||');
+          if (drawnEdges.has(key)) return;
+          drawnEdges.add(key);
+          lines.push([toLatLng(graph[id].px), toLatLng(graph[nId].px)]);
         });
       });
       networkLayer = L.layerGroup(lines.map(line =>
