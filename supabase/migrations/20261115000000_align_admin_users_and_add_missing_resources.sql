@@ -57,11 +57,24 @@ begin
         email=coalesce(excluded.email,public.admin_users.email),
         email_verified_at=coalesce(excluded.email_verified_at,public.admin_users.email_verified_at)
     $copy$;
+
+    -- Profiles created by the earlier trigger may not have a legacy numeric ID.
+    execute $backfill$
+      insert into public.admin_users(auth_user_id,full_name,username,email,password_hash,email_verified_at,role,active)
+      select p.id,p.full_name,
+        coalesce(nullif(p.username,''),'user_'||left(replace(p.id::text,'-',''),12)),
+        p.email,'SUPABASE_AUTH:'||p.id::text,p.email_verified_at,p.role,p.active
+      from public.admin_profiles p
+      join auth.users u on u.id=p.id
+      where p.legacy_admin_id is null
+        and not exists(select 1 from public.admin_users a where a.auth_user_id=p.id)
+      on conflict(auth_user_id) do nothing
+    $backfill$;
   end if;
 end;
-$$;
+$;
 
-do $$
+do $
 begin
   if to_regclass('public.admin_users_id_seq') is not null then
     perform setval('public.admin_users_id_seq',greatest(coalesce((select max(id) from public.admin_users),1),1),exists(select 1 from public.admin_users));
