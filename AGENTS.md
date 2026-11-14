@@ -1,6 +1,6 @@
 # Repository instructions for NaviGATE
 
-This repository contains the NaviGATE campus navigation application. The original PHP/MySQL application is retained alongside an additive Netlify + Supabase deployment path.
+This repository contains the NaviGATE campus navigation application. The original PHP/MySQL/XAMPP application is retained alongside an additive Netlify + Supabase deployment path.
 
 ## Project boundaries
 - Preserve the existing PHP/MySQL/XAMPP application unless a task explicitly requests changes to it.
