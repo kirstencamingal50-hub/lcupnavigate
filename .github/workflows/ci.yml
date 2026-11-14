@@ -6,10 +6,13 @@ on:
   push:
     branches:
       - main
-      - "codex/**"
 
 permissions:
   contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   validate:
@@ -44,7 +47,7 @@ jobs:
         continue-on-error: true
         run: npm run build:netlify
       - name: Verify deployment output excludes server-only files
-        if: always() && steps.build.outcome == 'success'
+        if: always() && steps.build.conclusion == 'success'
         run: |
           test -d dist
           if find dist -type f \( -name '*.php' -o -name '.env' \) | grep -q .; then
@@ -58,9 +61,9 @@ jobs:
       - name: Require all validation stages to pass
         if: always()
         env:
-          FULL_TESTS: ${{ steps.full_tests.outcome }}
-          SCHEMA_TESTS: ${{ steps.schema.outcome }}
-          MAP_TESTS: ${{ steps.map.outcome }}
+          FULL_TESTS: ${{ steps.full_tests.conclusion }}
+          SCHEMA_TESTS: ${{ steps.schema.conclusion }}
+          MAP_TESTS: ${{ steps.map.conclusion }}
           NETLIFY_BUILD: ${{ steps.build.outcome }}
         run: |
           printf 'Full test suite: %s\nSupabase schema: %s\nMap consistency: %s\nNetlify build: %s\n' "$FULL_TESTS" "$SCHEMA_TESTS" "$MAP_TESTS" "$NETLIFY_BUILD" >> "$GITHUB_STEP_SUMMARY"
