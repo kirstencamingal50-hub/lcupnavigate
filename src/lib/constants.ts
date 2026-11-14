@@ -1,52 +1,71 @@
-// constants.ts
-import { RealtimeClientOptions } from '@supabase/realtime-js'
-import { SupabaseAuthClientOptions, TracePropagationOptions } from './types'
 import { version } from './version'
+import type {
+  SocketState,
+  ChannelState,
+  ChannelEvent as PhoenixChannelEvent,
+  Transport,
+  Vsn,
+} from '../phoenix/types'
 
-let JS_ENV = ''
-let JS_RUNTIME_VERSION: string | undefined
-// @ts-ignore
-if (typeof Deno !== 'undefined') {
-  JS_ENV = 'deno'
-  // @ts-ignore
-  JS_RUNTIME_VERSION = Deno.version?.deno
-} else if (typeof document !== 'undefined') {
-  JS_ENV = 'web'
-} else if (typeof navigator !== 'undefined' && navigator.product === 'ReactNative') {
-  JS_ENV = 'react-native'
-} else {
-  JS_ENV = 'node'
-  const _process = (globalThis as any)['process']
-  JS_RUNTIME_VERSION = _process?.['version']?.replace(/^v/, '')
-}
+export type { SocketState, ChannelState, Transport }
 
-const _runtimeMeta = [`runtime=${JS_ENV}`]
-if (JS_RUNTIME_VERSION) {
-  _runtimeMeta.push(`runtime-version=${JS_RUNTIME_VERSION}`)
-}
+export const DEFAULT_VERSION = `realtime-js/${version}`
 
-export const DEFAULT_HEADERS = {
-  'X-Client-Info': `supabase-js/${version}; ${_runtimeMeta.join('; ')}`,
-}
+export const VSN_1_0_0: Vsn = '1.0.0'
+export const VSN_2_0_0: Vsn = '2.0.0'
+export const DEFAULT_VSN: Vsn = VSN_2_0_0
 
-export const DEFAULT_GLOBAL_OPTIONS = {
-  headers: DEFAULT_HEADERS,
-}
+export const VERSION = version
 
-export const DEFAULT_DB_OPTIONS = {
-  schema: 'public',
-}
+export const DEFAULT_TIMEOUT = 10000
 
-export const DEFAULT_AUTH_OPTIONS: SupabaseAuthClientOptions = {
-  autoRefreshToken: true,
-  persistSession: true,
-  detectSessionInUrl: true,
-  flowType: 'implicit',
-}
+/** Mirrors the Realtime server's own default for `postgres_changes_options.timeout`. */
+export const DEFAULT_POSTGRES_CHANGES_WAIT_TIMEOUT = 15000
 
-export const DEFAULT_REALTIME_OPTIONS: RealtimeClientOptions = {}
+/**
+ * Headroom added to the join timeout when waiting on postgres_changes, covering the
+ * CHANNEL_ERROR_BACKOFF_MS sleep (5s by default) the server takes before rejecting a join.
+ */
+export const POSTGRES_CHANGES_WAIT_ERROR_GRACE = 10000
 
-export const DEFAULT_TRACE_PROPAGATION_OPTIONS: TracePropagationOptions = {
-  enabled: false,
-  respectSamplingDecision: true,
-}
+export const WS_CLOSE_NORMAL = 1000
+export const MAX_PUSH_BUFFER_SIZE = 100
+
+export const SOCKET_STATES = {
+  connecting: 0,
+  open: 1,
+  closing: 2,
+  closed: 3,
+} as const
+
+export const CHANNEL_STATES = {
+  closed: 'closed',
+  errored: 'errored',
+  joined: 'joined',
+  joining: 'joining',
+  leaving: 'leaving',
+} as const
+
+export type ChannelEvent = PhoenixChannelEvent | 'access_token'
+
+export const CHANNEL_EVENTS = {
+  close: 'phx_close',
+  error: 'phx_error',
+  join: 'phx_join',
+  reply: 'phx_reply',
+  leave: 'phx_leave',
+  access_token: 'access_token',
+} as const
+
+export const TRANSPORTS = {
+  websocket: 'websocket',
+} as const
+
+export type ConnectionState = 'connecting' | 'open' | 'closing' | 'closed' | (string & {})
+
+export const CONNECTION_STATE = {
+  connecting: 'connecting',
+  open: 'open',
+  closing: 'closing',
+  closed: 'closed',
+} as const
