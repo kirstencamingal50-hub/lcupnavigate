@@ -15,7 +15,7 @@ function authRedirectUrl(path = '/pages/admin/login.html') {
 
 function publicProfile(profile) {
   return {
-    id: profile.legacy_admin_id ?? profile.id,
+    id: profile.id,
     full_name: profile.full_name,
     username: profile.username,
     email: profile.email,
@@ -50,7 +50,7 @@ async function getDirectory() {
       .select(`
         *,
         category:categories(name),
-        parent_building:locations!locations_parent_building_id_fkey(
+        parent_building:locations!fk_locations_parent(
           id,
           name,
           kind,
@@ -62,7 +62,7 @@ async function getDirectory() {
       .order('name'),
 
     db.from('rooms')
-      .select('*, building:locations!rooms_building_id_fkey(name,active), category:categories(name)')
+      .select('*, building:locations!fk_rooms_building(name,active), category:categories(name)')
       .eq('active', true)
       .order('floor_number')
       .order('room_number'),
@@ -172,7 +172,7 @@ async function getMap(admin = false) {
         accessibility_status,
         active,
         verified,
-        location:locations!map_markers_location_id_fkey(
+        location:locations!fk_marker_location(
           name,
           kind,
           description,
@@ -198,8 +198,8 @@ async function getMap(admin = false) {
         verified,
         accessibility_status,
         active,
-        from_node:map_nodes!map_connections_from_node_id_fkey(floor_number),
-        to_node:map_nodes!map_connections_to_node_id_fkey(floor_number)
+        from_node:map_nodes!fk_connection_from(floor_number),
+        to_node:map_nodes!fk_connection_to(floor_number)
       `)
       .eq('active', true)
       .order('id')
@@ -344,7 +344,7 @@ async function authResource(event, resource, method, body) {
   }
 
   if (resource === 'auth/login-status' && method === 'GET') {
-    const result = await db.from('admin_profiles')
+    const result = await db.from('admin_users')
       .select('id', { count: 'exact', head: true })
       .eq('role', 'admin')
       .eq('active', true);
@@ -375,7 +375,7 @@ async function authResource(event, resource, method, body) {
     if (method === 'GET') {
       const setupSecret = process.env.INITIAL_ADMIN_SETUP_KEY || '';
 
-      const admins = await db.from('admin_profiles')
+      const admins = await db.from('admin_users')
         .select('id', { count: 'exact', head: true })
         .eq('role', 'admin')
         .eq('active', true);
@@ -384,7 +384,7 @@ async function authResource(event, resource, method, body) {
 
       const state = unwrap(await db.from('admin_setup_state')
         .select('completed_at')
-        .eq('id', true)
+        .eq('id', 1)
         .single());
 
       return success({
@@ -492,7 +492,7 @@ async function authResource(event, resource, method, body) {
     let email = username;
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username)) {
-      const profile = unwrap(await db.from('admin_profiles')
+      const profile = unwrap(await db.from('admin_users')
         .select('email')
         .eq('username', username)
         .maybeSingle());
@@ -513,9 +513,9 @@ async function authResource(event, resource, method, body) {
       throw new HttpError(401, 'Invalid username/email or password.');
     }
 
-    const profile = unwrap(await db.from('admin_profiles')
-      .select('id,legacy_admin_id,full_name,username,email,role,active,created_at')
-      .eq('id', data.user.id)
+    const profile = unwrap(await db.from('admin_users')
+      .select('id,auth_user_id,full_name,username,email,role,active,created_at')
+      .eq('auth_user_id', data.user.id)
       .maybeSingle());
 
     if (!profile || !profile.active) {
@@ -771,9 +771,9 @@ async function authResource(event, resource, method, body) {
       throw new HttpError(401, 'Google sign-in could not be verified.');
     }
 
-    const profile = unwrap(await db.from('admin_profiles')
-      .select('id,legacy_admin_id,full_name,username,email,role,active,created_at')
-      .eq('id', data.user.id)
+    const profile = unwrap(await db.from('admin_users')
+      .select('id,auth_user_id,full_name,username,email,role,active,created_at')
+      .eq('auth_user_id', data.user.id)
       .maybeSingle());
 
     if (!profile || !profile.active) {
@@ -791,9 +791,9 @@ async function authResource(event, resource, method, body) {
   if (resource === 'auth/profile' && method === 'GET') {
     const user = await currentUser(event, true);
 
-    const profile = unwrap(await db.from('admin_profiles')
+    const profile = unwrap(await db.from('admin_users')
       .select('id,full_name,username,email,role')
-      .eq('id', user.auth_id)
+      .eq('auth_user_id', user.auth_id)
       .single());
 
     return success(profile);
@@ -816,10 +816,10 @@ async function authResource(event, resource, method, body) {
 
     const changedEmail = email !== user.email;
 
-    const usernameOwner = unwrap(await db.from('admin_profiles')
+    const usernameOwner = unwrap(await db.from('admin_users')
       .select('id')
       .eq('username', username)
-      .neq('id', user.auth_id)
+      .neq('auth_user_id', user.auth_id)
       .maybeSingle());
 
     if (usernameOwner) {
@@ -847,12 +847,12 @@ async function authResource(event, resource, method, body) {
       }
     }
 
-    const profileUpdate = await db.from('admin_profiles')
+    const profileUpdate = await db.from('admin_users')
       .update({
         full_name: fullName,
         username
       })
-      .eq('id', user.auth_id)
+      .eq('auth_user_id', user.auth_id)
       .select('id')
       .single();
 
@@ -1042,7 +1042,7 @@ async function publicResource(event, resource, method, query) {
     const user = await currentUser(event, false, 'viewer');
 
     let request = db.from('rooms')
-      .select('*, building:locations!rooms_building_id_fkey(name,active)')
+      .select('*, building:locations!fk_rooms_building(name,active)')
       .order('floor_number')
       .order('room_number');
 
