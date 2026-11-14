@@ -12,20 +12,26 @@ set search_path=''
 as $fn$
 declare
   candidate_username text;
+  requested_username text;
   username_suffix text;
   suffix_counter integer := 0;
 begin
-  candidate_username := coalesce(
+  requested_username := coalesce(
     nullif(left(btrim(coalesce(new.raw_user_meta_data->>'username','')),80),''),
     'user_' || left(replace(new.id::text,'-',''),12)
   );
+  candidate_username := requested_username;
+
+  -- Serialize signups requesting the same username to avoid a concurrent
+  -- check-then-insert race.
+  perform pg_advisory_xact_lock(hashtextextended(requested_username,0));
 
   if exists (
     select 1 from public.admin_users u
     where u.username = candidate_username
   ) then
     username_suffix := '_' || left(replace(new.id::text,'-',''),10);
-    candidate_username := left(candidate_username,80-length(username_suffix)) || username_suffix;
+    candidate_username := left(requested_username,80-length(username_suffix)) || username_suffix;
 
     while exists (
       select 1 from public.admin_users u
@@ -33,10 +39,7 @@ begin
     ) loop
       suffix_counter := suffix_counter + 1;
       username_suffix := '_' || left(replace(new.id::text,'-',''),8) || '_' || suffix_counter::text;
-      candidate_username := left(
-        coalesce(nullif(left(btrim(coalesce(new.raw_user_meta_data->>'username','')),80),''),'user'),
-        80-length(username_suffix)
-      ) || username_suffix;
+      candidate_username := left(requested_username,80-length(username_suffix)) || username_suffix;
     end loop;
   end if;
 
