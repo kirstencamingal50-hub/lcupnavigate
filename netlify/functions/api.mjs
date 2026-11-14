@@ -166,7 +166,7 @@ async function getMap(admin = false) {
         accessibility_status,
         active,
         verified,
-        location:locations!map_markers_location_id_fkey(
+        location:locations!fk_marker_location(
           name,
           kind,
           description,
