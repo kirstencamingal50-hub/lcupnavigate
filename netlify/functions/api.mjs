@@ -50,7 +50,7 @@ async function getDirectory() {
       .select(`
         *,
         category:categories(name),
-        parent_building:locations!locations_parent_building_id_fkey(
+        parent_building:locations!fk_locations_parent(
           id,
           name,
           kind,
