@@ -34,7 +34,7 @@ test('Netlify map queries use schema foreign keys and frontend-compatible direct
   assert.match(api, /floorNumber:\s*row\.floor_number/);
   assert.match(api, /node:map_nodes\(id,node_key,x,y,floor_number\)/);
   assert.match(api, /accessible_confirmed:\s*accessibleConfirmed/);
-  assert.match(api, /return admin \|\| \(isValidFloorTransition && edge\.verified\)/);
+  assert.match(api, /edge => admin \|\| \(edge\.isValidFloorTransition && edge\.verified\)/);
 });
 
 test('mapping mutations generate and preserve node keys and call the route RPC contract', () => {
