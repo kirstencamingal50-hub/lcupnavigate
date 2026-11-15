@@ -15,8 +15,8 @@ test('map frontend keeps database nodes, legacy junctions, and API loading align
   const directoryCall = mapPage.indexOf("CampusApi.get('directory')");
   const routesCall = mapPage.indexOf("CampusApi.get('routes/available')");
   assert.ok(mapCall >= 0 && mapCall < directoryCall && directoryCall < routesCall);
-  assert.match(mapPage, /\`\s*n:\$\{node\.id\}\`/);
-  assert.match(mapPage, /\`\s*n:\$\{edge\.from_node_id\}\`/);
+  assert.match(mapPage, /[\x60]\s*n:\$\{node\.id\}[\x60]/);
+  assert.match(mapPage, /[\x60]\s*n:\$\{edge\.from_node_id\}[\x60]/);
   assert.match(mapPage, /id\.startsWith\('n:'\)\s*&&\s*nId\.startsWith\('n:'\)/);
   assert.match(mapPage, /id\.startsWith\('j:'\)\s*&&\s*nId\.startsWith\('j:'\)/);
   assert.doesNotMatch(mapPage, /if\s*\(!id\.startsWith\('j:'\)\)\s*return;/);
@@ -41,10 +41,10 @@ test('Netlify map queries use schema foreign keys and frontend-compatible direct
 });
 
 test('mapping mutations generate and preserve node keys and call the route RPC contract', () => {
-  assert.match(mutations, /\`node-\$\{randomUUID\(\)\}\`/);
+  assert.match(mutations, /[\x60]node-\$\{randomUUID\(\)\}[\x60]/);
   assert.match(mutations, /existing\?\.node_key/);
   assert.match(mutations, /updateById\('map_connections', id, \{ active: false \}/);
-  assert.match(mutations, /node_key: \`location-\$\{locationId\}\`/);
+  assert.match(mutations, /node_key: [\x60]location-\$\{locationId\}[\x60]/);
   assert.match(mutations, /existingMarker\?\.route_node_id/);
   assert.match(mutations, /route_node_id: nodeId/);
   assert.match(mutations, /\.upsert\([\s\S]*?onConflict: 'node_key'/);
@@ -54,8 +54,8 @@ test('mapping mutations generate and preserve node keys and call the route RPC c
     'p_status', 'p_accessibility_status', 'p_notes', 'p_waypoints',
     'p_created_by_legacy_admin_id'
   ]) {
-    assert.match(mutations, new RegExp(\`\${parameter}:\`));
-    assert.match(routeMigration, new RegExp(\`\\\\b\${parameter}\\\\b\`));
+    assert.match(mutations, new RegExp(parameter + ':'));
+    assert.match(routeMigration, new RegExp('\\\\b' + parameter + '\\\\b'));
   }
 });
 
