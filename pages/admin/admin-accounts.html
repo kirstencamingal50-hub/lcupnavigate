@@ -16,25 +16,25 @@
   <main class="admin-main admin-accounts-main">
     <header class="admin-accounts-hero">
       <div>
-        <span class="admin-accounts-eyebrow"><span class="material-symbols-rounded" aria-hidden="true">shield_person</span> ACCESS CONTROL</span>
+        <span class="admin-accounts-eyebrow"><svg class="material-symbols-rounded " viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11zm0-14a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm-5 10a5 5 0 0 1 10 0"/></svg> ACCESS CONTROL</span>
         <h1>Admin Accounts</h1>
         <p>Manage who can access NaviGATE, review account status, and control administrator permissions.</p>
       </div>
-      <span class="admin-accounts-hero-icon material-symbols-rounded" aria-hidden="true">manage_accounts</span>
+      <svg class="material-symbols-rounded admin-accounts-hero-icon" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2m6-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm9-2v6m-3-3h6"/></svg>
     </header>
     <section class="admin-account-metrics" aria-label="Account summary">
-      <article><span class="material-symbols-rounded" aria-hidden="true">groups</span><div><small>Total accounts</small><strong id="account-total">—</strong></div></article>
-      <article><span class="material-symbols-rounded" aria-hidden="true">verified_user</span><div><small>Active accounts</small><strong id="account-active">—</strong></div></article>
-      <article><span class="material-symbols-rounded" aria-hidden="true">admin_panel_settings</span><div><small>Active administrators</small><strong id="account-admins">—</strong></div></article>
-      <article><span class="material-symbols-rounded" aria-hidden="true">person_off</span><div><small>Inactive accounts</small><strong id="account-inactive">—</strong></div></article>
+      <article><svg class="material-symbols-rounded " viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2m6-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm6-7a4 4 0 0 1 0 8m2 3a4 4 0 0 1 3 4v2"/></svg><div><small>Total accounts</small><strong id="account-total">—</strong></div></article>
+      <article><svg class="material-symbols-rounded " viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11zm-4-10 3 3 5-6"/></svg><div><small>Active accounts</small><strong id="account-active">—</strong></div></article>
+      <article><svg class="material-symbols-rounded " viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11zm0-13v5m-2-2h4"/></svg><div><small>Active administrators</small><strong id="account-admins">—</strong></div></article>
+      <article><svg class="material-symbols-rounded " viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18M10 10a4 4 0 1 0 5.6-5.6M5 21v-2a4 4 0 0 1 4-4h2m4 0a4 4 0 0 1 3 2"/></svg><div><small>Inactive accounts</small><strong id="account-inactive">—</strong></div></article>
     </section>
     <section class="admin-account-directory" aria-labelledby="admin-account-list-title">
       <div class="admin-account-directory-heading">
         <div><span>USER ACCESS</span><h2 id="admin-account-list-title">Account directory</h2><p>Change roles, enable or disable access, or permanently remove an account.</p></div>
-        <button type="button" class="admin-button-secondary" data-account-refresh><span class="material-symbols-rounded" aria-hidden="true">refresh</span> Refresh</button>
+        <button type="button" class="admin-button-secondary" data-account-refresh><svg class="material-symbols-rounded " viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5m-4-3a8 8 0 0 1 13-3l2 1m-1 9a8 8 0 0 1-13 3l-2-1"/></svg> Refresh</button>
       </div>
       <div id="admin-account-list" aria-live="polite"><p class="admin-empty-state">Loading administrator accounts…</p></div>
-      <p class="admin-account-safety-note"><span class="material-symbols-rounded" aria-hidden="true">info</span> You cannot remove or disable your own account. The last active administrator is also protected.</p>
+      <p class="admin-account-safety-note"><svg class="material-symbols-rounded " viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zm0-14h.01M11 12h1v5h1"/></svg> You cannot remove or disable your own account. The last active administrator is also protected.</p>
     </section>
   </main>
   <script src="../../assets/js/admin/admin-accounts.js?v=20261115-remove-layout"></script>
