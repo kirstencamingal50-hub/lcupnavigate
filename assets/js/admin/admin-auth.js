@@ -51,20 +51,12 @@
     const approvalNote = document.querySelector('.admin-auth-approval-note');
     const loginStatus = statusFor('login-status');
 
-    async function checkSetupResponse(response) {
-      let result;
-      try { result = await response.json(); }
-      catch { throw new Error('The administrator setup service returned an invalid response.'); }
-      if (!response.ok || !result.ok) throw new Error(result.error?.message || `Setup failed (${response.status}).`);
-      return result.data;
-    }
-
     const setupButton = statusFor('show-admin-setup');
     const setupForm = statusFor('admin-setup-form');
     const setupStatus = statusFor('admin-setup-status');
     if (setupButton && setupForm && setupStatus) {
       try {
-        const state = await checkSetupResponse(await fetch('../../api/admin-setup.php', { credentials: 'same-origin' }));
+        const state = await window.CampusApi.get('admin/bootstrap');
         setupButton.hidden = !state.available;
       } catch (error) {
         setupStatus.textContent = error.message;
@@ -86,13 +78,10 @@
         button.disabled = true;
         setupStatus.textContent = 'Creating administrator account…';
         try {
-          const csrf = await window.CampusApi.get('auth/csrf');
-          await checkSetupResponse(await fetch('../../api/admin-setup.php', {
+          await window.CampusApi.request('admin/bootstrap', {
             method: 'POST',
-            credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf.token },
-            body: JSON.stringify(Object.fromEntries(data))
-          }));
+            body: Object.fromEntries(data)
+          });
           await window.CampusApi.request('auth/login', {
             method: 'POST',
             body: { username: data.get('email'), password: data.get('password') }
