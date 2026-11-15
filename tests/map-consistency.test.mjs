@@ -43,6 +43,15 @@ test('Netlify map queries use schema foreign keys and frontend-compatible direct
   assert.match(api, /return admin \|\| \(isValidFloorTransition && edge\.verified\)/);
 });
 
+test('map marker mutations prevent duplicate canonical pins per map and floor', () => {
+  assert.match(mutations, /select\('id,active,canonical_location_id'\)/);
+  assert.match(mutations, /canonical_location_id\.eq\.\$\{canonicalLocationId\}/);
+  assert.match(mutations, /\.in\('location_id', canonicalLocationIds\)/);
+  assert.match(mutations, /\.eq\('map_key', mapKey\)/);
+  assert.match(mutations, /\.eq\('floor_number', floorNumber\)/);
+  assert.match(mutations, /already has an active marker on this map and floor/);
+});
+
 test('mapping mutations generate and preserve node keys and call the route RPC contract', () => {
   assert.match(mutations, /`node-\$\{randomUUID\(\)\}`/);
   assert.match(mutations, /existing\?\.node_key/);
