@@ -106,11 +106,6 @@
       </div>
 
       <div id="routeOptions" class="w-full hidden grid grid-cols-1 md:grid-cols-2 gap-2 mt-1"></div>
-      <section id="routeDirections" class="w-full hidden rounded-lg border border-slate-700 bg-slate-900/80 p-2 text-[11px] text-slate-200" aria-live="polite" data-speech-panel>
-        <p id="routeDirectionsText"></p>
-        <div class="mt-2 flex gap-1"><button type="button" data-speech-action="play" id="routeSpeak" class="rounded border border-slate-600 px-2 py-1">Read directions</button><button type="button" data-speech-action="pause" class="rounded border border-slate-600 px-2 py-1">Pause</button><button type="button" data-speech-action="resume" class="rounded border border-slate-600 px-2 py-1">Resume</button><button type="button" data-speech-action="stop" class="rounded border border-slate-600 px-2 py-1">Stop</button></div>
-        <p data-speech-status role="status" class="mt-1 text-slate-400"></p>
-      </section>
       <div id="routeNotice" class="w-full hidden text-[11px] rounded-lg border px-2.5 py-2"></div>
     </div>
 
@@ -421,7 +416,6 @@
       routeNotice.innerHTML = '';
       routeNotice.classList.add('hidden');
       routeInfo.textContent = 'Select locations to calculate routes';
-      document.getElementById('routeDirections').classList.add('hidden');
       window.CampusAccessibility?.stop();
       clearRouteBtn.classList.add('hidden');
     }
@@ -569,14 +563,6 @@
       showRouteMarkers(latlngs);
       map.fitBounds(L.latLngBounds(latlngs), { padding: [60, 60] });
       routeInfo.innerHTML = `<b>${escapeHtml(selected.name || (id === 'shortest' ? 'Shortest' : 'Alternative') + ' route')} selected:</b> ~${Math.round(selected.distance)} map units.`;
-      const start=locations.find(loc=>routeId(loc)===fromSelect.value),destination=locations.find(loc=>routeId(loc)===toSelect.value);
-      const junctions=selected.path.slice(1,-1).filter(nodeId=>nodeId.startsWith('n:')).map(nodeId=>storedMap.nodes.find(node=>`n:${node.id}`===nodeId)?.node_key).filter(Boolean);
-      const savedDirections=[selected.notes,...(selected.pointNotes||[])].filter(Boolean);
-      const directions=`Start at ${start?.name||'your selected location'}. Follow the highlighted campus route${junctions.length?` through ${junctions.map((name,index)=>`junction ${index+1}, ${name}`).join('; ')}`:''}. Arrive at ${destination?.name||'your selected destination'}.${savedDirections.length?` Route notes: ${savedDirections.join('. ')}`:''} ${accessibleOnly?'Only verified connections and endpoints recorded as accessible are included.':''}`;
-      const directionsText=document.getElementById('routeDirectionsText');
-      directionsText.textContent=directions;
-      document.getElementById('routeSpeak').dataset.speechText=directions;
-      document.getElementById('routeDirections').classList.remove('hidden');
       clearRouteBtn.classList.remove('hidden');
       routeNotice.classList.add('hidden');
     }
