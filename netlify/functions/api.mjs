@@ -1050,6 +1050,9 @@ async function publicResource(event, resource, method, query) {
     return success(
       (unwrap(await request) || []).map(row => ({
         ...row,
+        // Keep the storage object path available to signed-in admins so edits
+        // can preserve the existing photo without resubmitting its public URL.
+        image_object_path: user ? row.image_path : null,
         image_path: row.image_path ? mediaUrl(row.image_path) : null
       }))
     );
