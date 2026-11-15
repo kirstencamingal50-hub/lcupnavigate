@@ -27,7 +27,7 @@ create table if not exists public.department_locations (
 
 create index if not exists idx_department_locations_department on public.department_locations(department_id);
 create index if not exists idx_department_locations_building on public.department_locations(building_id);
-create index if not exists idx_department_locations_room on public.department_locations(room_id);
+create index if not exists idx_department_locations_room on public.department_locations(room_id);\n\nalter table public.departments enable row level security;\nalter table public.department_locations enable row level security;
 
 drop trigger if exists departments_touch_updated_at on public.departments;
 create trigger departments_touch_updated_at before update on public.departments
