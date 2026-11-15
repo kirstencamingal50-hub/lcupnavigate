@@ -496,3 +496,8 @@ html[data-high-contrast] .directory-card, html[data-high-contrast] .directory-he
   -webkit-font-feature-settings: 'liga' !important;
   font-variant-ligatures: contextual;
 }
+
+
+/* Inline SVG navigation icons do not depend on web fonts. */
+.nav-svg-icon { display:inline-block; flex:0 0 auto; vertical-align:middle; }
+.floating-nav a > .nav-svg-icon { display:block; width:22px; height:22px; }
