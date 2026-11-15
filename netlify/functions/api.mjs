@@ -93,18 +93,31 @@ async function getDirectory() {
     }]);
   }
 
-  const locationRows = locations.map(row => ({
-    ...row,
-    image_path: row.image_path ? mediaUrl(row.image_path) : null,
-    image: row.image_path ? mediaUrl(row.image_path) : null,
-    category: row.category?.name || null,
-    parent_building_name: row.parent_building?.name || null,
-    parentBuilding: row.parent_building || null,
-    accessibilityFeatures: row.kind === 'building' && Array.isArray(row.accessibility_features)
-      ? row.accessibility_features
-      : [],
-    photos: locationPhotos.get(String(row.id)) || []
-  }));
+  // Keep every directory record, but expose a single canonical map target
+  // for alternate/duplicate names. A primary location resolves to itself.
+  const locationById = new Map(
+    locations.map(row => [String(row.id), row])
+  );
+
+  const locationRows = locations.map(row => {
+    const mapLocationId = row.canonical_location_id ?? row.id;
+    const canonicalLocation = locationById.get(String(mapLocationId));
+
+    return {
+      ...row,
+      map_location_id: mapLocationId,
+      canonical_location_name: canonicalLocation?.name || row.name,
+      image_path: row.image_path ? mediaUrl(row.image_path) : null,
+      image: row.image_path ? mediaUrl(row.image_path) : null,
+      category: row.category?.name || null,
+      parent_building_name: row.parent_building?.name || null,
+      parentBuilding: row.parent_building || null,
+      accessibilityFeatures: row.kind === 'building' && Array.isArray(row.accessibility_features)
+        ? row.accessibility_features
+        : [],
+      photos: locationPhotos.get(String(row.id)) || []
+    };
+  });
 
   const buildingById = new Map(
     locations
@@ -171,6 +184,7 @@ async function getMap(admin = false) {
           kind,
           description,
           active,
+          canonical_location_id,
           category:categories(name)
         )
       `)
@@ -240,6 +254,8 @@ async function getMap(admin = false) {
       .map(marker => ({
         id: marker.id,
         location_id: marker.location_id,
+        canonical_location_id: marker.location?.canonical_location_id ?? marker.location_id,
+        map_location_id: marker.location?.canonical_location_id ?? marker.location_id,
         route_node_id: marker.route_node_id,
         name: marker.location?.name,
         kind: marker.location?.kind,
