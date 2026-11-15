@@ -173,7 +173,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       pendingEdit.item=savedItem;
       const recordLabel=pendingEdit.type==='location'?(item.kind==='building'?'Building':'Facility'):'Room';
       const selectedCategory=categories.find(category=>String(category.id)===String(savedItem.category_id))?.name;
-      message.textContent=`${recordLabel} updated successfully.${selectedCategory?\` Category: ${selectedCategory}.\`:''}`;
+      message.textContent=`${recordLabel} updated successfully.${selectedCategory?` Category: ${selectedCategory}.`:''}`;
       status(message.textContent);notify(message.textContent);
     }catch(error){message.textContent=error.message;notify(error.message,'error');}finally{button.disabled=false;}
   }
