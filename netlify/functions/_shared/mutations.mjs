@@ -607,23 +607,42 @@ async function mapMarkers(event, method, body, query) {
     ? positiveId(body.id ?? query.id)
     : null;
 
-  // Every mapped campus location receives one stable navigation node automatically.
-  // The unique node_key makes retries and marker edits reuse the same node.
-  const node = unwrap(await database
-    .from('map_nodes')
-    .upsert({
-      node_key: `location-${locationId}`,
-      x,
-      y,
-      floor_number: 0,
-      active: true
-    }, { onConflict: 'node_key' })
-    .select('id')
-    .single());
+  // Reuse an existing marker node so previously saved routes keep their endpoint IDs.
+  let nodeId = null;
+  if (id) {
+    const existingMarker = unwrap(await database
+      .from('map_markers')
+      .select('route_node_id')
+      .eq('id', id)
+      .maybeSingle());
+    if (existingMarker?.route_node_id) {
+      nodeId = unwrap(await database
+        .from('map_nodes')
+        .update({ x, y, floor_number: 0, active: true })
+        .eq('id', existingMarker.route_node_id)
+        .select('id')
+        .single()).id;
+    }
+  }
+
+  // New markers (or legacy markers without a node) get a stable node automatically.
+  if (!nodeId) {
+    nodeId = unwrap(await database
+      .from('map_nodes')
+      .upsert({
+        node_key: `location-${locationId}`,
+        x,
+        y,
+        floor_number: 0,
+        active: true
+      }, { onConflict: 'node_key' })
+      .select('id')
+      .single()).id;
+  }
 
   const fields = {
     location_id: locationId,
-    route_node_id: node.id,
+    route_node_id: nodeId,
     x,
     y,
     floor_number: 0,
