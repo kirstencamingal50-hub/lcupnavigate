@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Manage Announcements - Admin</title>
+  <title>Manage Campus Updates - Admin</title>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
   <link rel="stylesheet" href="../../assets/css/style.css?v=20261024-complete-details" />
@@ -15,23 +15,20 @@
   <div data-component="header"></div>
   <main class="admin-main">
     <div class="admin-page-heading">
-      <div><h1 class="text-xl font-bold">Announcements and Events</h1><p>Create updates, schedule events, and choose what is published on the public campus site.</p></div>
+      <div><h1 class="text-xl font-bold">Campus Updates</h1><p>Manage announcements and events together in one place.</p></div>
       <a href="dashboard.html">Back to Dashboard</a>
     </div>
 
-    <section class="admin-form-panel rounded-2xl p-5 mb-5" aria-labelledby="add-announcement-title">
-      <h2 id="add-announcement-title" class="text-sm font-bold">Create an announcement or event</h2>
-      <form id="announcement-form" class="mt-4 grid gap-3 md:grid-cols-2">
-        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Announcement Title
+    <section class="admin-form-panel admin-campus-updates-panel rounded-2xl p-5 mb-5" aria-labelledby="add-announcement-title">
+      <h2 id="add-announcement-title" class="text-sm font-bold">Create a campus update</h2><p class="admin-form-help">Add an announcement or include event dates to create an event. New updates are published automatically; you can unpublish them from the list.</p>
+      <form id="announcement-form" class="admin-campus-update-form mt-4 grid gap-3 md:grid-cols-2">
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Title
           <input name="title" required maxlength="180" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
         </label>
-        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Announcement Image (optional)
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Image (optional)
           <input name="photo" type="file" accept="image/png,image/jpeg,image/webp" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
           <img data-photo-preview hidden alt="Announcement preview" class="mt-2 max-h-40 rounded-lg object-cover" />
           <span class="mt-1 block text-[10px] font-normal normal-case text-slate-400">Images appear when the announcement is featured. You can keep the current image when editing.</span>
-        </label>
-        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Publication status
-          <select name="status" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"><option value="draft">Draft</option><option value="published">Published</option><option value="unpublished">Unpublished</option></select>
         </label>
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Campus location (optional)
           <select name="location_id" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"><option value="">No location</option></select>
@@ -54,7 +51,7 @@
         </label>
         <div class="md:col-span-2 flex items-center justify-between gap-3">
           <p id="announcement-form-status" class="text-xs text-slate-500" role="status" aria-live="polite"></p>
-          <div class="flex gap-2"><button type="submit" class="admin-button-primary">Save announcement</button></div>
+          <div class="flex gap-2"><button type="submit" class="admin-button-primary">Publish campus update</button></div>
         </div>
       </form>
     </section>

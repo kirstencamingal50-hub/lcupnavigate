@@ -46,8 +46,8 @@ function renderSharedUI() {
   if (isAdminPage && header && !document.querySelector('[data-admin-sidebar]')) {
     const items = [
       { group: 'Overview', links: [['dashboard.html','Dashboard','space_dashboard']] },
-      { group: 'Campus information', links: [['manage-buildings.html','Buildings','domain'],['manage-facilities.html','Facilities','storefront'],['manage-rooms.html','Rooms and Classrooms','meeting_room'],['manage-categories.html','Categories','category'],['manage-map.html','Campus Map','map'],['manage-map.html#route-builder','Walking Routes','alt_route'],['manage-map.html#floorplan-title','Floor Plans','floor'] ] },
-      { group: 'Communication', links: [['manage-announcements.html','Announcements','campaign'],['manage-announcements.html#event-fields','Events and Schedules','event']] },
+      { group: 'Campus information', links: [['manage-buildings.html','Buildings','domain'],['manage-departments.html','Departments','groups'],['manage-facilities.html','Facilities','storefront'],['manage-rooms.html','Rooms and Classrooms','meeting_room'],['manage-categories.html','Categories','category'],['manage-map.html','Campus Map','map'],['manage-map.html#add-landmark-title','Campus Location Marker','location_on'] ] },
+      { group: 'Communication', links: [['manage-announcements.html','Announcements','campaign']] },
       { group: 'Account management', links: [['admin-accounts.html','Admin Accounts','manage_accounts']] },
       { group: 'Settings', links: [['admin-settings.html','Settings','settings']] },
       { group: 'System', links: [['dashboard.html#recent-activity','Activity Log','history'],['#','Sign out','logout']] },
@@ -73,22 +73,21 @@ function renderSharedUI() {
 
   if (bottomNav) {
     bottomNav.innerHTML = `
-      <nav aria-label="Main navigation" class="floating-nav fixed bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between px-4 sm:px-6 py-2 rounded-2xl w-[min(92%,24rem)] bg-[#111c35] border border-slate-700/80 shadow-2xl" style="padding-bottom: max(.5rem, env(safe-area-inset-bottom))">
-        <a data-nav="home" href="${pathPrefix}index.html" class="flex flex-col items-center gap-1 text-slate-400 transition-colors px-3 py-1 rounded-xl">
-          <span class="material-symbols-rounded text-xl">home</span>
-          <span class="text-[11px] font-bold">Home</span>
+      <nav aria-label="Main navigation" class="floating-nav fixed bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between px-2 sm:px-3 py-2 rounded-2xl w-[min(96%,32rem)] bg-[#111c35] border border-slate-700/80 shadow-2xl" style="padding-bottom: max(.5rem, env(safe-area-inset-bottom))">
+        <a data-nav="home" href="${pathPrefix}index.html" class="flex flex-col items-center gap-1 text-slate-400 transition-colors px-2 py-1 rounded-xl">
+          <span class="material-symbols-rounded text-xl">home</span><span class="text-[10px] font-bold">Home</span>
         </a>
-        <a data-nav="directory" href="${pathPrefix}pages/directory.html" class="flex flex-col items-center gap-1 text-slate-400 transition-colors px-3 py-1 rounded-xl">
-          <span class="material-symbols-rounded text-xl">apartment</span>
-          <span class="text-[11px] font-bold">Directory</span>
+        <a data-nav="directory" href="${pathPrefix}pages/directory.html" class="flex flex-col items-center gap-1 text-slate-400 transition-colors px-2 py-1 rounded-xl">
+          <span class="material-symbols-rounded text-xl">apartment</span><span class="text-[10px] font-bold">Directory</span>
         </a>
-        <a data-nav="map" href="${pathPrefix}pages/map.html" class="flex flex-col items-center gap-1 text-slate-400 transition-colors px-3 py-1 rounded-xl">
-          <span class="material-symbols-rounded text-xl">map</span>
-          <span class="text-[11px] font-bold">Map</span>
+        <a data-nav="assistant" href="${pathPrefix}pages/assistant.html" class="flex flex-col items-center gap-1 text-slate-400 transition-colors px-2 py-1 rounded-xl">
+          <span class="material-symbols-rounded text-xl">forum</span><span class="text-[10px] font-bold">Assistant</span>
         </a>
-        <a data-nav="settings" href="${pathPrefix}pages/settings.html" class="flex flex-col items-center gap-1 text-slate-400 transition-colors px-3 py-1 rounded-xl">
-          <span class="material-symbols-rounded text-xl">settings</span>
-          <span class="text-[11px] font-bold">Settings</span>
+        <a data-nav="map" href="${pathPrefix}pages/map.html" class="flex flex-col items-center gap-1 text-slate-400 transition-colors px-2 py-1 rounded-xl">
+          <span class="material-symbols-rounded text-xl">map</span><span class="text-[10px] font-bold">Map</span>
+        </a>
+        <a data-nav="settings" href="${pathPrefix}pages/settings.html" class="flex flex-col items-center gap-1 text-slate-400 transition-colors px-2 py-1 rounded-xl">
+          <span class="material-symbols-rounded text-xl">settings</span><span class="text-[10px] font-bold">Settings</span>
         </a>
       </nav>
     `;
@@ -97,7 +96,9 @@ function renderSharedUI() {
       ? 'map'
       : path.endsWith('/directory.html') || path.endsWith('/building.html') || path.endsWith('/office.html')
         ? 'directory'
-          : path.endsWith('/settings.html')
+          : path.endsWith('/assistant.html')
+            ? 'assistant'
+            : path.endsWith('/settings.html')
             ? 'settings'
             : path.endsWith('/index.html') || path === '/' || path.endsWith('/announcements.html')
           ? 'home'
@@ -108,13 +109,27 @@ function renderSharedUI() {
   const guestChoice = document.querySelector('[data-role-choice="student-guest"]');
   const roleSplash = document.getElementById('role-splash');
   if (guestChoice && roleSplash) {
-    const dismissRoleSplash = () => {
+    const dismissRoleSplash = ({ focus = true } = {}) => {
       roleSplash.classList.add('role-splash-dismissed');
       roleSplash.setAttribute('aria-hidden', 'true');
       roleSplash.setAttribute('inert', '');
-      document.getElementById('welcome-title')?.focus({ preventScroll: true });
+      if (focus) document.getElementById('welcome-title')?.focus({ preventScroll: true });
     };
-    guestChoice.addEventListener('click', dismissRoleSplash);
+    // Keep the role choice only for this browser tab/session. A fresh visit
+    // opens the role selector again, while Home navigation in this session
+    // returns directly to the homepage without prompting a second time.
+    try {
+      if (sessionStorage.getItem('navigatorate.public-access-selected') === 'true') {
+        dismissRoleSplash({ focus: false });
+      }
+    } catch (error) {
+      console.warn('The public access choice could not be restored.', error);
+    }
+    guestChoice.addEventListener('click', () => {
+      try { sessionStorage.setItem('navigatorate.public-access-selected', 'true'); }
+      catch (error) { console.warn('The public access choice could not be saved.', error); }
+      dismissRoleSplash();
+    });
   }
 }
 

@@ -90,11 +90,19 @@
       </form>
     </section>
 
-    <div id="facilities-list" class="admin-data-panel p-2 sm:p-4"></div>
+    <div id="facilities-list" class="admin-data-panel p-2 sm:p-4"><p class="p-5 text-center text-sm text-slate-500">NaviGATE catalog is starting…</p></div>
+    <script>
+      (() => {
+        const panel = document.getElementById('facilities-list');
+        const showProblem = message => { if (panel) panel.innerHTML = '<div class="p-5 text-center text-sm text-red-700"><strong>The campus list did not start correctly.</strong><p class="mt-1"></p></div>'; if (panel) panel.querySelector('p').textContent = message; };
+        window.addEventListener('error', event => { if (/catalog\.js/.test(event.filename || '') || !event.filename) showProblem(event.message || 'A JavaScript error stopped the page.'); });
+        window.addEventListener('unhandledrejection', event => showProblem(event.reason?.message || String(event.reason || 'An unhandled request failed.')));
+      })();
+    </script>
   </main>
 
   <script src="../../assets/js/admin/admin-photos.js"></script>
-  <script src="../../assets/js/admin/catalog.js?v=20261024-complete-details"></script>
+  <script src="../../assets/js/admin/catalog.js?v=20261115-panel-api-errors"></script>
   <script src="../../assets/js/app.js?v=20261105-admin-ux"></script>
 </body>
 </html>

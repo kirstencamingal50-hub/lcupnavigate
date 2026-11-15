@@ -12,7 +12,7 @@ test('Netlify logout revokes only the current Supabase refresh-token session', a
 
 test('repository guidance protects the legacy deployment and production secrets', async () => {
   const instructions = await read('../AGENTS.md');
-  assert.match(instructions, /original PHP\/MySQL\/XAMPP application/);
+  assert.match(instructions, /original PHP\/MySQL application is retained/);
   assert.match(instructions, /SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(instructions, /real MySQL records and uploaded media/);
 });

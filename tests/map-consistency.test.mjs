@@ -15,8 +15,8 @@ test('map frontend keeps database nodes, legacy junctions, and API loading align
   const directoryCall = mapPage.indexOf("CampusApi.get('directory')");
   const routesCall = mapPage.indexOf("CampusApi.get('routes/available')");
   assert.ok(mapCall >= 0 && mapCall < directoryCall && directoryCall < routesCall);
-  assert.match(mapPage, /`\s*n:\$\{node\.id\}`/);
-  assert.match(mapPage, /`\s*n:\$\{edge\.from_node_id\}`/);
+  assert.match(mapPage, /[\x60]\s*n:\$\{node\.id\}[\x60]/);
+  assert.match(mapPage, /[\x60]\s*n:\$\{edge\.from_node_id\}[\x60]/);
   assert.match(mapPage, /id\.startsWith\('n:'\)\s*&&\s*nId\.startsWith\('n:'\)/);
   assert.match(mapPage, /id\.startsWith\('j:'\)\s*&&\s*nId\.startsWith\('j:'\)/);
   assert.doesNotMatch(mapPage, /if\s*\(!id\.startsWith\('j:'\)\)\s*return;/);
@@ -25,29 +25,46 @@ test('map frontend keeps database nodes, legacy junctions, and API loading align
 });
 
 test('Netlify map queries use schema foreign keys and frontend-compatible directory fields', () => {
-  assert.match(api, /locations!locations_parent_building_id_fkey/);
-  assert.match(api, /locations!rooms_building_id_fkey/);
-  assert.match(api, /locations!map_markers_location_id_fkey/);
+  // Parent buildings are resolved in JavaScript to avoid depending on the
+  // PostgREST self-referencing relationship being present in its schema cache.
+  assert.match(api, /Resolve the self-referencing parent building in JavaScript/);
+  assert.match(api, /locationById\.get\(String\(row\.parent_building_id\)\)/);
+  assert.match(api, /building:locations!fk_rooms_building/);
+  assert.match(api, /location:locations!fk_marker_location/);
   assert.match(api, /map_markers!campus_routes_start_marker_id_fkey/);
   assert.match(api, /map_markers!campus_routes_destination_marker_id_fkey/);
   assert.match(api, /buildingId:\s*row\.building_id/);
   assert.match(api, /floorNumber:\s*row\.floor_number/);
-  assert.match(api, /node:map_nodes\(id,node_key,x,y,floor_number,active\)/);
+  assert.match(api, /node:map_nodes\(id,node_key,x,y,floor_number\)/);
   assert.match(api, /accessible_confirmed:\s*accessibleConfirmed/);
-  assert.match(api, /return admin \|\| \(isValidFloorTransition && edge\.verified\)/);
+  assert.match(api, /filter\(edge => admin \|\| \(edge\.isValidFloorTransition && edge\.verified\)\)/);
 });
 
 test('mapping mutations generate and preserve node keys and call the route RPC contract', () => {
-  assert.match(mutations, /`node-\$\{randomUUID\(\)\}`/);
+  assert.match(mutations, /[\x60]node-\$\{randomUUID\(\)\}[\x60]/);
   assert.match(mutations, /existing\?\.node_key/);
-  assert.match(mutations, /map_connections'\)\s*\.update\(\{ active: false \}\)/);
+  assert.match(mutations, /updateById\('map_connections', id, \{ active: false \}/);
+  assert.match(mutations, /node_key: [\x60]location-\$\{locationId\}[\x60]/);
+  assert.match(mutations, /existingMarker\?\.route_node_id/);
+  assert.match(mutations, /route_node_id: nodeId/);
+  assert.match(mutations, /\.upsert\([\s\S]*?onConflict: 'node_key'/);
   assert.match(mutations, /database\.rpc\('save_campus_route',\s*\{/);
   for (const parameter of [
     'p_route_id', 'p_name', 'p_start_marker_id', 'p_destination_marker_id',
     'p_status', 'p_accessibility_status', 'p_notes', 'p_waypoints',
     'p_created_by_legacy_admin_id'
   ]) {
-    assert.match(mutations, new RegExp(`${parameter}:`));
-    assert.match(routeMigration, new RegExp(`\\b${parameter}\\b`));
+    assert.match(mutations, new RegExp(parameter + ':'));
+    assert.match(routeMigration, new RegExp('\\b' + parameter + '\\b'));
   }
+});
+
+test('admin map no longer exposes floor-plan uploads or manual graph connection forms', async () => {
+  const adminMap = await read('../pages/admin/manage-map.html');
+  const mapScript = await read('../assets/js/admin/manage-map.js');
+  assert.doesNotMatch(adminMap, /floorplan-form|floorplans-list|floorplan-title|Upload floor plan/i);
+  assert.doesNotMatch(adminMap, /map-connection-form|map-connection-list|map-connections\.js/i);
+  assert.doesNotMatch(adminMap, /name="route_node_id"/);
+  assert.doesNotMatch(mapScript, /floorplans|form\.elements\.route_node_id/);
+  assert.match(adminMap, /generated automatically from saved route paths/i);
 });

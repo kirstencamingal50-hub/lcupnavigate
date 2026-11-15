@@ -23,9 +23,9 @@ export async function currentUser(event, required = false, minimumRole = 'viewer
   }
 
   const profile = unwrap(await getServiceClient()
-    .from('admin_profiles')
-    .select('id,legacy_admin_id,full_name,username,email,role,active,created_at')
-    .eq('id', authData.user.id)
+    .from('admin_users')
+    .select('id,auth_user_id,full_name,username,email,role,active,created_at')
+    .eq('auth_user_id', authData.user.id)
     .maybeSingle());
 
   if (!profile || !profile.active) {
@@ -36,8 +36,8 @@ export async function currentUser(event, required = false, minimumRole = 'viewer
   }
 
   return {
-    id: profile.legacy_admin_id ?? profile.id,
-    auth_id: profile.id,
+    id: profile.id,
+    auth_id: profile.auth_user_id,
     full_name: profile.full_name,
     username: profile.username,
     email: profile.email || authData.user.email,

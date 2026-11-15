@@ -607,12 +607,45 @@ async function mapMarkers(event, method, body, query) {
     ? positiveId(body.id ?? query.id)
     : null;
 
+  // Reuse an existing marker node so previously saved routes keep their endpoint IDs.
+  let nodeId = null;
+  if (id) {
+    const existingMarker = unwrap(await database
+      .from('map_markers')
+      .select('route_node_id')
+      .eq('id', id)
+      .maybeSingle());
+    if (existingMarker?.route_node_id) {
+      nodeId = unwrap(await database
+        .from('map_nodes')
+        .update({ x, y, floor_number: 0, active: true })
+        .eq('id', existingMarker.route_node_id)
+        .select('id')
+        .single()).id;
+    }
+  }
+
+  // New markers (or legacy markers without a node) get a stable node automatically.
+  if (!nodeId) {
+    nodeId = unwrap(await database
+      .from('map_nodes')
+      .upsert({
+        node_key: `location-${locationId}`,
+        x,
+        y,
+        floor_number: 0,
+        active: true
+      }, { onConflict: 'node_key' })
+      .select('id')
+      .single()).id;
+  }
+
   const fields = {
     location_id: locationId,
-    route_node_id: nullableId(body.route_node_id, 'Route node ID'),
+    route_node_id: nodeId,
     x,
     y,
-    floor_number: Math.max(0, Number(body.floor_number) || 0),
+    floor_number: 0,
     map_key: optionalText(body.map_key, 'Map key', 40) || 'campus',
     accessibility_status: booleanValue(body.accessibility_status, 'Accessibility status'),
     active: true
@@ -898,10 +931,13 @@ async function adminAccounts(event, method, body, query) {
   const actor = await editor(event, 'admin');
   const database = db();
 
+  // Use the same admin_users table as authentication. The previous
+  // admin_profiles lookup did not match the deployed schema and caused the
+  // account list to fail before it could render.
   if (method === 'GET') {
     const rows = unwrap(await database
-      .from('admin_profiles')
-      .select('id,legacy_admin_id,full_name,username,email,role,active,created_at')
+      .from('admin_users')
+      .select('id,auth_user_id,full_name,username,email,role,active,created_at')
       .order('created_at', { ascending: false })) || [];
 
     return success(rows.map(publicAdminAccount));
@@ -912,70 +948,57 @@ async function adminAccounts(event, method, body, query) {
   }
 
   const id = body.id ?? query.id;
-
   if (id === undefined || id === null || id === '') {
     throw new HttpError(400, 'A valid account ID is required.');
   }
 
-  const targetQuery = database
-    .from('admin_profiles')
-    .select('id,legacy_admin_id,role,active,username');
-
-  const target = typeof id === 'string' && id.includes('-')
-    ? unwrap(await targetQuery.eq('id', id).maybeSingle())
-    : unwrap(await targetQuery.eq('legacy_admin_id', positiveId(id)).maybeSingle());
+  const target = unwrap(await database
+    .from('admin_users')
+    .select('id,auth_user_id,role,active,username')
+    .eq('id', positiveId(id))
+    .maybeSingle());
 
   if (!target) {
     throw new HttpError(404, 'Administrator account not found.');
   }
 
   const role = body.role;
-
   if (!['admin', 'editor', 'viewer'].includes(role)) {
     throw new HttpError(400, 'Choose a valid administrator role.');
   }
 
   const active = booleanValue(body.active, 'Account status');
-
   if (active === null) {
     throw new HttpError(400, 'Account status must be active or inactive.');
   }
 
-  if (target.id === actor.auth_id && (!active || role !== 'admin')) {
+  if (String(target.auth_user_id) === String(actor.auth_id) && (!active || role !== 'admin')) {
     throw new HttpError(409, 'You cannot deactivate or demote your own account.');
   }
 
   if (target.role === 'admin' && target.active && (!active || role !== 'admin')) {
     const countResult = await database
-      .from('admin_profiles')
+      .from('admin_users')
       .select('id', { count: 'exact', head: true })
       .eq('role', 'admin')
       .eq('active', true);
 
     if (countResult.error) throw countResult.error;
-
     if ((countResult.count || 0) <= 1) {
       throw new HttpError(409, 'The last active administrator cannot be disabled or demoted.');
     }
   }
 
   unwrap(await database
-    .from('admin_profiles')
+    .from('admin_users')
     .update({ role, active })
     .eq('id', target.id)
     .select('id')
     .single());
 
-  await audit(actor, 'update', 'admin_account', target.legacy_admin_id, {
-    role,
-    active
-  });
+  await audit(actor, 'update', 'admin_account', target.id, { role, active });
 
-  return success({
-    id: target.legacy_admin_id ?? target.id,
-    role,
-    active
-  });
+  return success({ id: target.id, role, active });
 }
 
 function publicAdminAccount(profile) {
@@ -1050,7 +1073,7 @@ async function adminOverview(event) {
 
   const activity = unwrap(await database
     .from('audit_logs')
-    .select('action,entity_type,entity_id,created_at,admin:admin_profiles!audit_logs_admin_legacy_id_fkey(username)')
+    .select('action,entity_type,entity_id,created_at,admin:admin_users!audit_logs_admin_legacy_id_fkey(username)')
     .order('created_at', { ascending: false })
     .limit(8)) || [];
 

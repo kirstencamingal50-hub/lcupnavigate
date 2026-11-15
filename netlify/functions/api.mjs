@@ -15,7 +15,7 @@ function authRedirectUrl(path = '/pages/admin/login.html') {
 
 function publicProfile(profile) {
   return {
-    id: profile.legacy_admin_id ?? profile.id,
+    id: profile.id,
     full_name: profile.full_name,
     username: profile.username,
     email: profile.email,
@@ -25,7 +25,7 @@ function publicProfile(profile) {
   };
 }
 
-function normalizeAnnouncement(row) {
+function normalizeAnnouncement(row, includeStoragePath = false) {
   return {
     id: row.id,
     title: row.title,
@@ -37,6 +37,9 @@ function normalizeAnnouncement(row) {
     event_end: row.event_end,
     location_id: row.location_id,
     photo: row.image_path ? mediaUrl(row.image_path) : null,
+    // Admin editors need the original bucket/object path to preserve an image
+    // when saving other fields. Never expose this storage path to public visitors.
+    image_object_path: includeStoragePath ? row.image_path : null,
     createdAt: row.created_at,
     location: row.location?.name || null
   };
@@ -47,13 +50,16 @@ async function getDirectory() {
 
   const [locationResult, roomResult, photoResult, planResult] = await Promise.all([
     db.from('locations')
-      .select(`\n        *,\n        category:categories(name)\n      `)
+      .select(`
+        *,
+        category:categories(name)
+      `)
       .eq('active', true)
       .order('kind')
       .order('name'),
 
     db.from('rooms')
-      .select('*, category:categories(name)')
+      .select('*, building:locations!fk_rooms_building(name,active), category:categories(name)')
       .eq('active', true)
       .order('floor_number')
       .order('room_number'),
@@ -93,36 +99,51 @@ async function getDirectory() {
     }]);
   }
 
-  const locationRows = locations.map(row => ({
+  // Resolve the self-referencing parent building in JavaScript instead of
+  // relying on a PostgREST foreign-key relationship that may not exist in
+  // the deployed database schema cache.
+  const locationById = new Map(
+    locations.map(location => [String(location.id), location])
+  );
+
+  const locationRows = locations.map(row => {
+    const parentBuilding = row.parent_building_id == null
+      ? null
+      : locationById.get(String(row.parent_building_id)) || null;
+
+    return ({
     ...row,
     image_path: row.image_path ? mediaUrl(row.image_path) : null,
     image: row.image_path ? mediaUrl(row.image_path) : null,
     category: row.category?.name || null,
-    parent_building_name: row.parent_building?.name || null,
-    parentBuilding: row.parent_building || null,
+    parent_building_name: parentBuilding?.name || null,
+    parentBuilding: parentBuilding ? {
+      id: parentBuilding.id,
+      name: parentBuilding.name,
+      kind: parentBuilding.kind,
+      active: parentBuilding.active
+    } : null,
     accessibilityFeatures: row.kind === 'building' && Array.isArray(row.accessibility_features)
       ? row.accessibility_features
       : [],
     photos: locationPhotos.get(String(row.id)) || []
-  }));
+  });
+  });
 
-  const buildingById = new Map(
+  const activeBuildingIds = new Set(
     locations
-      .filter(row => row.kind === 'building' && row.active)
-      .map(row => [String(row.id), row])
+      .filter(row => row.kind === 'building')
+      .map(row => String(row.id))
   );
 
-  const activeBuildingIds = new Set(buildingById.keys());
-
   const rooms = roomRows
-    .filter(row => activeBuildingIds.has(String(row.building_id)))
+    .filter(row => row.building?.active)
     .map(row => ({
       ...row,
-      building: buildingById.get(String(row.building_id)),
       buildingId: row.building_id,
       floorNumber: row.floor_number,
-      building_name: buildingById.get(String(row.building_id))?.name || null,
-      buildingName: buildingById.get(String(row.building_id))?.name || null,
+      building_name: row.building?.name || null,
+      buildingName: row.building?.name || null,
       category: row.category?.name || null,
       image_path: row.image_path ? mediaUrl(row.image_path) : null,
       image: row.image_path ? mediaUrl(row.image_path) : null,
@@ -268,7 +289,7 @@ async function getRoutes(availableOnly) {
   const db = adminDatabase();
 
   let query = db.from('campus_routes')
-    .select('*, start_marker:map_markers!campus_routes_start_marker_id_fkey(id,location_id,x,y,location:locations(name,active)), destination_marker:map_markers!campus_routes_destination_marker_id_fkey(id,location_id,x,y,location:locations(name,active))')
+    .select('*, start_marker:map_markers!campus_routes_start_marker_id_fkey(id,location_id,x,y,location:locations!fk_marker_location(name,active)), destination_marker:map_markers!campus_routes_destination_marker_id_fkey(id,location_id,x,y,location:locations!fk_marker_location(name,active))')
     .order('updated_at', { ascending: false })
     .order('id', { ascending: false });
 
@@ -338,7 +359,7 @@ async function authResource(event, resource, method, body) {
   }
 
   if (resource === 'auth/login-status' && method === 'GET') {
-    const result = await db.from('admin_profiles')
+    const result = await db.from('admin_users')
       .select('id', { count: 'exact', head: true })
       .eq('role', 'admin')
       .eq('active', true);
@@ -369,7 +390,7 @@ async function authResource(event, resource, method, body) {
     if (method === 'GET') {
       const setupSecret = process.env.INITIAL_ADMIN_SETUP_KEY || '';
 
-      const admins = await db.from('admin_profiles')
+      const admins = await db.from('admin_users')
         .select('id', { count: 'exact', head: true })
         .eq('role', 'admin')
         .eq('active', true);
@@ -378,7 +399,7 @@ async function authResource(event, resource, method, body) {
 
       const state = unwrap(await db.from('admin_setup_state')
         .select('completed_at')
-        .eq('id', true)
+        .eq('id', 1)
         .single());
 
       return success({
@@ -486,7 +507,7 @@ async function authResource(event, resource, method, body) {
     let email = username;
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username)) {
-      const profile = unwrap(await db.from('admin_profiles')
+      const profile = unwrap(await db.from('admin_users')
         .select('email')
         .eq('username', username)
         .maybeSingle());
@@ -507,9 +528,9 @@ async function authResource(event, resource, method, body) {
       throw new HttpError(401, 'Invalid username/email or password.');
     }
 
-    const profile = unwrap(await db.from('admin_profiles')
-      .select('id,legacy_admin_id,full_name,username,email,role,active,created_at')
-      .eq('id', data.user.id)
+    const profile = unwrap(await db.from('admin_users')
+      .select('id,auth_user_id,full_name,username,email,role,active,created_at')
+      .eq('auth_user_id', data.user.id)
       .maybeSingle());
 
     if (!profile || !profile.active) {
@@ -770,9 +791,9 @@ async function authResource(event, resource, method, body) {
       throw new HttpError(401, 'Google sign-in could not be verified.');
     }
 
-    const profile = unwrap(await db.from('admin_profiles')
-      .select('id,legacy_admin_id,full_name,username,email,role,active,created_at')
-      .eq('id', data.user.id)
+    const profile = unwrap(await db.from('admin_users')
+      .select('id,auth_user_id,full_name,username,email,role,active,created_at')
+      .eq('auth_user_id', data.user.id)
       .maybeSingle());
 
     if (!profile || !profile.active) {
@@ -790,9 +811,9 @@ async function authResource(event, resource, method, body) {
   if (resource === 'auth/profile' && method === 'GET') {
     const user = await currentUser(event, true);
 
-    const profile = unwrap(await db.from('admin_profiles')
+    const profile = unwrap(await db.from('admin_users')
       .select('id,full_name,username,email,role')
-      .eq('id', user.auth_id)
+      .eq('auth_user_id', user.auth_id)
       .single());
 
     return success(profile);
@@ -815,10 +836,10 @@ async function authResource(event, resource, method, body) {
 
     const changedEmail = email !== user.email;
 
-    const usernameOwner = unwrap(await db.from('admin_profiles')
+    const usernameOwner = unwrap(await db.from('admin_users')
       .select('id')
       .eq('username', username)
-      .neq('id', user.auth_id)
+      .neq('auth_user_id', user.auth_id)
       .maybeSingle());
 
     if (usernameOwner) {
@@ -846,12 +867,12 @@ async function authResource(event, resource, method, body) {
       }
     }
 
-    const profileUpdate = await db.from('admin_profiles')
+    const profileUpdate = await db.from('admin_users')
       .update({
         full_name: fullName,
         username
       })
-      .eq('id', user.auth_id)
+      .eq('auth_user_id', user.auth_id)
       .select('id')
       .single();
 
@@ -988,7 +1009,7 @@ async function publicResource(event, resource, method, query) {
     }
 
     return success(
-      (unwrap(await request) || []).map(normalizeAnnouncement)
+      (unwrap(await request) || []).map(row => normalizeAnnouncement(row, isAdmin))
     );
   }
 
@@ -1032,6 +1053,9 @@ async function publicResource(event, resource, method, query) {
     return success(
       (unwrap(await request) || []).map(row => ({
         ...row,
+        // Keep the storage object path available to signed-in admins so edits
+        // can preserve the existing photo without resubmitting its public URL.
+        image_object_path: user ? row.image_path : null,
         image_path: row.image_path ? mediaUrl(row.image_path) : null
       }))
     );
@@ -1041,7 +1065,7 @@ async function publicResource(event, resource, method, query) {
     const user = await currentUser(event, false, 'viewer');
 
     let request = db.from('rooms')
-      .select('*, building:locations!rooms_building_id_fkey(name,active)')
+      .select('*, building:locations!fk_rooms_building(name,active)')
       .order('floor_number')
       .order('room_number');
 

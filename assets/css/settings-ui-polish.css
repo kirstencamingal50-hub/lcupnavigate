@@ -1,0 +1,21 @@
+/* NaviGATE student / guest settings refinements */
+.settings-main { max-width:1040px; padding-top:34px; }
+.settings-page-heading { margin-bottom:24px; }
+.settings-page-heading h1 { margin:8px 0 6px; color:#172b45; font-size:clamp(28px,4vw,38px); font-weight:900; letter-spacing:-.035em; }
+.settings-page-heading > p { max-width:680px; color:#718096; font-size:13px; line-height:1.65; }
+.settings-page-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; align-items:start; }
+.settings-panel { min-width:0; padding:22px; border:1px solid #e0e7f0; border-radius:16px; background:#fff; box-shadow:0 5px 18px rgba(20,42,72,.045); }
+.settings-panel h2 { margin:0; color:#1b2e49; font-size:15px; font-weight:850; }
+.settings-panel > p { margin:5px 0 16px; color:#748399; font-size:11px; line-height:1.5; }
+.settings-panel > label:not(.settings-check) { display:grid; gap:6px; margin-top:13px; color:#4c5d74; font-size:11px; font-weight:750; }
+.settings-panel select,.settings-panel input:not([type=checkbox]),.settings-panel textarea { width:100%; min-width:0; min-height:40px; padding:9px 11px; border:1px solid #d5deea; border-radius:9px; color:#20334d; background:#fff; font-size:12px; }
+.settings-panel :is(select,input,textarea):focus { outline:3px solid rgba(37,99,235,.14); border-color:#6b9be8; }
+.settings-panel .settings-check { display:flex; align-items:center; gap:9px; margin-top:14px; color:#4c5d74; font-size:11px; font-weight:650; }
+.settings-panel .settings-check input { width:16px; height:16px; accent-color:#2563eb; }
+.settings-note { padding:10px 12px; border-radius:9px; color:#60738d !important; background:#f4f7fb; }
+#visitor-settings-status { min-height:18px; margin-top:14px; color:#1763ae; font-size:11px; }
+@media(max-width:720px) { .settings-page-grid { grid-template-columns:minmax(0,1fr); } .settings-panel { padding:17px; } .settings-main { padding-top:24px; } }
+html[data-theme="dark"] .settings-panel { border-color:#344256; background:#1c2738; }
+html[data-theme="dark"] .settings-page-heading h1,html[data-theme="dark"] .settings-panel h2 { color:#f1f5fb; }
+html[data-theme="dark"] .settings-panel > label:not(.settings-check),html[data-theme="dark"] .settings-panel .settings-check { color:#c1ccda; }
+html[data-theme="dark"] .settings-panel select,html[data-theme="dark"] .settings-panel input:not([type=checkbox]),html[data-theme="dark"] .settings-panel textarea { color:#e7edf5; border-color:#46566d; background:#172235; }
