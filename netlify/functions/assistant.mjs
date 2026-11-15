@@ -58,7 +58,7 @@ function publicAnswer(question, matches) {
   if (!matches.length) {
     return 'I could not find a matching campus record. Try the exact building, department, office, room, or facility name, or browse the Campus Directory.';
   }
-  const placeRecords = matches.filter(item => ['building', 'facility', 'room', 'location'].includes(item.record_type));
+  const placeRecords = matches.filter(item => ['building', 'facility', 'room', 'location', 'department'].includes(item.record_type));
   const lines = matches.slice(0, 5).map(item => {
     const location = [item.building_name, item.floor_number != null ? `Floor ${item.floor_number}` : null, item.room_number ? `Room ${item.room_number}` : null].filter(Boolean).join(' · ');
     const details = [clean(item.description), clean(item.service_hours) ? `Hours: ${clean(item.service_hours)}` : null, clean(item.contact_email) ? `Email: ${clean(item.contact_email)}` : null].filter(Boolean);
