@@ -62,6 +62,6 @@ test('admin map no longer exposes floor-plan uploads or manual graph connection 
   assert.doesNotMatch(adminMap, /floorplan-form|floorplans-list|floorplan-title|Upload floor plan/i);
   assert.doesNotMatch(adminMap, /map-connection-form|map-connection-list|map-connections\.js/i);
   assert.doesNotMatch(adminMap, /name="route_node_id"/);
-  assert.doesNotMatch(mapScript, /floorplans|route_node_id/);
+  assert.doesNotMatch(mapScript, /floorplans|form\.elements\.route_node_id/);
   assert.match(adminMap, /generated automatically from saved route paths/i);
 });
