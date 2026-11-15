@@ -109,13 +109,26 @@ function renderSharedUI() {
   const guestChoice = document.querySelector('[data-role-choice="student-guest"]');
   const roleSplash = document.getElementById('role-splash');
   if (guestChoice && roleSplash) {
-    const dismissRoleSplash = () => {
+    const dismissRoleSplash = ({ focus = true } = {}) => {
       roleSplash.classList.add('role-splash-dismissed');
       roleSplash.setAttribute('aria-hidden', 'true');
       roleSplash.setAttribute('inert', '');
-      document.getElementById('welcome-title')?.focus({ preventScroll: true });
+      if (focus) document.getElementById('welcome-title')?.focus({ preventScroll: true });
     };
-    guestChoice.addEventListener('click', dismissRoleSplash);
+    // Remember the public Student / Guest choice so Home navigation returns
+    // directly to the homepage instead of showing the role selector again.
+    try {
+      if (localStorage.getItem('navigatorate.public-access-selected') === 'true') {
+        dismissRoleSplash({ focus: false });
+      }
+    } catch (error) {
+      console.warn('The public access choice could not be restored.', error);
+    }
+    guestChoice.addEventListener('click', () => {
+      try { localStorage.setItem('navigatorate.public-access-selected', 'true'); }
+      catch (error) { console.warn('The public access choice could not be saved.', error); }
+      dismissRoleSplash();
+    });
   }
 }
 
