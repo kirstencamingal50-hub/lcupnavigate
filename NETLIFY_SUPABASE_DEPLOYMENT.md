@@ -16,6 +16,8 @@ The function API currently covers public directory/map/announcement reads; admin
 - `supabase/migrations/20261113230000_initial_navigate_schema.sql` creates the PostgreSQL data model, RLS policies, auth profile triggers, one-time first-admin RPC, and private Storage buckets.
 - `supabase/migrations/20261115000000_align_admin_users_and_add_missing_resources.sql` connects Supabase Auth to the existing `admin_users` table and adds missing API resources without dropping existing campus data.
 - `supabase/migrations/20261114230000_route_save_rpc.sql` adds the transactional route graph save operation.
+- `supabase/migrations/20261115010000_prevent_duplicate_admin_usernames.sql` prevents duplicate administrator usernames.
+- `supabase/migrations/20261115020000_prevent_duplicate_canonical_map_markers.sql` links markers to canonical campus locations and prevents duplicate active pins for alternate names of the same place.
 
 Keep the original PHP and MySQL files in the repository. Do not copy `.env`, `vendor/`, or any database credentials to Netlify's published directory.
 
@@ -23,7 +25,7 @@ Keep the original PHP and MySQL files in the repository. Do not copy `.env`, `ve
 
 1. **Back up the original system.** Export the real MySQL schema and records and inventory/copy the existing image and floor-plan files. Keep the original database and uploads unchanged until the migration is verified.
 2. **Prepare the data mapping.** The Supabase schema preserves the campus entities and relationships, but no real data-import script has been run. Verify ID mappings and relationships for categories, locations, rooms, markers/nodes/connections, routes, announcements, admin accounts, and file references before importing. Do not import prototype seed data in place of production records.
-3. **Prepare the Supabase schema.** For a fresh Supabase project, apply all three SQL migrations in filename order: initial schema, `admin_users` alignment, then route-save RPC. For an existing project that already has the original NaviGATE tables, do not rerun the initial schema migration; apply only the `20261115000000_align_admin_users_and_add_missing_resources.sql` migration and route-save RPC migration if they have not already been applied. Check Supabase migration history before running anything again. The alignment migration is additive and preserves existing campus records. The initial migration creates the private `campus-photos` and `floor-plans` buckets and their editor-only object policies.
+3. **Prepare the Supabase schema.** For a fresh Supabase project, apply all five SQL migrations in filename order: initial schema, route-save RPC, `admin_users` alignment, duplicate-admin-username protection, then canonical map-marker protection. For an existing project that already has the original NaviGATE tables, do not rerun the initial schema migration; apply only the additive migrations that are still missing from migration history. Check Supabase migration history before running anything again. These migrations preserve existing campus records. The canonical-marker migration expects any existing duplicate active pins to be resolved first; it stops rather than deleting or merging marker records.
 4. **Configure Supabase Auth.**
    - Set the site URL to the deployed HTTPS origin.
    - Add `https://YOUR-SITE/pages/admin/login.html` to the Auth redirect URL allow-list. Add the Netlify deploy-preview domain only if previews need authentication.
