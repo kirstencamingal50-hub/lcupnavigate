@@ -607,12 +607,26 @@ async function mapMarkers(event, method, body, query) {
     ? positiveId(body.id ?? query.id)
     : null;
 
+  // Every mapped campus location receives one stable navigation node automatically.
+  // The unique node_key makes retries and marker edits reuse the same node.
+  const node = unwrap(await database
+    .from('map_nodes')
+    .upsert({
+      node_key: `location-${locationId}`,
+      x,
+      y,
+      floor_number: 0,
+      active: true
+    }, { onConflict: 'node_key' })
+    .select('id')
+    .single());
+
   const fields = {
     location_id: locationId,
-    route_node_id: nullableId(body.route_node_id, 'Route node ID'),
+    route_node_id: node.id,
     x,
     y,
-    floor_number: Math.max(0, Number(body.floor_number) || 0),
+    floor_number: 0,
     map_key: optionalText(body.map_key, 'Map key', 40) || 'campus',
     accessibility_status: booleanValue(body.accessibility_status, 'Accessibility status'),
     active: true
