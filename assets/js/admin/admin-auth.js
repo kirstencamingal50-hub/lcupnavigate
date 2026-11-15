@@ -51,6 +51,28 @@
     const approvalNote = document.querySelector('.admin-auth-approval-note');
     const loginStatus = statusFor('login-status');
 
+    // Register login submission before any network request or await. This prevents
+    // the browser's default GET submission from putting credentials in the URL.
+    loginForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      if (!loginForm.reportValidity()) return;
+      const button = loginForm.querySelector('[type="submit"]');
+      button.disabled = true;
+      loginStatus.textContent = 'Signing in…';
+      try {
+        const user = await window.CampusApi.request('auth/login', {
+          method: 'POST',
+          body: { username: loginForm.elements.username.value.trim(), password: loginForm.elements.password.value }
+        });
+        if (!user.user) throw new Error('Sign-in did not return an administrator session.');
+        location.replace('dashboard.html');
+      } catch (error) {
+        loginStatus.textContent = error.message;
+        button.disabled = false;
+      }
+    });
+
+
     const setupButton = statusFor('show-admin-setup');
     const setupForm = statusFor('admin-setup-form');
     const setupStatus = statusFor('admin-setup-status');
@@ -413,24 +435,6 @@
       loginStatus.textContent = error.message;
       loginForm.querySelectorAll('input, button[type="submit"]').forEach(control => { control.disabled = true; });
     }
-    loginForm.addEventListener('submit', async event => {
-      event.preventDefault();
-      if (!loginForm.reportValidity()) return;
-      const button = loginForm.querySelector('[type="submit"]');
-      button.disabled = true;
-      loginStatus.textContent = 'Signing in…';
-      try {
-        const user = await window.CampusApi.request('auth/login', {
-          method: 'POST',
-          body: { username: loginForm.elements.username.value.trim(), password: loginForm.elements.password.value }
-        });
-        if (!user.user) throw new Error('Sign-in did not return an administrator session.');
-        location.replace('dashboard.html');
-      } catch (error) {
-        loginStatus.textContent = error.message;
-        button.disabled = false;
-      }
-    });
 
     try {
       const config = await window.CampusApi.get('auth/google-config');
