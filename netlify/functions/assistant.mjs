@@ -111,7 +111,7 @@ export const handler = async event => {
     const question = requiredText(body.question, 'Question', 500);
     const matches = await campusContext(question);
     const result = await answer(question, matches);
-    const locations = matches.filter(item => ['building', 'facility', 'room', 'location'].includes(item.record_type)).slice(0, 6).map(item => ({
+    const locations = matches.filter(item => ['building', 'facility', 'room', 'location', 'department'].includes(item.record_type)).slice(0, 6).map(item => {\n      const targetName = item.record_type === 'department' ? String(item.building_name || '').split(',')[0].trim() : item.name;\n      return ({
       id: item.id,
       name: item.name,
       kind: item.record_type,
