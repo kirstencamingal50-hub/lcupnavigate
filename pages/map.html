@@ -164,7 +164,31 @@
       savedRoutes = await window.CampusApi.get('routes/available');
     }
     catch (error) { document.getElementById('routeInfo').textContent = error.message; document.getElementById('routeNotice').textContent = 'Map data could not be loaded from the campus database.'; document.getElementById('routeNotice').classList.remove('hidden'); throw error; }
-    const mapPins = storedMap.markers.map(row => {const record=(storedDirectory.locations||[]).find(item=>String(item.id)===String(row.location_id))||{};return { ...record,id:String(row.location_id), markerId:Number(row.id), num:null, name:row.name, category:row.category, kind:row.kind, cat:row.kind, px:[Number(row.x),Number(row.y)], floor:Number(row.floor_number||0), routeNodeId:row.route_node_id?`n:${row.route_node_id}`:null, accessibilityValue:row.accessibility_value, description:row.description };});
+    const directoryLocations = storedDirectory.locations || [];
+    const mapPins = storedMap.markers.map(row => {
+      const record = directoryLocations.find(item => String(item.id) === String(row.location_id)) || {};
+      const canonicalId = String(row.map_location_id ?? row.canonical_location_id ?? row.location_id);
+      const aliases = directoryLocations
+        .filter(item => String(item.map_location_id ?? item.canonical_location_id ?? item.id) === canonicalId)
+        .map(item => item.name)
+        .filter(Boolean);
+      return {
+        ...record,
+        id: canonicalId,
+        markerId: Number(row.id),
+        num: null,
+        name: row.name || record.canonical_location_name || record.name,
+        searchAliases: [...new Set(aliases)],
+        category: row.category,
+        kind: row.kind,
+        cat: row.kind,
+        px: [Number(row.x), Number(row.y)],
+        floor: Number(row.floor_number || 0),
+        routeNodeId: row.route_node_id ? `n:${row.route_node_id}` : null,
+        accessibilityValue: row.accessibility_value,
+        description: row.description
+      };
+    });
     const roomLocations = (storedDirectory.rooms || []).flatMap(room => {
       const building = mapPins.find(loc => loc.id === String(room.buildingId));
       if (!building) return [];
@@ -433,7 +457,7 @@
     const closeSuggestions = list => { list.classList.add('hidden'); list.closest('[class~="relative"]')?.querySelector('[role="combobox"]')?.setAttribute('aria-expanded','false'); };
     const renderSuggestions = (control, open = true) => {
       const query = control.input.value.trim().toLocaleLowerCase();
-      const matches = locations.filter(loc => `${loc.name} ${loc.category || ''} ${loc.buildingName || ''} ${loc.kind || ''} ${loc.description || ''} ${loc.functionDescription || ''} ${loc.building_number || ''} ${loc.roomNumber || ''} ${loc.floor || ''} ${loc.floorLabel || ''} ${loc.departmentName || ''} ${loc.departmentHead || ''} ${loc.contactInfo || ''} ${loc.contactEmail || ''} ${loc.contactPhone || ''} ${loc.services || ''} ${loc.nearbyLandmarks || ''}`.toLocaleLowerCase().includes(query)).slice(0, 50);
+      const matches = locations.filter(loc => `${loc.name} ${(loc.searchAliases || []).join(' ')} ${loc.category || ''} ${loc.buildingName || ''} ${loc.kind || ''} ${loc.description || ''} ${loc.functionDescription || ''} ${loc.building_number || ''} ${loc.roomNumber || ''} ${loc.floor || ''} ${loc.floorLabel || ''} ${loc.departmentName || ''} ${loc.departmentHead || ''} ${loc.contactInfo || ''} ${loc.contactEmail || ''} ${loc.contactPhone || ''} ${loc.services || ''} ${loc.nearbyLandmarks || ''}`.toLocaleLowerCase().includes(query)).slice(0, 50);
       control.list.innerHTML = matches.length ? matches.map(loc => {
         const label = labelFor(routeId(loc));
         const alreadySelected = control.other.value === routeId(loc);
@@ -713,14 +737,20 @@
       openPin(loc);
     });
 
-    const initialSearch = new URLSearchParams(location.search).get('search')?.trim().toLowerCase();
-    if (initialSearch) {
-      const match = locations.find(loc => `${loc.name} ${loc.buildingName || ''} ${loc.building_number || ''} ${loc.roomNumber || ''} ${loc.floorLabel || ''} ${loc.departmentName || ''} ${loc.contactEmail || ''} ${loc.services || ''} ${loc.nearbyLandmarks || ''}`.toLocaleLowerCase().includes(initialSearch));
-      if (match) {
-        searchBox.value = match.name;
-        map.setView(toLatLng(match.px), 1, { animate: false });
-        openPin(match);
-      }
+    const mapParams = new URLSearchParams(location.search);
+    const requestedLocationId = mapParams.get('locationId');
+    const initialSearch = mapParams.get('search')?.trim().toLowerCase();
+    const initialMatch = requestedLocationId
+      ? locations.find(loc => String(loc.id) === String(requestedLocationId))
+      : initialSearch
+        ? locations.find(loc => `${loc.name} ${(loc.searchAliases || []).join(' ')} ${loc.buildingName || ''} ${loc.building_number || ''} ${loc.roomNumber || ''} ${loc.floorLabel || ''} ${loc.departmentName || ''} ${loc.contactEmail || ''} ${loc.services || ''} ${loc.nearbyLandmarks || ''}`.toLocaleLowerCase().includes(initialSearch))
+        : null;
+    if (initialMatch) {
+      searchBox.value = initialSearch && (initialMatch.searchAliases || []).some(alias => alias.toLocaleLowerCase() === initialSearch)
+        ? initialSearch
+        : initialMatch.name;
+      map.setView(toLatLng(initialMatch.px), 1, { animate: false });
+      openPin(initialMatch);
     }
 
     clearRoute();
