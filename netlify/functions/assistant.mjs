@@ -111,17 +111,25 @@ export const handler = async event => {
     const question = requiredText(body.question, 'Question', 500);
     const matches = await campusContext(question);
     const result = await answer(question, matches);
-    const locations = matches.filter(item => ['building', 'facility', 'room', 'location', 'department'].includes(item.record_type)).slice(0, 6).map(item => {\n      const targetName = item.record_type === 'department' ? String(item.building_name || '').split(',')[0].trim() : item.name;\n      return ({
-      id: item.id,
-      name: item.name,
-      kind: item.record_type,
-      building: item.building_name || null,
-      floor: item.floor_number ?? null,
-      room: item.room_number || null,
-      description: item.description || null,
-      image: item.image_path || null,
-      map_url: item.name ? `/pages/map.html?search=${encodeURIComponent(item.name)}` : null
-    }));
+    const locations = matches
+      .filter(item => ['building', 'facility', 'room', 'location', 'department'].includes(item.record_type))
+      .slice(0, 6)
+      .map(item => {
+        const targetName = item.record_type === 'department'
+          ? String(item.building_name || '').split(',')[0].trim()
+          : item.name;
+        return {
+          id: item.id,
+          name: item.name,
+          kind: item.record_type,
+          building: item.building_name || null,
+          floor: item.floor_number ?? null,
+          room: item.room_number || null,
+          description: item.description || null,
+          image: item.image_path || null,
+          map_url: targetName ? `/pages/map.html?search=${encodeURIComponent(targetName)}` : null
+        };
+      });
     return success({ answer: result.answer, mode: result.mode, results: locations });
   } catch (error) {
     return errorResponse(error);
