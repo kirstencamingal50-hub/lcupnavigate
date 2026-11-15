@@ -165,7 +165,15 @@
     }
     catch (error) { document.getElementById('routeInfo').textContent = error.message; document.getElementById('routeNotice').textContent = 'Map data could not be loaded from the campus database.'; document.getElementById('routeNotice').classList.remove('hidden'); throw error; }
     const directoryLocations = storedDirectory.locations || [];
-    const mapPins = storedMap.markers.map(row => {
+    const seenCanonicalLocations = new Set();
+    const preferredMarkers = [...storedMap.markers].sort((a, b) => {
+      const aCanonical = String(a.map_location_id ?? a.canonical_location_id ?? a.location_id);
+      const bCanonical = String(b.map_location_id ?? b.canonical_location_id ?? b.location_id);
+      const aIsPrimary = String(a.location_id) === aCanonical;
+      const bIsPrimary = String(b.location_id) === bCanonical;
+      return Number(bIsPrimary) - Number(aIsPrimary);
+    });
+    const mapPins = preferredMarkers.map(row => {
       const record = directoryLocations.find(item => String(item.id) === String(row.location_id)) || {};
       const canonicalId = String(row.map_location_id ?? row.canonical_location_id ?? row.location_id);
       const aliases = directoryLocations
@@ -188,6 +196,10 @@
         accessibilityValue: row.accessibility_value,
         description: row.description
       };
+    }).filter(pin => {
+      if (seenCanonicalLocations.has(pin.id)) return false;
+      seenCanonicalLocations.add(pin.id);
+      return true;
     });
     const roomLocations = (storedDirectory.rooms || []).flatMap(room => {
       const building = mapPins.find(loc => loc.id === String(room.buildingId));
