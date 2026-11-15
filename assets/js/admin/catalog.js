@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const facilityForm=document.getElementById('add-facility-form');
   const roomForm=document.getElementById('add-classroom-form');
   if(!categoryPage&&!buildingForm&&!facilityForm&&!roomForm)return;
-  let categories=[],locations=[],rooms=[],pendingEdit=null;
+  let categories=[],locations=[],rooms=[],pendingEdit=null,locationLoadError=null,roomLoadError=null;
   const searchTerms={building:'',facility:'',room:''};
   const categoryFilters={building:'',facility:'',room:''};
   const sortOrders={building:'name-asc',facility:'name-asc',room:'name-asc'};
@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const pageSize=12;
   const normalizeKind=value=>String(value??'').trim().toLowerCase().replace(/[ _-]+/g,' ');
   const isLocationKind=(item,kind)=>normalizeKind(item?.kind)===normalizeKind(kind);
-  const refresh=async()=>{const [locationResult,roomResult,categoryResult,directoryResult]=await Promise.allSettled([CampusApi.get('locations'),CampusApi.get('rooms'),CampusApi.get('categories'),CampusApi.get('directory')]);if(locationResult.status==='rejected')throw locationResult.reason;if(roomResult.status==='rejected')throw roomResult.reason;const locationRows=Array.isArray(locationResult.value)?locationResult.value:[];const roomRows=Array.isArray(roomResult.value)?roomResult.value:[];categories=categoryResult.status==='fulfilled'&&Array.isArray(categoryResult.value)?categoryResult.value:[];const directory=directoryResult.status==='fulfilled'&&directoryResult.value?directoryResult.value:{locations:[],rooms:[]};locations=locationRows.map(item=>({...item,photos:(directory.locations||[]).find(record=>String(record.id)===String(item.id))?.photos||[]}));rooms=roomRows.map(item=>({...item,photos:(directory.rooms||[]).find(record=>String(record.id)===String(item.id))?.photos||[]}));if(categoryResult.status==='rejected')console.warn('NaviGATE categories could not be loaded; campus records will still be displayed.',categoryResult.reason);if(directoryResult.status==='rejected')console.warn('NaviGATE photo directory could not be loaded; campus records will still be displayed.',directoryResult.reason);};
+  const refresh=async()=>{const [locationResult,roomResult,categoryResult,directoryResult]=await Promise.allSettled([CampusApi.get('locations'),CampusApi.get('rooms'),CampusApi.get('categories'),CampusApi.get('directory')]);locationLoadError=locationResult.status==='rejected'?locationResult.reason:null;roomLoadError=roomResult.status==='rejected'?roomResult.reason:null;const locationRows=locationResult.status==='fulfilled'&&Array.isArray(locationResult.value)?locationResult.value:[];const roomRows=roomResult.status==='fulfilled'&&Array.isArray(roomResult.value)?roomResult.value:[];categories=categoryResult.status==='fulfilled'&&Array.isArray(categoryResult.value)?categoryResult.value:[];const directory=directoryResult.status==='fulfilled'&&directoryResult.value?directoryResult.value:{locations:[],rooms:[]};locations=locationRows.map(item=>({...item,photos:(directory.locations||[]).find(record=>String(record.id)===String(item.id))?.photos||[]}));rooms=roomRows.map(item=>({...item,photos:(directory.rooms||[]).find(record=>String(record.id)===String(item.id))?.photos||[]}));if(locationLoadError)console.error('NaviGATE locations request failed:',locationLoadError);if(roomLoadError)console.error('NaviGATE rooms request failed:',roomLoadError);if(categoryResult.status==='rejected')console.warn('NaviGATE categories could not be loaded.',categoryResult.reason);if(directoryResult.status==='rejected')console.warn('NaviGATE photo directory could not be loaded.',directoryResult.reason);};
   const statusNode=()=>document.querySelector('#building-form-status,#facility-form-status,#classroom-form-status,#category-status');
   const status=message=>{const node=statusNode();if(node)node.textContent=message;};
   const notify=(message,tone='success')=>window.AdminUI?.toast(message,tone);
@@ -201,7 +201,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     </article>`;
   }).join('')}</div>`;
   function renderLocations(kind){
-    const target=document.getElementById(kind==='building'?'buildings-list':'facilities-list');if(!target)return;
+    const target=document.getElementById(kind==='building'?'buildings-list':'facilities-list');if(!target)return;if(locationLoadError){target.innerHTML=`<div class="p-5 text-center text-sm text-red-700"><strong>Could not load ${kind==='building'?'buildings':'facilities'}.</strong><p class="mt-1">${esc(locationLoadError.message||'The campus API request failed.')}</p><button type="button" class="mt-3 underline" onclick="location.reload()">Retry</button></div>`;return;}
     const term=searchTerms[kind].toLocaleLowerCase();const all=locations.filter(item=>isLocationKind(item,kind));const filtered=all.filter(item=>`${item.name} ${item.category||''} ${item.building_number||''}`.toLocaleLowerCase().includes(term)&&(!categoryFilters[kind]||item.category===categoryFilters[kind])).sort((a,b)=>sortOrders[kind]==='name-desc'?b.name.localeCompare(a.name):a.name.localeCompare(b.name));
     pageNumbers[kind]=Math.max(0,Math.min(pageNumbers[kind],Math.max(0,Math.ceil(filtered.length/pageSize)-1)));const rows=filtered.slice(pageNumbers[kind]*pageSize,(pageNumbers[kind]+1)*pageSize);
     target.innerHTML=listToolbar(kind,kind==='building'?'Buildings':'Facilities',filtered.length)+(rows.length?catalogCards(rows,kind):emptyState(kind==='building'?'buildings':'facilities',!!term||!!categoryFilters[kind]))+pagination(kind,filtered.length);
@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
   function renderRooms(){
-    const target=document.getElementById('classrooms-list');if(!target)return;const term=searchTerms.room.toLocaleLowerCase();
+    const target=document.getElementById('classrooms-list');if(!target)return;if(roomLoadError){target.innerHTML=`<div class="p-5 text-center text-sm text-red-700"><strong>Could not load rooms and classrooms.</strong><p class="mt-1">${esc(roomLoadError.message||'The campus API request failed.')}</p><button type="button" class="mt-3 underline" onclick="location.reload()">Retry</button></div>`;return;}const term=searchTerms.room.toLocaleLowerCase();
     const filtered=rooms.filter(room=>`${room.name} ${room.room_number} ${room.building_name} ${room.floor_label||''}`.toLocaleLowerCase().includes(term)&&(!categoryFilters.room||room.category===categoryFilters.room)).sort((a,b)=>sortOrders.room==='name-desc'?b.name.localeCompare(a.name):a.name.localeCompare(b.name));
     pageNumbers.room=Math.max(0,Math.min(pageNumbers.room,Math.max(0,Math.ceil(filtered.length/pageSize)-1)));const rows=filtered.slice(pageNumbers.room*pageSize,(pageNumbers.room+1)*pageSize);
     target.innerHTML=listToolbar('room','Rooms and classrooms',filtered.length)+(rows.length?catalogCards(rows,'room'):emptyState('rooms',!!term||!!categoryFilters.room))+pagination('room',filtered.length);
