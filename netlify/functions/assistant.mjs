@@ -33,8 +33,8 @@ async function campusContext(question) {
   const rooms = unwrap(roomResult) || [];
   const announcements = unwrap(announcementResult) || [];
   const routes = unwrap(routeResult) || [];
-  const departments = unwrap(arguments[0]) || [];
-  const departmentAssignments = unwrap(arguments[1]) || [];
+  const departments = unwrap(departmentResult) || [];
+  const departmentAssignments = unwrap(departmentLocationResult) || [];
   const byId = new Map(locations.map(item => [String(item.id), item]));
   const records = [
     ...locations.map(item => ({ ...item, building_name: item.parent_building_id ? byId.get(String(item.parent_building_id))?.name : (item.kind === 'building' ? item.name : null), record_type: item.kind || 'location' })),
