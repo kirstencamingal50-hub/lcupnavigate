@@ -10,8 +10,8 @@ test('admin login never falls back to a GET that exposes credentials in the URL'
   const form = html.match(/<form id="login-form"[^>]*>/)?.[0];
 
   assert.ok(form, 'login form exists');
-  assert.match(form, /\\bmethod="post"/i);
-  assert.doesNotMatch(form, /\\bmethod="get"/i);
+  assert.match(form, /\bmethod="post"/i);
+  assert.doesNotMatch(form, /\bmethod="get"/i);
 
   const handlerIndex = auth.indexOf("loginForm.addEventListener('submit'");
   const bootstrapIndex = auth.indexOf("const state = await window.CampusApi.get('admin/bootstrap')");
@@ -25,6 +25,6 @@ test('admin login never falls back to a GET that exposes credentials in the URL'
 
   const handlerEnd = auth.indexOf('    });', handlerIndex);
   const handler = auth.slice(handlerIndex, handlerEnd + 7);
-  assert.match(handler, /event\\.preventDefault\\(\\)/);
-  assert.match(handler, /method:\\s*'POST'/);
+  assert.match(handler, /event\.preventDefault\(\)/);
+  assert.match(handler, /method:\s*'POST'/);
 });
