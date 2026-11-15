@@ -30,6 +30,59 @@ async function listDepartments() {
   }));
 }
 
+async function validateAssignments(database, locations) {
+  if (!Array.isArray(locations) || locations.length > 100) {
+    throw new HttpError(400, 'Provide a list of department building assignments (up to 100).');
+  }
+
+  const assignments = [];
+  for (const item of locations) {
+    const buildingId = Number(item?.building_id);
+    if (!Number.isSafeInteger(buildingId) || buildingId < 1) {
+      throw new HttpError(400, 'Each assignment needs a valid building.');
+    }
+
+    const building = unwrap(await database.from('locations')
+      .select('id,kind,active')
+      .eq('id', buildingId)
+      .maybeSingle());
+
+    if (!building || building.kind !== 'building' || !building.active) {
+      throw new HttpError(400, 'Department assignments must reference active campus buildings.');
+    }
+
+    const roomId = item.room_id ? Number(item.room_id) : null;
+    if (roomId !== null) {
+      if (!Number.isSafeInteger(roomId) || roomId < 1) {
+        throw new HttpError(400, 'Select a valid room for the department assignment.');
+      }
+      const room = unwrap(await database.from('rooms')
+        .select('id,building_id,active')
+        .eq('id', roomId)
+        .maybeSingle());
+      if (!room || !room.active || String(room.building_id) !== String(buildingId)) {
+        throw new HttpError(400, 'The selected room must belong to the selected building.');
+      }
+    }
+
+    const floorNumber = item.floor_number === '' || item.floor_number == null
+      ? null
+      : Number(item.floor_number);
+    if (floorNumber !== null && (!Number.isSafeInteger(floorNumber) || floorNumber < 0 || floorNumber > 32767)) {
+      throw new HttpError(400, 'Floor number must be a whole number between 0 and 32767.');
+    }
+
+    assignments.push({
+      building_id: buildingId,
+      room_id: roomId,
+      floor_number: floorNumber,
+      room_number: optionalText(item.room_number, 'Room number', 50)
+    });
+  }
+
+  return assignments;
+}
+
 export const handler = async event => {
   try {
     if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: { 'Access-Control-Allow-Headers': 'Authorization, Content-Type', 'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS' }, body: '' };
@@ -51,6 +104,10 @@ export const handler = async event => {
     const name = requiredText(body.name, 'Department name', 180);
     const email = optionalText(body.contact_email, 'Contact email', 254);
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new HttpError(400, 'Enter a valid department email.');
+
+    // Validate every assignment before writing the department. Invalid room or
+    // building data must never leave behind a partially saved department.
+    const assignments = await validateAssignments(database, body.locations);
     const fields = {
       name,
       description: optionalText(body.description, 'Description', 4000),
@@ -60,34 +117,17 @@ export const handler = async event => {
       image_path: optionalText(body.image_path, 'Photograph path', 255),
       active: true
     };
+
     const saved = id
       ? unwrap(await database.from('departments').update(fields).eq('id', id).select('id').single())
       : unwrap(await database.from('departments').insert(fields).select('id').single());
 
-    if (!Array.isArray(body.locations) || body.locations.length > 100) throw new HttpError(400, 'Provide a list of department building assignments (up to 100).');
-    const assignments = [];
-    for (const item of body.locations) {
-      const buildingId = Number(item.building_id);
-      if (!Number.isSafeInteger(buildingId) || buildingId < 1) throw new HttpError(400, 'Each assignment needs a valid building.');
-      const building = unwrap(await database.from('locations').select('id,kind,active').eq('id', buildingId).maybeSingle());
-      if (!building || building.kind !== 'building' || !building.active) throw new HttpError(400, 'Department assignments must reference active campus buildings.');
-      let roomId = item.room_id ? Number(item.room_id) : null;
-      if (roomId) {
-        const room = unwrap(await database.from('rooms').select('id,building_id,active').eq('id', roomId).maybeSingle());
-        if (!room || !room.active || String(room.building_id) !== String(buildingId)) throw new HttpError(400, 'The selected room must belong to the selected building.');
-      }
-      assignments.push({
-        department_id: saved.id,
-        building_id: buildingId,
-        room_id: roomId,
-        floor_number: item.floor_number === '' || item.floor_number == null ? null : Number(item.floor_number),
-        room_number: optionalText(item.room_number, 'Room number', 50)
-      });
-    }
+    const rows = assignments.map(item => ({ ...item, department_id: saved.id }));
     if (id) unwrap(await database.from('department_locations').delete().eq('department_id', saved.id));
-    if (assignments.length) unwrap(await database.from('department_locations').insert(assignments));
-    await database.from('audit_logs').insert({ admin_legacy_id: user.id, action: id ? 'update' : 'create', entity_type: 'department', entity_id: saved.id, after_json: { name, assignments: assignments.length } });
-    return success({ id: saved.id, name, locations: assignments.length }, id ? 200 : 201);
+    if (rows.length) unwrap(await database.from('department_locations').insert(rows));
+
+    await database.from('audit_logs').insert({ admin_legacy_id: user.id, action: id ? 'update' : 'create', entity_type: 'department', entity_id: saved.id, after_json: { name, assignments: rows.length } });
+    return success({ id: saved.id, name, locations: rows.length }, id ? 200 : 201);
   } catch (error) {
     return errorResponse(error);
   }
