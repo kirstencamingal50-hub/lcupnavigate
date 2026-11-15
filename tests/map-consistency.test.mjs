@@ -55,7 +55,7 @@ test('mapping mutations generate and preserve node keys and call the route RPC c
     'p_created_by_legacy_admin_id'
   ]) {
     assert.match(mutations, new RegExp(parameter + ':'));
-    assert.match(routeMigration, new RegExp('\\\\b' + parameter + '\\\\b'));
+    assert.match(routeMigration, new RegExp('\\b' + parameter + '\\b'));
   }
 });
 
