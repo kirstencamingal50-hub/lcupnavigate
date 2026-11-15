@@ -41,8 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       CampusApi.get('directory'),
       CampusApi.get('announcements')
     ]);
-    if (directoryResult.status === 'rejected') throw directoryResult.reason;
-    const directory = directoryResult.value || {};
+    const directory = directoryResult.status === 'fulfilled' ? (directoryResult.value || {}) : {};
     const announcementPayload = announcementResult.status === 'fulfilled' ? announcementResult.value : [];
     const announcements = Array.isArray(announcementPayload)
       ? announcementPayload
