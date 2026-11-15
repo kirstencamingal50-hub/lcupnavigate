@@ -943,7 +943,7 @@ async function adminAccounts(event, method, body, query) {
     return success(rows.map(publicAdminAccount));
   }
 
-  if (method !== 'PUT') {
+  if (!['PUT', 'DELETE'].includes(method)) {
     throw new HttpError(405, 'Method not allowed.');
   }
 
@@ -960,6 +960,39 @@ async function adminAccounts(event, method, body, query) {
 
   if (!target) {
     throw new HttpError(404, 'Administrator account not found.');
+  }
+
+  if (method === 'DELETE') {
+    if (String(target.auth_user_id) === String(actor.auth_id)) {
+      throw new HttpError(409, 'You cannot remove your own administrator account.');
+    }
+
+    if (target.role === 'admin' && target.active) {
+      const countResult = await database
+        .from('admin_users')
+        .select('id', { count: 'exact', head: true })
+        .eq('role', 'admin')
+        .eq('active', true);
+
+      if (countResult.error) throw countResult.error;
+      if ((countResult.count || 0) <= 1) {
+        throw new HttpError(409, 'The last active administrator cannot be removed.');
+      }
+    }
+
+    await audit(actor, 'delete', 'admin_account', target.id, {
+      username: target.username,
+      role: target.role
+    });
+
+    if (target.auth_user_id) {
+      const { error } = await database.auth.admin.deleteUser(target.auth_user_id);
+      if (error) throw error;
+    } else {
+      unwrap(await database.from('admin_users').delete().eq('id', target.id));
+    }
+
+    return success({ id: target.id, removed: true });
   }
 
   const role = body.role;
