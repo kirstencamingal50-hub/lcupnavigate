@@ -115,17 +115,18 @@ function renderSharedUI() {
       roleSplash.setAttribute('inert', '');
       if (focus) document.getElementById('welcome-title')?.focus({ preventScroll: true });
     };
-    // Remember the public Student / Guest choice so Home navigation returns
-    // directly to the homepage instead of showing the role selector again.
+    // Keep the role choice only for this browser tab/session. A fresh visit
+    // opens the role selector again, while Home navigation in this session
+    // returns directly to the homepage without prompting a second time.
     try {
-      if (localStorage.getItem('navigatorate.public-access-selected') === 'true') {
+      if (sessionStorage.getItem('navigatorate.public-access-selected') === 'true') {
         dismissRoleSplash({ focus: false });
       }
     } catch (error) {
       console.warn('The public access choice could not be restored.', error);
     }
     guestChoice.addEventListener('click', () => {
-      try { localStorage.setItem('navigatorate.public-access-selected', 'true'); }
+      try { sessionStorage.setItem('navigatorate.public-access-selected', 'true'); }
       catch (error) { console.warn('The public access choice could not be saved.', error); }
       dismissRoleSplash();
     });
