@@ -49,13 +49,7 @@ async function getDirectory() {
     db.from('locations')
       .select(`
         *,
-        category:categories(name),
-        parent_building:locations!locations_parent_building_id_fkey(
-          id,
-          name,
-          kind,
-          active
-        )
+        category:categories(name)
       `)
       .eq('active', true)
       .order('kind')
@@ -102,18 +96,36 @@ async function getDirectory() {
     }]);
   }
 
-  const locationRows = locations.map(row => ({
+  // Resolve the self-referencing parent building in JavaScript instead of
+  // relying on a PostgREST foreign-key relationship that may not exist in
+  // the deployed database schema cache.
+  const locationById = new Map(
+    locations.map(location => [String(location.id), location])
+  );
+
+  const locationRows = locations.map(row => {
+    const parentBuilding = row.parent_building_id == null
+      ? null
+      : locationById.get(String(row.parent_building_id)) || null;
+
+    return ({
     ...row,
     image_path: row.image_path ? mediaUrl(row.image_path) : null,
     image: row.image_path ? mediaUrl(row.image_path) : null,
     category: row.category?.name || null,
-    parent_building_name: row.parent_building?.name || null,
-    parentBuilding: row.parent_building || null,
+    parent_building_name: parentBuilding?.name || null,
+    parentBuilding: parentBuilding ? {
+      id: parentBuilding.id,
+      name: parentBuilding.name,
+      kind: parentBuilding.kind,
+      active: parentBuilding.active
+    } : null,
     accessibilityFeatures: row.kind === 'building' && Array.isArray(row.accessibility_features)
       ? row.accessibility_features
       : [],
     photos: locationPhotos.get(String(row.id)) || []
-  }));
+  });
+  });
 
   const activeBuildingIds = new Set(
     locations
