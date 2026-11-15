@@ -595,7 +595,7 @@ async function mapMarkers(event, method, body, query) {
 
   const location = unwrap(await database
     .from('locations')
-    .select('id,active')
+    .select('id,active,canonical_location_id')
     .eq('id', locationId)
     .maybeSingle());
 
@@ -607,13 +607,43 @@ async function mapMarkers(event, method, body, query) {
     ? positiveId(body.id ?? query.id)
     : null;
 
+  const floorNumber = Math.max(0, Number(body.floor_number) || 0);
+  const mapKey = optionalText(body.map_key, 'Map key', 40) || 'campus';
+  const canonicalLocationId = location.canonical_location_id ?? location.id;
+
+  // Allow only one active marker for a canonical location on each map/floor.
+  // Multi-storey buildings can still have one marker per floor.
+  const canonicalLocations = unwrap(await database
+    .from('locations')
+    .select('id')
+    .or(`id.eq.${canonicalLocationId},canonical_location_id.eq.${canonicalLocationId}`)) || [];
+  const canonicalLocationIds = canonicalLocations.map(row => row.id);
+
+  let duplicateMarkersQuery = database
+    .from('map_markers')
+    .select('id,location_id')
+    .in('location_id', canonicalLocationIds)
+    .eq('map_key', mapKey)
+    .eq('floor_number', floorNumber)
+    .eq('active', true);
+
+  if (id) duplicateMarkersQuery = duplicateMarkersQuery.neq('id', id);
+
+  const duplicateMarkers = unwrap(await duplicateMarkersQuery) || [];
+  if (duplicateMarkers.length) {
+    throw new HttpError(
+      409,
+      'This canonical campus location already has an active marker on this map and floor. Edit the existing marker instead.'
+    );
+  }
+
   const fields = {
     location_id: locationId,
     route_node_id: nullableId(body.route_node_id, 'Route node ID'),
     x,
     y,
-    floor_number: Math.max(0, Number(body.floor_number) || 0),
-    map_key: optionalText(body.map_key, 'Map key', 40) || 'campus',
+    floor_number: floorNumber,
+    map_key: mapKey,
     accessibility_status: booleanValue(body.accessibility_status, 'Accessibility status'),
     active: true
   };

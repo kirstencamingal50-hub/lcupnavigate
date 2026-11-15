@@ -5,7 +5,8 @@ import { test } from 'node:test';
 
 const migrationUrl = new URL('../supabase/migrations/20261113230000_initial_navigate_schema.sql', import.meta.url);
 const routeMigrationUrl = new URL('../supabase/migrations/20261114230000_route_save_rpc.sql', import.meta.url);
-const migration = `${await readFile(migrationUrl, 'utf8')}\n${await readFile(routeMigrationUrl, 'utf8')}`;
+const canonicalLocationMigrationUrl = new URL('../supabase/migrations/20261115000000_canonical_location_mapping.sql', import.meta.url);
+const migration = `${await readFile(migrationUrl, 'utf8')}\n${await readFile(routeMigrationUrl, 'utf8')}\n${await readFile(canonicalLocationMigrationUrl, 'utf8')}`;
 
 test('Supabase schema applies, preserves data model coverage, and protects role assignment', async () => {
   const db = new PGlite();
@@ -54,7 +55,8 @@ test('Supabase schema applies, preserves data model coverage, and protects role 
     `);
     const relationshipNames = new Set(relationships.rows.map(row => row.conname));
     for (const name of [
-      'locations_parent_building_id_fkey', 'rooms_building_id_fkey', 'map_markers_location_id_fkey',
+      'locations_parent_building_id_fkey', 'locations_canonical_location_id_fkey',
+      'rooms_building_id_fkey', 'map_markers_location_id_fkey',
       'campus_routes_start_marker_id_fkey', 'campus_routes_destination_marker_id_fkey',
       'campus_route_points_route_id_fkey', 'floor_plans_building_id_fkey',
       'audit_logs_admin_legacy_id_fkey'
@@ -65,6 +67,14 @@ test('Supabase schema applies, preserves data model coverage, and protects role 
       where schemaname = 'public'
     `);
     assert.ok(policies.rows[0].count >= 14, 'Expected RLS policies for public tables');
+
+    const canonicalColumn = await db.query(`
+      select column_name from information_schema.columns
+      where table_schema = 'public'
+        and table_name = 'locations'
+        and column_name = 'canonical_location_id'
+    `);
+    assert.equal(canonicalColumn.rows.length, 1, 'Expected canonical location mapping column');
 
     await db.exec(`
       insert into auth.users (id, email, raw_user_meta_data)

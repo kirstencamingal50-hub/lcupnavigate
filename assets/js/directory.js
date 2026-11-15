@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           ${item.parent_building ? `<p class="directory-parent"><span class="material-symbols-rounded" aria-hidden="true">location_on</span>${escapeHtml(item.parent_building)}${item.room_number ? ` · Room ${escapeHtml(item.room_number)}` : ''}</p>` : ''}
           ${features ? `<div class="directory-features" aria-label="Building accessibility features">${features}</div>` : ''}
         </div>
-        <div class="directory-card-actions"><a href="map.html?search=${encodeURIComponent(item.name)}"><span class="material-symbols-rounded" aria-hidden="true">map</span>Show on map</a><a href="${detailUrl}" aria-label="View details for ${escapeHtml(item.name)}">Details<span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></a></div>
+        <div class="directory-card-actions"><a href="map.html?locationId=${encodeURIComponent(item.map_location_id || item.id)}&search=${encodeURIComponent(item.name)}"><span class="material-symbols-rounded" aria-hidden="true">map</span>Show on map</a><a href="${detailUrl}" aria-label="View details for ${escapeHtml(item.name)}">Details<span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></a></div>
       </article>`;
     }).join('');
   }
