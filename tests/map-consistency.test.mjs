@@ -51,3 +51,13 @@ test('mapping mutations generate and preserve node keys and call the route RPC c
     assert.match(routeMigration, new RegExp(`\\b${parameter}\\b`));
   }
 });
+
+\ntest('admin map no longer exposes floor-plan uploads or manual graph connection forms', async () => {
+  const adminMap = await read('../pages/admin/manage-map.html');
+  const mapScript = await read('../assets/js/admin/manage-map.js');
+  assert.doesNotMatch(adminMap, /floorplan-form|floorplans-list|floorplan-title|Upload floor plan/i);
+  assert.doesNotMatch(adminMap, /map-connection-form|map-connection-list|map-connections\.js/i);
+  assert.doesNotMatch(adminMap, /name="route_node_id"/);
+  assert.doesNotMatch(mapScript, /floorplans|route_node_id/);
+  assert.match(adminMap, /generated automatically from saved route paths/i);
+});
