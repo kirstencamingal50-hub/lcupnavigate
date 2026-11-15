@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="../../assets/css/style.css?v=20261102-admin-auth">
   <link rel="stylesheet" href="../../assets/css/admin.css?v=20261102-admin-auth">
   <script src="../../assets/js/campus-api.js"></script>
-  <script src="../../assets/js/admin/admin-auth.js?v=20261105-username-auth"></script>
+  <script src="../../assets/js/admin/admin-auth.js?v=20261115-login-post-fix"></script>
 </head>
 <body class="admin-login-page">
   <main class="admin-login-panel" aria-labelledby="auth-heading">
@@ -29,7 +29,7 @@
         <button type="button" id="signup-tab" role="tab" aria-selected="false" aria-controls="signup-form" data-auth-view="signup">Sign Up</button>
       </div>
 
-      <form id="login-form" class="admin-auth-form" role="tabpanel" aria-labelledby="login-tab">
+      <form id="login-form" class="admin-auth-form" method="post" action="login.html" role="tabpanel" aria-labelledby="login-tab">
         <label for="username">Email or username</label>
         <input type="text" id="username" name="username" autocomplete="username" maxlength="254" required>
 

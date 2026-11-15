@@ -607,12 +607,45 @@ async function mapMarkers(event, method, body, query) {
     ? positiveId(body.id ?? query.id)
     : null;
 
+  // Reuse an existing marker node so previously saved routes keep their endpoint IDs.
+  let nodeId = null;
+  if (id) {
+    const existingMarker = unwrap(await database
+      .from('map_markers')
+      .select('route_node_id')
+      .eq('id', id)
+      .maybeSingle());
+    if (existingMarker?.route_node_id) {
+      nodeId = unwrap(await database
+        .from('map_nodes')
+        .update({ x, y, floor_number: 0, active: true })
+        .eq('id', existingMarker.route_node_id)
+        .select('id')
+        .single()).id;
+    }
+  }
+
+  // New markers (or legacy markers without a node) get a stable node automatically.
+  if (!nodeId) {
+    nodeId = unwrap(await database
+      .from('map_nodes')
+      .upsert({
+        node_key: `location-${locationId}`,
+        x,
+        y,
+        floor_number: 0,
+        active: true
+      }, { onConflict: 'node_key' })
+      .select('id')
+      .single()).id;
+  }
+
   const fields = {
     location_id: locationId,
-    route_node_id: nullableId(body.route_node_id, 'Route node ID'),
+    route_node_id: nodeId,
     x,
     y,
-    floor_number: Math.max(0, Number(body.floor_number) || 0),
+    floor_number: 0,
     map_key: optionalText(body.map_key, 'Map key', 40) || 'campus',
     accessibility_status: booleanValue(body.accessibility_status, 'Accessibility status'),
     active: true
@@ -1050,7 +1083,7 @@ async function adminOverview(event) {
 
   const activity = unwrap(await database
     .from('audit_logs')
-    .select('action,entity_type,entity_id,created_at,admin:admin_profiles!audit_logs_admin_legacy_id_fkey(username)')
+    .select('action,entity_type,entity_id,created_at,admin:admin_users!audit_logs_admin_legacy_id_fkey(username)')
     .order('created_at', { ascending: false })
     .limit(8)) || [];
 
