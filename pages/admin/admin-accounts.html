@@ -1,17 +1,43 @@
 <!DOCTYPE html>
-<html lang="en"><head>
+<html lang="en">
+<head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Accounts - NaviGATE LCUP</title>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0,1,-50..200" />
-  <link rel="stylesheet" href="../../assets/css/style.css?v=20261024-complete-details"><link rel="stylesheet" href="../../assets/css/admin.css?v=20261105-admin-ux">
-  <script src="../../assets/js/campus-api.js"></script><script src="../../assets/js/admin/admin-auth.js"></script>
-  <link rel="stylesheet" href="../../assets/css/admin-ui-polish.css?v=20261115-ui-fix">
-</head><body class="admin-page min-h-screen">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0,1,-50..200">
+  <link rel="stylesheet" href="../../assets/css/style.css?v=20261115-icons">
+  <link rel="stylesheet" href="../../assets/css/admin.css?v=20261105-admin-ux">
+  <link rel="stylesheet" href="../../assets/css/admin-ui-polish.css?v=20261115-accounts-layout">
+  <script src="../../assets/js/campus-api.js"></script>
+  <script src="../../assets/js/admin/admin-auth.js"></script>
+</head>
+<body class="admin-page min-h-screen">
   <div data-component="header"></div>
-  <main class="admin-main">
-    <div class="admin-page-heading"><div><h1 class="text-xl font-bold">Admin Accounts</h1><p>Review administrator access. Account creation is managed through the authorized backend process.</p></div></div>
-    <section class="admin-settings-panel" aria-labelledby="admin-account-list-title"><div class="admin-settings-heading"><div><h2 id="admin-account-list-title">Existing accounts</h2><p>Disable access or change the assigned role. Your own account cannot be disabled or demoted here.</p></div></div><div id="admin-account-list" aria-live="polite">Loading administrator accounts…</div></section>
+  <main class="admin-main admin-accounts-main">
+    <header class="admin-accounts-hero">
+      <div>
+        <span class="admin-accounts-eyebrow"><span class="material-symbols-rounded" aria-hidden="true">shield_person</span> ACCESS CONTROL</span>
+        <h1>Admin Accounts</h1>
+        <p>Manage who can access NaviGATE, review account status, and control administrator permissions.</p>
+      </div>
+      <span class="admin-accounts-hero-icon material-symbols-rounded" aria-hidden="true">manage_accounts</span>
+    </header>
+    <section class="admin-account-metrics" aria-label="Account summary">
+      <article><span class="material-symbols-rounded" aria-hidden="true">groups</span><div><small>Total accounts</small><strong id="account-total">—</strong></div></article>
+      <article><span class="material-symbols-rounded" aria-hidden="true">verified_user</span><div><small>Active accounts</small><strong id="account-active">—</strong></div></article>
+      <article><span class="material-symbols-rounded" aria-hidden="true">admin_panel_settings</span><div><small>Active administrators</small><strong id="account-admins">—</strong></div></article>
+      <article><span class="material-symbols-rounded" aria-hidden="true">person_off</span><div><small>Inactive accounts</small><strong id="account-inactive">—</strong></div></article>
+    </section>
+    <section class="admin-account-directory" aria-labelledby="admin-account-list-title">
+      <div class="admin-account-directory-heading">
+        <div><span>USER ACCESS</span><h2 id="admin-account-list-title">Account directory</h2><p>Change roles, enable or disable access, or permanently remove an account.</p></div>
+        <button type="button" class="admin-button-secondary" data-account-refresh><span class="material-symbols-rounded" aria-hidden="true">refresh</span> Refresh</button>
+      </div>
+      <div id="admin-account-list" aria-live="polite"><p class="admin-empty-state">Loading administrator accounts…</p></div>
+      <p class="admin-account-safety-note"><span class="material-symbols-rounded" aria-hidden="true">info</span> You cannot remove or disable your own account. The last active administrator is also protected.</p>
+    </section>
   </main>
-  <script src="../../assets/js/admin/admin-accounts.js?v=20261021-saved-accounts"></script><script src="../../assets/js/app.js?v=20261105-admin-ux"></script>
-</body></html>
+  <script src="../../assets/js/admin/admin-accounts.js?v=20261115-remove-layout"></script>
+  <script src="../../assets/js/app.js?v=20261115-icons"></script>
+</body>
+</html>
