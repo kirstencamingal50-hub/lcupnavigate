@@ -68,39 +68,8 @@ function publicAnswer(question, matches) {
   return `Here is what I found in the campus records:\n\n${lines.join('\n')}\n\nSelect “Show on Map” on a location result to open it on the campus map.`;
 }
 
-async function answer(question, matches) {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return { answer: publicAnswer(question, matches), mode: 'campus-record-search' };
-  const context = matches.map(item => ({
-    type: item.record_type,
-    name: item.name,
-    building: item.building_name,
-    floor: item.floor_number,
-    room: item.room_number,
-    description: item.description,
-    hours: item.service_hours,
-    email: item.contact_email,
-    accessibility: item.accessibility_details || item.accessibility_features,
-    event_start: item.event_start,
-    event_end: item.event_end
-  }));
-  const response = await fetch('https://api.openai.com/v1/responses', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: process.env.OPENAI_MODEL || 'gpt-4.1-mini',
-      instructions: 'You are Ask NaviGATE, the public campus information assistant for La Consolacion University Philippines. Answer only from the supplied campus records. Do not invent buildings, room numbers, office hours, contacts, routes, events, or accessibility details. If the records do not contain the answer, say so clearly. Be concise and helpful. Do not answer questions about student schedules, subjects, sections, grades, or student-specific records.',
-      input: `Visitor question: ${question}\n\nCampus database records (authoritative):\n${JSON.stringify(context)}`,
-      max_output_tokens: 450
-    })
-  });
-  if (!response.ok) {
-    console.error('Ask NaviGATE model request failed:', response.status);
-    return { answer: publicAnswer(question, matches), mode: 'campus-record-search' };
-  }
-  const payload = await response.json();
-  const generated = (payload.output || []).flatMap(item => item.content || []).filter(item => item.type === 'output_text').map(item => item.text).join('\n').trim();
-  return { answer: generated || publicAnswer(question, matches), mode: 'ai-grounded' };
+function answer(question, matches) {
+  return { answer: publicAnswer(question, matches), mode: 'campus-record-search' };
 }
 
 export const handler = async event => {
