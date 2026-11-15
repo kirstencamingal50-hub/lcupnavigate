@@ -25,9 +25,12 @@ test('map frontend keeps database nodes, legacy junctions, and API loading align
 });
 
 test('Netlify map queries use schema foreign keys and frontend-compatible directory fields', () => {
-  assert.match(api, /locations!locations_parent_building_id_fkey/);
-  assert.match(api, /locations!rooms_building_id_fkey/);
-  assert.match(api, /locations!map_markers_location_id_fkey/);
+  // Parent buildings are resolved in JavaScript to avoid depending on the
+  // PostgREST self-referencing relationship being present in its schema cache.
+  assert.match(api, /Resolve the self-referencing parent building in JavaScript/);
+  assert.match(api, /locationById\.get\(String\(row\.parent_building_id\)\)/);
+  assert.match(api, /building:locations!fk_rooms_building/);
+  assert.match(api, /location:locations!fk_marker_location/);
   assert.match(api, /map_markers!campus_routes_start_marker_id_fkey/);
   assert.match(api, /map_markers!campus_routes_destination_marker_id_fkey/);
   assert.match(api, /buildingId:\s*row\.building_id/);
@@ -40,12 +43,12 @@ test('Netlify map queries use schema foreign keys and frontend-compatible direct
 test('mapping mutations generate and preserve node keys and call the route RPC contract', () => {
   assert.match(mutations, /`node-\$\{randomUUID\(\)\}`/);
   assert.match(mutations, /existing\?\.node_key/);
-  assert.match(mutations, /map_connections'\)\s*\.update\(\{ active: false \}\)/);
+  assert.match(mutations, /updateById\('map_connections', id, \{ active: false \}/);
   assert.match(mutations, /node_key: `location-\$\{locationId\}`/);
   assert.match(mutations, /existingMarker\?\.route_node_id/);
   assert.match(mutations, /route_node_id: nodeId/);
   assert.match(mutations, /\.upsert\([\s\S]*?onConflict: 'node_key'/);
-  assert.match(mutations, /route_node_id: node\.id/);
+  assert.match(mutations, /route_node_id: nodeId/);
   assert.match(mutations, /database\.rpc\('save_campus_route',\s*\{/);
   for (const parameter of [
     'p_route_id', 'p_name', 'p_start_marker_id', 'p_destination_marker_id',
