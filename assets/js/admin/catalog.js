@@ -1,5 +1,10 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  const imageSrc=value=>{
+    const source=String(value??'').trim();
+    if(!source)return '';
+    return /^(?:https?:|data:|blob:|\/)/i.test(source)?source:`../../${source.replace(/^\.\/+/, '')}`;
+  };
   const categoryPage=!!document.querySelector('[data-category-form]');
   const buildingForm=document.getElementById('add-building-form');
   const facilityForm=document.getElementById('add-facility-form');
@@ -77,7 +82,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   function galleryMarkup(type,item){
     const ownerType=type==='location'?'location':'room';
     const photos=item.photos||[];
-    return `<section class="admin-edit-wide" data-gallery-owner="${ownerType}" data-gallery-id="${esc(item.id)}"><h3 class="font-bold">Photo gallery</h3><p class="text-xs text-slate-500">Upload and manage campus photos.</p><div class="mt-3 grid gap-2">${photos.map(photo=>`<div class="rounded-lg border p-3" data-photo-id="${esc(photo.id)}"><img src="../../${esc(photo.image)}" alt="" class="mb-2 h-24 w-full rounded object-cover"><label class="mt-2 block">Caption<input data-photo-caption maxlength="255" value="${esc(photo.caption||'')}"></label><label class="mt-2 flex items-center gap-2"><input type="checkbox" data-photo-cover ${Number(photo.isCover)?'checked':''}> Use as cover photo</label><div class="mt-2 flex gap-2"><button type="button" data-photo-save class="admin-button-secondary">Save photo details</button><button type="button" data-photo-delete class="admin-button-secondary">Remove photo</button></div></div>`).join('')||'<p class="text-xs text-slate-500">No gallery photos have been added.</p>'}</div><div class="mt-3 grid gap-2"><label>New photo<input type="file" data-gallery-file accept="image/png,image/jpeg,image/webp"></label><label>Caption<input data-gallery-caption maxlength="255"></label><button type="button" data-photo-add class="admin-button-primary">Upload photo</button></div></section>`;
+    return `<section class="admin-edit-wide" data-gallery-owner="${ownerType}" data-gallery-id="${esc(item.id)}"><h3 class="font-bold">Photo gallery</h3><p class="text-xs text-slate-500">Upload and manage campus photos.</p><div class="mt-3 grid gap-2">${photos.map(photo=>`<div class="rounded-lg border p-3" data-photo-id="${esc(photo.id)}"><img src="${esc(imageSrc(photo.image))}" alt="" class="mb-2 h-24 w-full rounded object-cover"><label class="mt-2 block">Caption<input data-photo-caption maxlength="255" value="${esc(photo.caption||'')}"></label><label class="mt-2 flex items-center gap-2"><input type="checkbox" data-photo-cover ${Number(photo.isCover)?'checked':''}> Use as cover photo</label><div class="mt-2 flex gap-2"><button type="button" data-photo-save class="admin-button-secondary">Save photo details</button><button type="button" data-photo-delete class="admin-button-secondary">Remove photo</button></div></div>`).join('')||'<p class="text-xs text-slate-500">No gallery photos have been added.</p>'}</div><div class="mt-3 grid gap-2"><label>New photo<input type="file" data-gallery-file accept="image/png,image/jpeg,image/webp"></label><label>Caption<input data-gallery-caption maxlength="255"></label><button type="button" data-photo-add class="admin-button-primary">Upload photo</button></div></section>`;
   }
   async function manageGalleryAction(event){
     const button=event.target.closest('[data-photo-add],[data-photo-save],[data-photo-delete]');if(!button)return;
@@ -149,7 +154,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       return `<div><dt>${esc(labels[key]||key)}</dt><dd>${esc(value)}</dd></div>`;
     });
     const photo=item.image_path||item.image||item.photos?.find(photo=>Number(photo.isCover))?.image||item.photos?.[0]?.image;
-    dialog.querySelector('[data-details-content]').innerHTML=`${photo?`<img class="admin-details-photo" src="../../${esc(photo)}" alt="${esc(item.name)}">`:''}<dl class="admin-details-grid">${entries.join('')||'<p class="admin-empty-state">No additional details are saved for this record.</p>'}</dl>`;
+    dialog.querySelector('[data-details-content]').innerHTML=`${photo?`<img class="admin-details-photo" src="${esc(imageSrc(photo))}" alt="${esc(item.name)}">`:''}<dl class="admin-details-grid">${entries.join('')||'<p class="admin-empty-state">No additional details are saved for this record.</p>'}</dl>`;
     dialog.showModal();
   }
   async function saveEditor(event){
@@ -196,7 +201,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const mapHref=`../map.html?search=${encodeURIComponent(item.name)}`;
     const subtitle=room?`${parent||'Building unavailable'} · ${item.floor_label||'Floor unavailable'} · Room ${item.room_number||'—'}`:building?parent:`Located in ${parent}`;
     return `<article class="catalog-directory-card" data-id="${esc(item.id)}">
-      <div class="catalog-directory-photo">${image?`<img src="../../${esc(image)}" alt="" loading="lazy">`:`<span class="material-symbols-rounded" aria-hidden="true">${room?'meeting_room':building?'location_city':'storefront'}</span>`}</div>
+      <div class="catalog-directory-photo">${image?`<img src="${esc(imageSrc(image))}" alt="" loading="lazy">`:`<span class="material-symbols-rounded" aria-hidden="true">${room?'meeting_room':building?'location_city':'storefront'}</span>`}</div>
       <div class="catalog-directory-info"><div class="catalog-directory-meta"><span>${kindLabel}</span><span>${esc(item.category||'Campus')}</span></div><h3>${esc(item.name)}</h3><p class="catalog-directory-description">${esc(item.description||'More information is available in this directory profile.')}</p><p class="catalog-directory-location">${esc(subtitle)}</p></div>
       <div class="catalog-directory-actions"><a href="${mapHref}"><span class="material-symbols-rounded" aria-hidden="true">map</span><span>Show on map</span></a><a href="${detailHref}"><span>Public page</span><span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></a><span class="catalog-row-action-group"><button data-action="details" class="admin-row-action">View details</button><button data-action="edit" class="admin-row-action">Edit</button><button data-action="archive" class="admin-row-action is-danger">Archive</button></span></div>
     </article>`;
