@@ -20,6 +20,10 @@ test('map frontend keeps database nodes, legacy junctions, and API loading align
   assert.match(mapPage, /id\.startsWith\('n:'\)\s*&&\s*nId\.startsWith\('n:'\)/);
   assert.match(mapPage, /id\.startsWith\('j:'\)\s*&&\s*nId\.startsWith\('j:'\)/);
   assert.doesNotMatch(mapPage, /if\s*\(!id\.startsWith\('j:'\)\)\s*return;/);
+  assert.match(mapPage, /row\.map_location_id \?\? row\.canonical_location_id \?\? row\.location_id/);
+  assert.match(mapPage, /seenCanonicalLocations\.has\(pin\.id\)/);
+  assert.match(mapPage, /loc\.searchAliases \|\| \[\]/);
+  assert.match(mapPage, /requestedLocationId/);
   assert.match(mapPage, /room\.buildingId/);
   assert.match(mapPage, /route\.accessible_confirmed/);
 });
@@ -30,6 +34,8 @@ test('Netlify map queries use schema foreign keys and frontend-compatible direct
   assert.match(api, /locations!map_markers_location_id_fkey/);
   assert.match(api, /map_markers!campus_routes_start_marker_id_fkey/);
   assert.match(api, /map_markers!campus_routes_destination_marker_id_fkey/);
+  assert.match(api, /map_location_id:\s*mapLocationId/);
+  assert.match(api, /canonical_location_name:/);
   assert.match(api, /buildingId:\s*row\.building_id/);
   assert.match(api, /floorNumber:\s*row\.floor_number/);
   assert.match(api, /node:map_nodes\(id,node_key,x,y,floor_number,active\)/);
