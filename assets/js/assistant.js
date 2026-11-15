@@ -50,7 +50,7 @@
     renderSaved();
     input.value = '';
     button.disabled = true;
-    button.textContent = 'Thinking…';
+    button.textContent = 'Searching…';
     status.textContent = 'Searching verified campus information…';
     results.innerHTML = '';
     try {
@@ -63,7 +63,7 @@
       if (!response.ok || !payload.ok) throw new Error(payload.error?.message || 'The campus assistant is temporarily unavailable.');
       addMessage(payload.data.answer, 'assistant');
       renderResults(payload.data.results);
-      status.textContent = payload.data.mode === 'ai-grounded' ? 'AI answer based on campus database records.' : 'Campus database search results. Add OPENAI_API_KEY in Netlify to enable generated AI responses.';
+      status.textContent = 'Answer generated from verified campus database records using campus search rules. No AI service is used.';
       const speech = document.createElement('button');
       speech.type = 'button';
       speech.className = 'assistant-action mt-2';
