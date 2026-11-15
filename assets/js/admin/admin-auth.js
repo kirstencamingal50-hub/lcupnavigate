@@ -64,7 +64,7 @@
     const setupStatus = statusFor('admin-setup-status');
     if (setupButton && setupForm && setupStatus) {
       try {
-        const state = await checkSetupResponse(await fetch('../../api/admin-setup.php', { credentials: 'same-origin' }));
+        const state = await checkSetupResponse(await fetch('../../api/index.php?resource=admin/bootstrap', { credentials: 'same-origin' }));
         setupButton.hidden = !state.available;
       } catch (error) {
         setupStatus.textContent = error.message;
@@ -87,7 +87,7 @@
         setupStatus.textContent = 'Creating administrator account…';
         try {
           const csrf = await window.CampusApi.get('auth/csrf');
-          await checkSetupResponse(await fetch('../../api/admin-setup.php', {
+          await checkSetupResponse(await fetch('../../api/index.php?resource=admin/bootstrap', {
             method: 'POST',
             credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf.token },
