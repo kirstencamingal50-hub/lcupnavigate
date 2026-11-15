@@ -41,7 +41,7 @@ test('mapping mutations generate and preserve node keys and call the route RPC c
   assert.match(mutations, /`node-\$\{randomUUID\(\)\}`/);
   assert.match(mutations, /existing\?\.node_key/);
   assert.match(mutations, /map_connections'\)\s*\.update\(\{ active: false \}\)/);
-  assert.match(mutations, /node_key: `location-\$\{locationId\}`/);
+  assert.match(mutations, /node_key: `location-\$\{locationId\}`/);\n  assert.match(mutations, /existingMarker\?\.route_node_id/);\n  assert.match(mutations, /route_node_id: nodeId/);
   assert.match(mutations, /\.upsert\([\s\S]*?onConflict: 'node_key'/);
   assert.match(mutations, /route_node_id: node\.id/);
   assert.match(mutations, /database\.rpc\('save_campus_route',\s*\{/);
