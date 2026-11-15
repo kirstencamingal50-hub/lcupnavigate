@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const itemCategory = normalizeCategory(item.category);
       const categoryMatch = !category || category === 'all' ||
         (selectedAliases
-          ? selectedAliases.some(alias => itemCategory.includes(normalizeCategory(alias)) || normalizeCategory(alias).includes(itemCategory))
+          ? Boolean(itemCategory) && selectedAliases.some(alias => itemCategory.includes(normalizeCategory(alias)) || normalizeCategory(alias).includes(itemCategory))
           : itemCategory.includes(normalizeCategory(category)) || normalizeCategory(item.kind).includes(normalizeCategory(category)));
       return (!query || text.includes(query)) && categoryMatch && (selectedKind === 'all' || item.kind === selectedKind);
     });
