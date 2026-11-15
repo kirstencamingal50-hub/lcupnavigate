@@ -37,10 +37,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   ];
 
   try {
-    const [directory, announcements] = await Promise.all([
+    const [directoryResult, announcementResult] = await Promise.allSettled([
       CampusApi.get('directory'),
       CampusApi.get('announcements')
     ]);
+    if (directoryResult.status === 'rejected') throw directoryResult.reason;
+    const directory = directoryResult.value || {};
+    const announcementPayload = announcementResult.status === 'fulfilled' ? announcementResult.value : [];
+    const announcements = Array.isArray(announcementPayload)
+      ? announcementPayload
+      : Array.isArray(announcementPayload?.announcements)
+        ? announcementPayload.announcements
+        : Array.isArray(announcementPayload?.items) ? announcementPayload.items : [];
     const locations = Array.isArray(directory.locations) ? directory.locations : [];
     const rooms = Array.isArray(directory.rooms) ? directory.rooms : [];
     const buildings = locations.filter(record =>
@@ -76,9 +84,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (updates) {
-      updates.innerHTML = announcements.length
-        ? announcements.slice(0, 4).map(item => `<a href="pages/announcements.html" class="home-announcement ${Number(item.pinned) ? 'home-announcement--pinned' : 'home-announcement--standard'}">${item.photo ? `<img src="${esc(item.photo)}" alt="" loading="lazy">` : ''}<span class="home-announcement-copy"><span class="home-announcement-label">${Number(item.pinned) ? 'Pinned announcement' : 'Campus update'}</span><strong>${esc(item.title)}</strong><span>${esc(item.details)}</span>${announcementDate(item) ? `<small>${esc(announcementDate(item))}</small>` : ''}${item.location ? `<small>Location: ${esc(item.location)}</small>` : ''}</span></a>`).join('')
-        : '<p class="text-sm text-slate-500">There are no published announcements or events.</p>';
+      updates.innerHTML = announcementResult.status === 'rejected'
+        ? '<p class="text-sm text-red-600">Campus announcements could not be loaded. Please try again later.</p>'
+        : announcements.length
+          ? announcements.slice(0, 4).map(item => {
+              const photo = item.photo || item.image || item.image_path;
+              const details = item.details || item.body || item.description || '';
+              return `<a href="pages/announcements.html" class="home-announcement ${Number(item.pinned ?? item.featured) ? 'home-announcement--pinned' : 'home-announcement--standard'}">${photo ? `<img src="${esc(photo)}" alt="" loading="lazy">` : ''}<span class="home-announcement-copy"><span class="home-announcement-label">${Number(item.pinned ?? item.featured) ? 'Pinned announcement' : 'Campus update'}</span><strong>${esc(item.title)}</strong><span>${esc(details)}</span>${announcementDate(item) ? `<small>${esc(announcementDate(item))}</small>` : ''}${item.location ? `<small>Location: ${esc(item.location)}</small>` : ''}</span></a>`;
+            }).join('')
+          : '<p class="text-sm text-slate-500">There are no published announcements or events.</p>';
     }
 
     const count = document.getElementById('home-directory-count');
