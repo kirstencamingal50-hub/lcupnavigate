@@ -25,7 +25,7 @@ async function campusContext(question) {
     database.from('locations').select('id,name,kind,description,category_id,parent_building_id,department_name,contact_email,contact_phone,service_hours,access_hours,days_open,services,accessibility_status,accessibility_details,accessibility_features,image_path,active').eq('active', true).order('name').limit(MAX_CONTEXT_ROWS),
     database.from('rooms').select('id,name,room_number,floor_number,floor_label,description,function_description,department_name,contact_email,contact_info,service_hours,accessibility_status,accessibility_details,building_id,active').eq('active', true).order('name').limit(MAX_CONTEXT_ROWS),
     database.from('announcements').select('id,title,body,status,publish_at,event_start,event_end,location_id').eq('status', 'published').order('created_at', { ascending: false }).limit(50),
-    database.from('campus_routes').select('id,name,description,start_marker_id,destination_marker_id,status').eq('status', 'active').limit(100),
+    database.from('campus_routes').select('id,name,notes,start_marker_id,destination_marker_id,status').eq('status', 'active').limit(100),
     database.from('departments').select('id,name,description,office_hours,contact_email,contact_phone,image_path,active').eq('active', true).order('name').limit(150),
     database.from('department_locations').select('department_id,building_id,room_id,floor_number,room_number').limit(300)
   ]);
@@ -40,7 +40,7 @@ async function campusContext(question) {
     ...locations.map(item => ({ ...item, building_name: item.parent_building_id ? byId.get(String(item.parent_building_id))?.name : (item.kind === 'building' ? item.name : null), record_type: item.kind || 'location' })),
     ...rooms.map(item => ({ ...item, building_name: byId.get(String(item.building_id))?.name || null, record_type: 'room' })),
     ...announcements.map(item => ({ ...item, name: item.title, description: item.body, record_type: 'announcement', building_name: item.location_id ? byId.get(String(item.location_id))?.name : null })),
-    ...routes.map(item => ({ ...item, name: item.name || 'Campus route', record_type: 'route' })),
+    ...routes.map(item => ({ ...item, description: item.notes, name: item.name || 'Campus route', record_type: 'route' })),
     ...departments.map(department => {
       const assignments = departmentAssignments.filter(item => String(item.department_id) === String(department.id));
       const buildingNames = assignments.map(item => byId.get(String(item.building_id))?.name).filter(Boolean);
