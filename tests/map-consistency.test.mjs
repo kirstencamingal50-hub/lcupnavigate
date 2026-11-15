@@ -41,7 +41,10 @@ test('mapping mutations generate and preserve node keys and call the route RPC c
   assert.match(mutations, /`node-\$\{randomUUID\(\)\}`/);
   assert.match(mutations, /existing\?\.node_key/);
   assert.match(mutations, /map_connections'\)\s*\.update\(\{ active: false \}\)/);
-  assert.match(mutations, /node_key: `location-\$\{locationId\}`/);\n  assert.match(mutations, /\.upsert\([\s\S]*?onConflict: 'node_key'/);\n  assert.match(mutations, /route_node_id: node\.id/);\n  assert.match(mutations, /database\.rpc\('save_campus_route',\s*\{/);
+  assert.match(mutations, /node_key: `location-\$\{locationId\}`/);
+  assert.match(mutations, /\.upsert\([\s\S]*?onConflict: 'node_key'/);
+  assert.match(mutations, /route_node_id: node\.id/);
+  assert.match(mutations, /database\.rpc\('save_campus_route',\s*\{/);
   for (const parameter of [
     'p_route_id', 'p_name', 'p_start_marker_id', 'p_destination_marker_id',
     'p_status', 'p_accessibility_status', 'p_notes', 'p_waypoints',
@@ -52,7 +55,8 @@ test('mapping mutations generate and preserve node keys and call the route RPC c
   }
 });
 
-\ntest('admin map no longer exposes floor-plan uploads or manual graph connection forms', async () => {
+
+test('admin map no longer exposes floor-plan uploads or manual graph connection forms', async () => {
   const adminMap = await read('../pages/admin/manage-map.html');
   const mapScript = await read('../assets/js/admin/manage-map.js');
   assert.doesNotMatch(adminMap, /floorplan-form|floorplans-list|floorplan-title|Upload floor plan/i);
