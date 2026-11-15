@@ -41,4 +41,9 @@ for (const directory of ['assets', 'data', 'pages']) {
   );
 }
 
+// Fail the deployment if the public admin login page is missing from the publish folder.
+const adminLoginPage = resolve(output, 'pages/admin/login.html');
+await access(adminLoginPage);
+
+console.log('Verified publish file: pages/admin/login.html');
 console.log('NaviGATE Netlify build completed.');
