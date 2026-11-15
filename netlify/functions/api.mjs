@@ -25,7 +25,7 @@ function publicProfile(profile) {
   };
 }
 
-function normalizeAnnouncement(row) {
+function normalizeAnnouncement(row, includeStoragePath = false) {
   return {
     id: row.id,
     title: row.title,
@@ -37,6 +37,9 @@ function normalizeAnnouncement(row) {
     event_end: row.event_end,
     location_id: row.location_id,
     photo: row.image_path ? mediaUrl(row.image_path) : null,
+    // Admin editors need the original bucket/object path to preserve an image
+    // when saving other fields. Never expose this storage path to public visitors.
+    image_object_path: includeStoragePath ? row.image_path : null,
     createdAt: row.created_at,
     location: row.location?.name || null
   };
@@ -1006,7 +1009,7 @@ async function publicResource(event, resource, method, query) {
     }
 
     return success(
-      (unwrap(await request) || []).map(normalizeAnnouncement)
+      (unwrap(await request) || []).map(row => normalizeAnnouncement(row, isAdmin))
     );
   }
 
