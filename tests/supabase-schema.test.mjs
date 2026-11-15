@@ -6,7 +6,8 @@ import { test } from 'node:test';
 const migrationUrl = new URL('../supabase/migrations/20261113230000_initial_navigate_schema.sql', import.meta.url);
 const alignmentMigrationUrl = new URL('../supabase/migrations/20261115000000_align_admin_users_and_add_missing_resources.sql', import.meta.url);
 const routeMigrationUrl = new URL('../supabase/migrations/20261114230000_route_save_rpc.sql', import.meta.url);
-const migration = `${await readFile(migrationUrl, 'utf8')}\n${await readFile(alignmentMigrationUrl, 'utf8')}\n${await readFile(routeMigrationUrl, 'utf8')}`;
+const markerMigrationUrl = new URL('../supabase/migrations/20261115020000_prevent_duplicate_canonical_map_markers.sql', import.meta.url);
+const migration = `${await readFile(migrationUrl, 'utf8')}\n${await readFile(alignmentMigrationUrl, 'utf8')}\n${await readFile(routeMigrationUrl, 'utf8')}\n${await readFile(markerMigrationUrl, 'utf8')}`;
 
 test('Supabase schema applies, preserves data model coverage, and protects role assignment', async () => {
   const db = new PGlite();
@@ -145,7 +146,17 @@ test('route save RPC atomically creates graph points and connections', async () 
       values ('North Hall', true), ('South Hall', true), ('East Hall', true), ('West Hall', true);
       insert into public.map_markers (location_id, x, y, accessibility_status)
       values (1, 10, 20, true), (2, 40, 60, true), (3, 100, 120, true), (4, 130, 160, true);
+      insert into public.locations (name, kind, canonical_location_id)
+      values ('North Hall alternate directory name', 'facility', 1);
     `);
+
+    await assert.rejects(
+      db.query(`
+        insert into public.map_markers (location_id, x, y, map_key, floor_number)
+        values (5, 15, 25, 'campus', 0)
+      `),
+      /uq_active_map_marker_canonical_location|duplicate key value/
+    );
 
     const saved = await db.query(`
       select public.save_campus_route(
