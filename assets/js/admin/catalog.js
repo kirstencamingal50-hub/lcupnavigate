@@ -11,6 +11,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const sortOrders={building:'name-asc',facility:'name-asc',room:'name-asc'};
   const pageNumbers={building:0,facility:0,room:0};
   const pageSize=12;
+  const normalizeKind=value=>String(value??'').trim().toLowerCase().replace(/[ _-]+/g,' ');
+  const isLocationKind=(item,kind)=>normalizeKind(item?.kind)===normalizeKind(kind);
   const refresh=async()=>{const [categoryRows,locationRows,roomRows,directory]=await Promise.all([CampusApi.get('categories'),CampusApi.get('locations'),CampusApi.get('rooms'),CampusApi.get('directory')]);categories=categoryRows;locations=locationRows.map(item=>({...item,photos:(directory.locations||[]).find(record=>String(record.id)===String(item.id))?.photos||[]}));rooms=roomRows.map(item=>({...item,photos:(directory.rooms||[]).find(record=>String(record.id)===String(item.id))?.photos||[]}));};
   const statusNode=()=>document.querySelector('#building-form-status,#facility-form-status,#classroom-form-status,#category-status');
   const status=message=>{const node=statusNode();if(node)node.textContent=message;};
@@ -32,7 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     accessibility_details:optionalText(form,'accessibility_details')
   });
   const catOptions=(selected='')=>categories.map(item=>`<option value="${esc(item.id)}" ${String(item.id)===String(selected)?'selected':''}>${esc(item.name)}</option>`).join('');
-  const buildingOptions=(selected='')=>locations.filter(item=>item.kind==='building').map(item=>`<option value="${esc(item.id)}" ${String(item.id)===String(selected)?'selected':''}>${esc(item.name)}</option>`).join('');
+  const buildingOptions=(selected='')=>locations.filter(item=>isLocationKind(item,'building')).map(item=>`<option value="${esc(item.id)}" ${String(item.id)===String(selected)?'selected':''}>${esc(item.name)}</option>`).join('');
 
   const ensureEditor=()=>{
     if(document.getElementById('catalog-editor'))return;
@@ -200,7 +202,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }).join('')}</div>`;
   function renderLocations(kind){
     const target=document.getElementById(kind==='building'?'buildings-list':'facilities-list');if(!target)return;
-    const term=searchTerms[kind].toLocaleLowerCase();const all=locations.filter(item=>item.kind===kind);const filtered=all.filter(item=>`${item.name} ${item.category||''} ${item.building_number||''}`.toLocaleLowerCase().includes(term)&&(!categoryFilters[kind]||item.category===categoryFilters[kind])).sort((a,b)=>sortOrders[kind]==='name-desc'?b.name.localeCompare(a.name):a.name.localeCompare(b.name));
+    const term=searchTerms[kind].toLocaleLowerCase();const all=locations.filter(item=>isLocationKind(item,kind));const filtered=all.filter(item=>`${item.name} ${item.category||''} ${item.building_number||''}`.toLocaleLowerCase().includes(term)&&(!categoryFilters[kind]||item.category===categoryFilters[kind])).sort((a,b)=>sortOrders[kind]==='name-desc'?b.name.localeCompare(a.name):a.name.localeCompare(b.name));
     pageNumbers[kind]=Math.max(0,Math.min(pageNumbers[kind],Math.max(0,Math.ceil(filtered.length/pageSize)-1)));const rows=filtered.slice(pageNumbers[kind]*pageSize,(pageNumbers[kind]+1)*pageSize);
     target.innerHTML=listToolbar(kind,kind==='building'?'Buildings':'Facilities',filtered.length)+(rows.length?catalogCards(rows,kind):emptyState(kind==='building'?'buildings':'facilities',!!term||!!categoryFilters[kind]))+pagination(kind,filtered.length);
     target.querySelector('[data-list-search]')?.addEventListener('input',event=>{const cursor=event.target.selectionStart;searchTerms[kind]=event.target.value;pageNumbers[kind]=0;renderLocations(kind);const input=target.querySelector('[data-list-search]');input.focus();input.setSelectionRange(cursor,cursor);});
