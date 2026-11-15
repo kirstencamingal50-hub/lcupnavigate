@@ -162,7 +162,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         const floorLabel=value('floor_label');
         await CampusApi.save('rooms',{name:value('name'),room_number:value('room_number'),building_id:Number(value('building_id')),category_id:Number(value('category_id')),floor_label:floorLabel||null,floor_number:Number((floorLabel.match(/\d+/)||[])[0]||item.floor_number||0),capacity:value('capacity')===''?null:Number(value('capacity')),description:value('description')||null,function_description:value('function_description')||null,department_head:value('department_head')||null,contact_info:value('contact_info')||null,image_path:item.image_path||null,department_name:value('department_name')||null,contact_email:value('contact_email')||null,contact_phone:value('contact_phone')||null,website_url:value('website_url')||null,service_hours:value('service_hours')||null,days_open:value('days_open')||null,lunch_break:value('lunch_break')||null,services:value('services')||null,nearby_landmarks:value('nearby_landmarks')||null,accessibility_status:value('accessibility_status')===''?null:Number(value('accessibility_status')),accessibility_details:value('accessibility_details')||null},item.id);
       }
-      message.textContent='Changes saved.';form.dataset.dirty='false';await refresh();renderAll();status('Changes saved to the campus database.');notify('Record updated successfully.');document.getElementById('catalog-editor').close();
+      form.dataset.dirty='false';await refresh();renderAll();
+      const savedItem=pendingEdit.type==='location'
+        ?locations.find(record=>String(record.id)===String(item.id))
+        :rooms.find(record=>String(record.id)===String(item.id));
+      if(!savedItem)throw new Error('The record was saved, but could not be reloaded. Refresh the page to verify the latest information.');
+      if(pendingEdit.type==='location'&&Number(savedItem.category_id)!==Number(value('category_id')))throw new Error('The building was saved, but its category did not match the selected category. Please try again.');
+      pendingEdit.item=savedItem;
+      const recordLabel=pendingEdit.type==='location'?(item.kind==='building'?'Building':'Facility'):'Room';
+      const selectedCategory=categories.find(category=>String(category.id)===String(savedItem.category_id))?.name;
+      message.textContent=`${recordLabel} updated successfully.${selectedCategory?\` Category: ${selectedCategory}.\`:''}`;
+      status(message.textContent);notify(message.textContent);
     }catch(error){message.textContent=error.message;notify(error.message,'error');}finally{button.disabled=false;}
   }
   const listToolbar=(kind,label,count)=>`<div class="admin-list-toolbar"><div><h2>${label}</h2><p>${count} record${count===1?'':'s'}</p></div><div class="admin-list-controls"><label class="admin-search"><span class="material-symbols-rounded" aria-hidden="true">search</span><span class="sr-only">Search ${label.toLowerCase()}</span><input type="search" data-list-search="${kind}" value="${esc(searchTerms[kind])}" placeholder="Search ${label.toLowerCase()}" autocomplete="off"></label><label class="admin-filter-label">Category<select data-category-filter="${kind}"><option value="">All categories</option>${categories.map(category=>`<option value="${esc(category.name)}" ${categoryFilters[kind]===category.name?'selected':''}>${esc(category.name)}</option>`).join('')}</select></label><label class="admin-filter-label">Sort<select data-sort-order="${kind}"><option value="name-asc" ${sortOrders[kind]==='name-asc'?'selected':''}>Name A to Z</option><option value="name-desc" ${sortOrders[kind]==='name-desc'?'selected':''}>Name Z to A</option></select></label></div></div>`;
