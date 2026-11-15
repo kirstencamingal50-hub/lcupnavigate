@@ -23,12 +23,35 @@ document.addEventListener('DOMContentLoaded', async () => {
   const requestedKind = params.get('type') || '';
   let selectedKind = ['building', 'facility', 'room'].includes(requestedKind) ? requestedKind : 'all';
   let records = [];
+  const normalizeCategory = value => String(value ?? '').toLocaleLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[\\/–—_-]+/g, ' ')
+    .replace(/[^a-z0-9 ]/g, '')
+    .replace(/\\s+/g, ' ')
+    .trim();
+  const categoryAliases = {
+    academic: ['academic', 'academic building'],
+    administrative: ['administrative', 'administration', 'administrative building', 'office'],
+    medical: ['medical', 'health and medical', 'health'],
+    'events and conference': ['events and conference', 'event and conference', 'events conference', 'events'],
+    'food and dining': ['food and dining', 'food', 'dining'],
+    'sports and recreation': ['sports and recreation', 'recreation and sports', 'sports', 'recreation'],
+    outdoor: ['outdoor', 'outdoor spaces']
+  };
+  const selectedAliases = Object.entries(categoryAliases).find(([key, aliases]) =>
+    normalizeCategory(key) === normalizeCategory(category) ||
+    aliases.some(alias => normalizeCategory(alias) === normalizeCategory(category))
+  )?.[1] || null;
 
   function render() {
     const query = search.value.trim().toLocaleLowerCase();
     const filtered = records.filter(item => {
       const text = `${item.name} ${item.category || ''} ${item.description || ''} ${item.parent_building || ''} ${item.room_number || ''} ${item.services || ''}`.toLocaleLowerCase();
-      const categoryMatch = !category || category === 'all' || String(item.category || '').toLocaleLowerCase().includes(category.toLocaleLowerCase()) || String(item.kind).toLocaleLowerCase().includes(category.toLocaleLowerCase());
+      const itemCategory = normalizeCategory(item.category);
+      const categoryMatch = !category || category === 'all' ||
+        (selectedAliases
+          ? selectedAliases.some(alias => itemCategory.includes(normalizeCategory(alias)) || normalizeCategory(alias).includes(itemCategory))
+          : itemCategory.includes(normalizeCategory(category)) || normalizeCategory(item.kind).includes(normalizeCategory(category)));
       return (!query || text.includes(query)) && categoryMatch && (selectedKind === 'all' || item.kind === selectedKind);
     });
     if (sort.value === 'name-desc') filtered.sort((a, b) => String(b.name).localeCompare(String(a.name)));
