@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ask NaviGATE - Campus Assistant</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+  <link rel="stylesheet" href="../assets/css/style.css?v=ask-navigate-20261115">
+  <style>
+    .assistant-shell{max-width:980px;margin:0 auto;padding:28px 16px 110px;color:#172033}
+    .assistant-hero{background:linear-gradient(135deg,#101c3a,#173b70);color:white;border-radius:24px;padding:28px;margin-bottom:20px}
+    .assistant-panel{background:white;border:1px solid #e5eaf2;border-radius:20px;padding:20px;box-shadow:0 8px 30px #0f172a0b}
+    .assistant-message{padding:14px 16px;border-radius:16px;max-width:90%;white-space:pre-wrap;line-height:1.55}
+    .assistant-bot{background:#f1f5fb;color:#172033;border-top-left-radius:5px}
+    .assistant-user{background:#173b70;color:white;margin-left:auto;border-top-right-radius:5px}
+    .assistant-chip{border:1px solid #dbe3ef;border-radius:999px;padding:8px 12px;font-size:13px;background:white}
+    .assistant-result{border:1px solid #e4eaf2;border-radius:14px;padding:14px;display:flex;justify-content:space-between;gap:12px;align-items:center}
+    .assistant-action{color:#174a91;font-weight:700;font-size:13px;white-space:nowrap}
+    .assistant-muted{color:#64748b;font-size:13px}
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 font-sans">
+  <div data-component="header"></div>
+  <main class="assistant-shell">
+    <section class="assistant-hero">
+      <p class="text-xs uppercase tracking-widest text-blue-200 font-bold mb-2">Your campus information guide</p>
+      <h1 class="text-3xl sm:text-4xl font-black mb-2">Ask <span class="text-blue-300">NaviGATE</span></h1>
+      <p class="text-blue-100 max-w-2xl">Ask about buildings, departments, rooms, offices, campus services, events, directions, and accessibility. No student or guest account required.</p>
+    </section>
+    <section class="assistant-panel mb-5">
+      <div class="flex items-center justify-between gap-3 mb-4">
+        <div><h2 class="font-extrabold text-lg">Campus assistant</h2><p class="assistant-muted">Answers are grounded in available campus database records.</p></div>
+        <span class="text-xs rounded-full bg-emerald-50 text-emerald-700 px-3 py-1 font-bold">Public access</span>
+      </div>
+      <div id="conversation" class="space-y-3 mb-5" aria-live="polite">
+        <div class="assistant-message assistant-bot">Hello! I’m Ask NaviGATE. What would you like to find on campus?</div>
+      </div>
+      <div class="flex flex-wrap gap-2 mb-4" id="suggestions">
+        <button class="assistant-chip" data-question="Where is the Registrar's Office?">Registrar's Office</button>
+        <button class="assistant-chip" data-question="Which building is used by the CITE Department?">CITE Department</button>
+        <button class="assistant-chip" data-question="Where can I find a computer laboratory?">Computer laboratory</button>
+        <button class="assistant-chip" data-question="What accessible facilities are available?">Accessible facilities</button>
+        <button class="assistant-chip" data-question="What are the upcoming campus events?">Upcoming events</button>
+      </div>
+      <form id="ask-form" class="flex gap-2">
+        <label class="sr-only" for="question">Ask a campus question</label>
+        <input id="question" class="min-w-0 flex-1 rounded-xl border-slate-300 focus:border-blue-600 focus:ring-blue-600" maxlength="500" placeholder="Ask about a campus place or service…" autocomplete="off" required>
+        <button id="ask-button" class="rounded-xl bg-blue-700 px-5 py-2 font-bold text-white hover:bg-blue-800" type="submit">Ask</button>
+      </form>
+      <p id="assistant-status" class="assistant-muted mt-3" role="status"></p>
+      <div id="answer-results" class="space-y-2 mt-4"></div>
+    </section>
+    <section class="grid sm:grid-cols-2 gap-4">
+      <div class="assistant-panel">
+        <div class="flex justify-between items-center mb-3"><h2 class="font-extrabold">Favorite places</h2><span class="material-symbols-rounded text-amber-500">star</span></div>
+        <div id="favorites" class="space-y-2 assistant-muted">Save locations from answers for quick access on this device.</div>
+      </div>
+      <div class="assistant-panel">
+        <div class="flex justify-between items-center mb-3"><h2 class="font-extrabold">Recent searches</h2><span class="material-symbols-rounded text-blue-600">history</span></div>
+        <div id="recents" class="space-y-2 assistant-muted">Your recent questions will appear here.</div>
+      </div>
+    </section>
+    <p class="assistant-muted mt-5">For accessibility and route availability, the assistant can only confirm details that have been entered and verified in the campus database. It does not provide student schedules or academic records.</p>
+  </main>
+  <div data-component="bottom-nav"></div>
+  <script src="../assets/js/app.js?v=ask-navigate-20261115"></script>
+  <script src="../assets/js/assistant.js?v=ask-navigate-20261115"></script>
+</body>
+</html>
