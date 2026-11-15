@@ -436,6 +436,11 @@ async function authResource(event, resource, method, body) {
       );
     }
 
+    // Reuse an already-registered, email-verified user from the normal signup
+    // flow. Never promote an unverified address or delete an existing account.
+    let targetUser = null;
+    let createdForSetup = false;
+
     const created = await db.auth.admin.createUser({
       email,
       password,
@@ -446,32 +451,66 @@ async function authResource(event, resource, method, body) {
       }
     });
 
-    if (created.error) {
-      if (/already registered|already been registered/i.test(created.error.message)) {
-        throw new HttpError(409, 'That email address is already registered.');
+    if (!created.error) {
+      targetUser = created.data.user;
+      createdForSetup = true;
+    } else if (/already registered|already been registered/i.test(created.error.message)) {
+      let page = 1;
+      const perPage = 1000;
+
+      while (!targetUser) {
+        const listed = await db.auth.admin.listUsers({ page, perPage });
+        if (listed.error) throw listed.error;
+        const users = listed.data?.users || [];
+        targetUser = users.find(user =>
+          String(user.email || '').toLowerCase() === email
+        ) || null;
+        if (targetUser || users.length < perPage) break;
+        page += 1;
       }
 
+      if (!targetUser) {
+        throw new HttpError(409, 'An account with this email exists but could not be located. Contact the system administrator.');
+      }
+
+      if (!targetUser.email_confirmed_at) {
+        throw new HttpError(403, 'Verify this email address before using it for first administrator setup.');
+      }
+
+      const updated = await db.auth.admin.updateUserById(targetUser.id, {
+        password,
+        user_metadata: {
+          ...(targetUser.user_metadata || {}),
+          username,
+          full_name: fullName
+        }
+      });
+
+      if (updated.error) throw updated.error;
+      targetUser = updated.data.user;
+    } else {
       throw created.error;
     }
 
     const promoted = unwrap(await db.rpc('bootstrap_first_admin', {
-      p_user_id: created.data.user.id
+      p_user_id: targetUser.id
     }));
 
     if (!promoted) {
-      const cleanup = await db.auth.admin.deleteUser(created.data.user.id);
-
-      if (cleanup.error) {
-        console.error(
-          'Unused first-admin account cleanup failed:',
-          cleanup.error.code || cleanup.error.name
-        );
+      if (createdForSetup) {
+        const cleanup = await db.auth.admin.deleteUser(targetUser.id);
+        if (cleanup.error) {
+          console.error(
+            'Unused first-admin account cleanup failed:',
+            cleanup.error.code || cleanup.error.name
+          );
+        }
       }
 
       throw new HttpError(409, 'Administrator setup has already been completed.');
     }
 
-    return success({ created: true }, 201);
+    return success({ created: true, reused_existing_account: !createdForSetup }, 201);
   }
 
   if (resource === 'auth/me' && method === 'GET') {
