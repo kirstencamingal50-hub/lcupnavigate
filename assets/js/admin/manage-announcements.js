@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     return /^(?:https?:|data:|blob:|\/)/i.test(source)?source:`../../${source.replace(/^\.\/+/, '')}`;
   };
   const localDate=value=>value?String(value).replace(' ','T').slice(0,16):'';
-  let items=[],editingId=null,editingPhoto=null,editingPhotoUrl=null,query='',formDialog=null,statusFilter='',page=0;
+  let items=[],editingId=null,editingStatus='published',editingPhoto=null,editingPhotoUrl=null,query='',formDialog=null,statusFilter='',page=0;
   const pageSize=10;
   const notify=(message,tone='success')=>window.AdminUI?.toast(message,tone);
   const render=()=>{
@@ -28,21 +28,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     list.querySelectorAll('[data-page]').forEach(button=>button.addEventListener('click',()=>{page+=button.dataset.page==='next'?1:-1;render();}));
   };
   const setEditing=item=>{
-    editingId=item?.id??null;editingPhoto=item?.image_object_path??item?.photo??null;editingPhotoUrl=item?.photo??null;
+    editingId=item?.id??null;editingStatus=item?.status||'published';editingPhoto=item?.image_object_path??item?.photo??null;editingPhotoUrl=item?.photo??null;
     form.elements.title.value=item?.title||'';form.elements.details.value=item?.details||'';
-    form.elements.status.value=item?.status||'draft';form.elements.pinned.checked=!!Number(item?.pinned||0);
+    form.elements.pinned.checked=!!Number(item?.pinned||0);
     form.elements.location_id.value=item?.location_id?String(item.location_id):'';
     form.elements.publish_at.value=localDate(item?.publish_at);form.elements.event_start.value=localDate(item?.event_start);form.elements.event_end.value=localDate(item?.event_end);
     form.elements.photo.value='';const preview=form.querySelector('[data-photo-preview]');if(preview){preview.hidden=!editingPhoto;preview.src=editingPhotoUrl?imageSrc(editingPhotoUrl):'';}
-    form.querySelector('[type="submit"]').textContent=editingId?'Save announcement changes':'Save announcement';
-    formDialog?.setTitle(editingId?'Edit announcement or event':'Create an announcement or event',editingId?'Update the announcement, event details, image, and publication status.':'Create a campus announcement or schedule an event.');
+    form.querySelector('[type="submit"]').textContent=editingId?'Save changes':'Publish campus update';
+    formDialog?.setTitle(editingId?'Edit campus update':'Create a campus update',editingId?'Update the announcement or event details. Publication status is managed automatically.':'Create an announcement or event. Publication status is managed automatically.');
   };
   try{
     const [all,directory]=await Promise.all([CampusApi.get('announcements?admin=1'),CampusApi.get('directory')]);
     items=all;const select=form.elements.location_id;
     if(select)select.innerHTML='<option value="">No location</option>'+(directory.locations||[]).map(item=>`<option value="${esc(item.id)}">${esc(item.name)}</option>`).join('');
   }catch(error){status.textContent=error.message;list.innerHTML=`<p class="admin-inline-error" role="alert">${esc(error.message)}</p>`;return;}
-  formDialog=window.AdminUI?.mountFormDialog(form,{title:'Create an announcement or event',description:'Create a campus announcement or schedule an event.',triggerLabel:'Create announcement'});
+  formDialog=window.AdminUI?.mountFormDialog(form,{title:'Create a campus update',description:'Create an announcement or schedule an event. Publication status is managed automatically.',triggerLabel:'Create campus update'});
   formDialog?.onDismiss(()=>setEditing(null));
   window.CampusPhotoTools?.bindPreview(form.elements.photo,form.querySelector('[data-photo-preview]'));
   form.addEventListener('submit',async event=>{
@@ -52,8 +52,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     try{
       let image_path=editingPhoto;const file=form.elements.photo.files?.[0];
       if(file){const data=new FormData();data.append('file',file);data.append('type','photo');image_path=(await CampusApi.request('uploads',{method:'POST',body:data})).path;}
-      const payload={title:form.elements.title.value.trim(),details:form.elements.details.value.trim(),status:form.elements.status.value,pinned:form.elements.pinned.checked,location_id:form.elements.location_id.value||null,publish_at:form.elements.publish_at.value||null,event_start:form.elements.event_start.value||null,event_end:form.elements.event_end.value||null,image_path};
-      await CampusApi.save('announcements',payload,editingId);items=await CampusApi.get('announcements?admin=1');setEditing(null);formDialog?.close();status.textContent='Saved to the campus database.';notify(wasEditing?'Announcement updated successfully.':'Announcement saved successfully.');render();
+      const payload={title:form.elements.title.value.trim(),details:form.elements.details.value.trim(),status:editingId?editingStatus:'published',pinned:form.elements.pinned.checked,location_id:form.elements.location_id.value||null,publish_at:form.elements.publish_at.value||null,event_start:form.elements.event_start.value||null,event_end:form.elements.event_end.value||null,image_path};
+      await CampusApi.save('announcements',payload,editingId);items=await CampusApi.get('announcements?admin=1');setEditing(null);formDialog?.close();status.textContent='Saved to the campus database.';notify(wasEditing?'Campus update saved successfully.': 'Campus update published successfully.');render();
     }catch(error){status.textContent=error.message;notify(error.message,'error');}finally{button.disabled=false;}
   });
   const previewItem=(item,allowPublish=false)=>new Promise(resolve=>{
