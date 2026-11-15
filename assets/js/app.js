@@ -46,7 +46,7 @@ function renderSharedUI() {
   if (isAdminPage && header && !document.querySelector('[data-admin-sidebar]')) {
     const items = [
       { group: 'Overview', links: [['dashboard.html','Dashboard','space_dashboard']] },
-      { group: 'Campus information', links: [['manage-buildings.html','Buildings','domain'],['manage-facilities.html','Facilities','storefront'],['manage-rooms.html','Rooms and Classrooms','meeting_room'],['manage-categories.html','Categories','category'],['manage-map.html','Campus Map','map'],['manage-map.html#route-builder','Walking Routes','alt_route'],['manage-map.html#floorplan-title','Floor Plans','floor'] ] },
+      { group: 'Campus information', links: [['manage-buildings.html','Buildings','domain'],['manage-departments.html','Departments','groups'],['manage-facilities.html','Facilities','storefront'],['manage-rooms.html','Rooms and Classrooms','meeting_room'],['manage-categories.html','Categories','category'],['manage-map.html','Campus Map','map'],['manage-map.html#route-builder','Walking Routes','alt_route'],['manage-map.html#floorplan-title','Floor Plans','floor'] ] },
       { group: 'Communication', links: [['manage-announcements.html','Announcements','campaign'],['manage-announcements.html#event-fields','Events and Schedules','event']] },
       { group: 'Account management', links: [['admin-accounts.html','Admin Accounts','manage_accounts']] },
       { group: 'Settings', links: [['admin-settings.html','Settings','settings']] },
