@@ -1,3 +1,4 @@
+/* Netlify Deploy Preview trigger only; no application behavior changed. */
 
 import { currentUser, bearerToken } from './_shared/authorization.mjs';
 import { HttpError, errorResponse, requestBody, requiredText, optionalText, requireMethod, success, unwrap } from './_shared/http.mjs';
