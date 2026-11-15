@@ -1083,7 +1083,7 @@ async function adminOverview(event) {
 
   const activity = unwrap(await database
     .from('audit_logs')
-    .select('action,entity_type,entity_id,created_at,admin:admin_profiles!audit_logs_admin_legacy_id_fkey(username)')
+    .select('action,entity_type,entity_id,created_at,admin:admin_users!audit_logs_admin_legacy_id_fkey(username)')
     .order('created_at', { ascending: false })
     .limit(8)) || [];
 
