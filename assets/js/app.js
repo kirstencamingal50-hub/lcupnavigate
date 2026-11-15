@@ -73,22 +73,21 @@ function renderSharedUI() {
 
   if (bottomNav) {
     bottomNav.innerHTML = `
-      <nav aria-label="Main navigation" class="floating-nav fixed bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between px-4 sm:px-6 py-2 rounded-2xl w-[min(92%,24rem)] bg-[#111c35] border border-slate-700/80 shadow-2xl" style="padding-bottom: max(.5rem, env(safe-area-inset-bottom))">
-        <a data-nav="home" href="${pathPrefix}index.html" class="flex flex-col items-center gap-1 text-slate-400 transition-colors px-3 py-1 rounded-xl">
-          <span class="material-symbols-rounded text-xl">home</span>
-          <span class="text-[11px] font-bold">Home</span>
+      <nav aria-label="Main navigation" class="floating-nav fixed bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between px-2 sm:px-3 py-2 rounded-2xl w-[min(96%,32rem)] bg-[#111c35] border border-slate-700/80 shadow-2xl" style="padding-bottom: max(.5rem, env(safe-area-inset-bottom))">
+        <a data-nav="home" href="${pathPrefix}index.html" class="flex flex-col items-center gap-1 text-slate-400 transition-colors px-2 py-1 rounded-xl">
+          <span class="material-symbols-rounded text-xl">home</span><span class="text-[10px] font-bold">Home</span>
         </a>
-        <a data-nav="directory" href="${pathPrefix}pages/directory.html" class="flex flex-col items-center gap-1 text-slate-400 transition-colors px-3 py-1 rounded-xl">
-          <span class="material-symbols-rounded text-xl">apartment</span>
-          <span class="text-[11px] font-bold">Directory</span>
+        <a data-nav="directory" href="${pathPrefix}pages/directory.html" class="flex flex-col items-center gap-1 text-slate-400 transition-colors px-2 py-1 rounded-xl">
+          <span class="material-symbols-rounded text-xl">apartment</span><span class="text-[10px] font-bold">Directory</span>
         </a>
-        <a data-nav="map" href="${pathPrefix}pages/map.html" class="flex flex-col items-center gap-1 text-slate-400 transition-colors px-3 py-1 rounded-xl">
-          <span class="material-symbols-rounded text-xl">map</span>
-          <span class="text-[11px] font-bold">Map</span>
+        <a data-nav="assistant" href="${pathPrefix}pages/assistant.html" class="flex flex-col items-center gap-1 text-slate-400 transition-colors px-2 py-1 rounded-xl">
+          <span class="material-symbols-rounded text-xl">forum</span><span class="text-[10px] font-bold">Assistant</span>
         </a>
-        <a data-nav="settings" href="${pathPrefix}pages/settings.html" class="flex flex-col items-center gap-1 text-slate-400 transition-colors px-3 py-1 rounded-xl">
-          <span class="material-symbols-rounded text-xl">settings</span>
-          <span class="text-[11px] font-bold">Settings</span>
+        <a data-nav="map" href="${pathPrefix}pages/map.html" class="flex flex-col items-center gap-1 text-slate-400 transition-colors px-2 py-1 rounded-xl">
+          <span class="material-symbols-rounded text-xl">map</span><span class="text-[10px] font-bold">Map</span>
+        </a>
+        <a data-nav="settings" href="${pathPrefix}pages/settings.html" class="flex flex-col items-center gap-1 text-slate-400 transition-colors px-2 py-1 rounded-xl">
+          <span class="material-symbols-rounded text-xl">settings</span><span class="text-[10px] font-bold">Settings</span>
         </a>
       </nav>
     `;
@@ -97,7 +96,9 @@ function renderSharedUI() {
       ? 'map'
       : path.endsWith('/directory.html') || path.endsWith('/building.html') || path.endsWith('/office.html')
         ? 'directory'
-          : path.endsWith('/settings.html')
+          : path.endsWith('/assistant.html')
+            ? 'assistant'
+            : path.endsWith('/settings.html')
             ? 'settings'
             : path.endsWith('/index.html') || path === '/' || path.endsWith('/announcements.html')
           ? 'home'
