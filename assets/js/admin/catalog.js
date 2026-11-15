@@ -79,6 +79,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     const photos=item.photos||[];
     return `<section class="admin-edit-wide" data-gallery-owner="${ownerType}" data-gallery-id="${esc(item.id)}"><h3 class="font-bold">Photo gallery</h3><p class="text-xs text-slate-500">Upload photos one at a time and provide accurate alternative text for each image.</p><div class="mt-3 grid gap-2">${photos.map(photo=>`<div class="rounded-lg border p-3" data-photo-id="${esc(photo.id)}"><img src="../../${esc(photo.image)}" alt="${esc(photo.altText)}" class="mb-2 h-24 w-full rounded object-cover"><label>Alternative text<input data-photo-alt maxlength="255" required value="${esc(photo.altText)}"></label><label class="mt-2 block">Caption<input data-photo-caption maxlength="255" value="${esc(photo.caption||'')}"></label><label class="mt-2 flex items-center gap-2"><input type="checkbox" data-photo-cover ${Number(photo.isCover)?'checked':''}> Use as cover photo</label><div class="mt-2 flex gap-2"><button type="button" data-photo-save class="admin-button-secondary">Save photo details</button><button type="button" data-photo-delete class="admin-button-secondary">Remove photo</button></div></div>`).join('')||'<p class="text-xs text-slate-500">No gallery photos have been added.</p>'}</div><div class="mt-3 grid gap-2"><label>New photo<input type="file" data-gallery-file accept="image/png,image/jpeg,image/webp"></label><label>Alternative text<input data-gallery-alt maxlength="255" required placeholder="Describe what this image shows"></label><label>Caption<input data-gallery-caption maxlength="255"></label><button type="button" data-photo-add class="admin-button-primary">Upload photo</button></div></section>`;
   }
+  async function manageGalleryAction(event){
+    const button=event.target.closest('[data-photo-add],[data-photo-save],[data-photo-delete]');if(!button)return;
+    const section=button.closest('[data-gallery-owner]'),card=button.closest('[data-photo-id]'),status=document.getElementById('catalog-editor-status');
+    if(!section)return;
+    button.disabled=true;
+    try{
+      if(button.hasAttribute('data-photo-add')){
+        const fileInput=section.querySelector('[data-gallery-file]'),altInput=section.querySelector('[data-gallery-alt]'),captionInput=section.querySelector('[data-gallery-caption]');
+        if(!fileInput.files?.length||!altInput.value.trim()){status.textContent='Choose a photo and enter descriptive alternative text.';return;}
+        const image_path=await upload(fileInput);
+        await CampusApi.request('facility-photos',{method:'POST',body:{owner_type:section.dataset.galleryOwner,owner_id:Number(section.dataset.galleryId),image_path,alt_text:altInput.value.trim(),caption:captionInput.value.trim()||null}});
+        status.textContent='Photo added to the gallery.';
+      }else if(button.hasAttribute('data-photo-save')){
+        const altText=card.querySelector('[data-photo-alt]').value.trim();if(!altText){status.textContent='Alternative text is required.';return;}
+        await CampusApi.request('facility-photos',{method:'PUT',body:{id:Number(card.dataset.photoId),alt_text:altText,caption:card.querySelector('[data-photo-caption]').value.trim()||null,is_cover:card.querySelector('[data-photo-cover]').checked,sort_order:0}});
+        status.textContent='Photo details saved.';
+      }else{
+        if(!await window.AdminUI.confirm({title:'Remove gallery photo?',message:'This removes the photo from the saved campus gallery. The building or room record will remain.',confirmLabel:'Remove photo',danger:true}))return;
+        await CampusApi.remove('facility-photos',Number(card.dataset.photoId));status.textContent='Photo removed from the gallery.';
+      }
+      await refresh();const item=section.dataset.galleryOwner==='location'?locations.find(row=>String(row.id)===section.dataset.galleryId):rooms.find(row=>String(row.id)===section.dataset.galleryId);
+      if(item)section.outerHTML=galleryMarkup(section.dataset.galleryOwner==='location'?'location':'room',item);
+    }catch(error){status.textContent=error.message;}finally{button.disabled=false;}
+  }
   function openEditor(type,item){
     ensureEditor();pendingEdit={type,item};
     const dialog=document.getElementById('catalog-editor'),fields=document.getElementById('catalog-editor-fields');
@@ -104,30 +128,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         field('Department head','department_head',item.department_head||'','text',false,'maxlength="120"')+
         field('Contact information','contact_info',item.contact_info||'','text',false,'maxlength="180"')+extraRoomFields(item)+galleryMarkup(type,item);
     }
-    async function manageGalleryAction(event){
-      const button=event.target.closest('[data-photo-add],[data-photo-save],[data-photo-delete]');if(!button)return;
-      const section=button.closest('[data-gallery-owner]'),card=button.closest('[data-photo-id]'),status=document.getElementById('catalog-editor-status');
-      if(!section)return;
-      button.disabled=true;
-      try{
-        if(button.hasAttribute('data-photo-add')){
-          const fileInput=section.querySelector('[data-gallery-file]'),altInput=section.querySelector('[data-gallery-alt]'),captionInput=section.querySelector('[data-gallery-caption]');
-          if(!fileInput.files?.length||!altInput.value.trim()){status.textContent='Choose a photo and enter descriptive alternative text.';return;}
-          const image_path=await upload(fileInput);
-          await CampusApi.request('facility-photos',{method:'POST',body:{owner_type:section.dataset.galleryOwner,owner_id:Number(section.dataset.galleryId),image_path,alt_text:altInput.value.trim(),caption:captionInput.value.trim()||null}});
-          status.textContent='Photo added to the gallery.';
-        }else if(button.hasAttribute('data-photo-save')){
-          const altText=card.querySelector('[data-photo-alt]').value.trim();if(!altText){status.textContent='Alternative text is required.';return;}
-          await CampusApi.request('facility-photos',{method:'PUT',body:{id:Number(card.dataset.photoId),alt_text:altText,caption:card.querySelector('[data-photo-caption]').value.trim()||null,is_cover:card.querySelector('[data-photo-cover]').checked,sort_order:0}});
-          status.textContent='Photo details saved.';
-        }else{
-          if(!await window.AdminUI.confirm({title:'Remove gallery photo?',message:'This removes the photo from the saved campus gallery. The building or room record will remain.',confirmLabel:'Remove photo',danger:true}))return;
-          await CampusApi.remove('facility-photos',Number(card.dataset.photoId));status.textContent='Photo removed from the gallery.';
-        }
-        await refresh();const item=section.dataset.galleryOwner==='location'?locations.find(row=>String(row.id)===section.dataset.galleryId):rooms.find(row=>String(row.id)===section.dataset.galleryId);
-        if(item)section.outerHTML=galleryMarkup(section.dataset.galleryOwner==='location'?'location':'room',item);
-      }catch(error){status.textContent=error.message;}finally{button.disabled=false;}
-    }
+
     document.getElementById('catalog-editor-form').dataset.dirty='false';
     document.getElementById('catalog-editor-status').textContent='';
     dialog.showModal();dialog.querySelector('input,select,textarea')?.focus();
