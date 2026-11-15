@@ -71,7 +71,7 @@ function renderSharedUI() {
             ${iconSvg('map-pin',18,'text-blue-400')}
             <span class="text-xs text-white font-semibold">Main Campus Map</span>
           </a>
-          ${isAdminPage ? '<button type="button" data-admin-menu-toggle aria-label="Open admin navigation" aria-expanded="false" class="mr-auto ml-3 grid h-10 w-10 place-items-center rounded-lg border border-slate-700 text-white hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400">${iconSvg('menu',22)}</button><a href="#" data-admin-logout class="ml-2 text-xs font-bold text-slate-300 hover:text-white">Sign out</a>' : ''}
+          ${isAdminPage ? '<button type="button" data-admin-menu-toggle aria-label="Open admin navigation" aria-expanded="false" class="mr-auto ml-3 grid h-10 w-10 place-items-center rounded-lg border border-slate-700 text-white hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400"><svg class="nav-svg-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><a href="#" data-admin-logout class="ml-2 text-xs font-bold text-slate-300 hover:text-white">Sign out</a>' : ''}
         </div>
       </header>
     `;
