@@ -84,7 +84,7 @@ function renderSharedUI() {
       { group: 'Communication', links: [['manage-announcements.html','Announcements','campaign']] },
       { group: 'Account management', links: [['admin-accounts.html','Admin Accounts','manage_accounts']] },
       { group: 'Settings', links: [['admin-settings.html','Settings','settings']] },
-      { group: 'System', links: [['dashboard.html#recent-activity','Activity Log','history'],['#','Sign out','logout']] },
+      { group: 'System', links: [['activity-log.html','Activity Log','history'],['#','Sign out','logout']] },
     ];
     const current = window.location.pathname.split('/').pop().toLowerCase();
     const aside = document.createElement('aside');
