@@ -50,7 +50,7 @@ async function getDirectory() {
       .select(`
         *,
         category:categories(name),
-        parent_building:locations!fk_locations_parent(
+        parent_building:locations!locations_parent_building_id_fkey(
           id,
           name,
           kind,
@@ -274,7 +274,7 @@ async function getRoutes(availableOnly) {
   const db = adminDatabase();
 
   let query = db.from('campus_routes')
-    .select('*, start_marker:map_markers!campus_routes_start_marker_id_fkey(id,location_id,x,y,location:locations(name,active)), destination_marker:map_markers!campus_routes_destination_marker_id_fkey(id,location_id,x,y,location:locations(name,active))')
+    .select('*, start_marker:map_markers!campus_routes_start_marker_id_fkey(id,location_id,x,y,location:locations!fk_marker_location(name,active)), destination_marker:map_markers!campus_routes_destination_marker_id_fkey(id,location_id,x,y,location:locations!fk_marker_location(name,active))')
     .order('updated_at', { ascending: false })
     .order('id', { ascending: false });
 
