@@ -595,7 +595,7 @@ async function mapMarkers(event, method, body, query) {
 
   const location = unwrap(await database
     .from('locations')
-    .select('id,active')
+    .select('id,active,canonical_location_id')
     .eq('id', locationId)
     .maybeSingle());
 
@@ -606,25 +606,62 @@ async function mapMarkers(event, method, body, query) {
   const id = method === 'PUT'
     ? positiveId(body.id ?? query.id)
     : null;
+  const floorNumber = Math.max(0, Number(body.floor_number) || 0);
+  const mapKey = optionalText(body.map_key, 'Map key', 40) || 'campus';
+  const canonicalLocationId = location.canonical_location_id || location.id;
+
+  // Resolve every alternate directory record that points to this canonical place.
+  const aliases = unwrap(await database
+    .from('locations')
+    .select('id')
+    .or(`id.eq.${canonicalLocationId},canonical_location_id.eq.${canonicalLocationId}`)) || [];
+  const canonicalLocationIds = [...new Set([locationId, ...aliases.map(row => row.id)])];
+
+  let duplicateQuery = database
+    .from('map_markers')
+    .select('id,location_id')
+    .in('location_id', canonicalLocationIds)
+    .eq('map_key', mapKey)
+    .eq('floor_number', floorNumber)
+    .eq('active', true);
+  if (id) duplicateQuery = duplicateQuery.neq('id', id);
+  const duplicate = unwrap(await duplicateQuery.limit(1).maybeSingle());
+  if (duplicate) {
+    throw new HttpError(
+      409,
+      'This campus location already has a marker. Edit the existing marker instead of creating another pin.'
+    );
+  }
 
   const fields = {
     location_id: locationId,
+    canonical_location_id: canonicalLocationId,
     route_node_id: nullableId(body.route_node_id, 'Route node ID'),
     x,
     y,
-    floor_number: Math.max(0, Number(body.floor_number) || 0),
-    map_key: optionalText(body.map_key, 'Map key', 40) || 'campus',
+    floor_number: floorNumber,
+    map_key: mapKey,
     accessibility_status: booleanValue(body.accessibility_status, 'Accessibility status'),
     active: true
   };
 
-  const savedId = id
-    ? await updateById('map_markers', id, fields, 'Marker not found.')
-    : unwrap(await database
+  let savedId;
+  if (id) {
+    savedId = await updateById('map_markers', id, fields, 'Marker not found.');
+  } else {
+    try {
+      savedId = unwrap(await database
         .from('map_markers')
         .insert(fields)
         .select('id')
         .single()).id;
+    } catch (error) {
+      if (error?.code === '23505') {
+        throw new HttpError(409, 'This campus location already has a marker. Edit the existing marker instead.');
+      }
+      throw error;
+    }
+  }
 
   if (!id) {
     unwrap(await database.from('campus_routes').insert({
