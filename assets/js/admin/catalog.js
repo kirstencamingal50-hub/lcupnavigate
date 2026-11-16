@@ -40,6 +40,76 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   const catOptions=(selected='')=>categories.map(item=>`<option value="${esc(item.id)}" ${String(item.id)===String(selected)?'selected':''}>${esc(item.name)}</option>`).join('');
   const buildingOptions=(selected='')=>locations.filter(item=>isLocationKind(item,'building')).map(item=>`<option value="${esc(item.id)}" ${String(item.id)===String(selected)?'selected':''}>${esc(item.name)}</option>`).join('');
+  // Structured controls keep the existing database fields and API payload format.
+  const weekdays=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const accessOptions=[['wheelchair_entrance','Wheelchair-accessible entrance'],['elevator','Elevator'],['ramp','Ramp'],['accessible_restroom','Accessible restroom'],['accessible_parking','Accessible parking'],['handrails','Handrails'],['tactile_paving','Tactile paving'],['braille_signage','Braille signage'],['hearing_assistance','Hearing assistance']];
+  const toTime=value=>{
+    const match=String(value||'').match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);if(!match)return '';
+    let hour=Number(match[1]);const meridiem=(match[3]||'').toUpperCase();
+    if(meridiem==='PM'&&hour<12)hour+=12;if(meridiem==='AM'&&hour===12)hour=0;
+    return String(hour).padStart(2,'0')+':'+match[2];
+  };
+  const displayTime=value=>{if(!value)return '';const [h,m]=value.split(':').map(Number);return ((h%12)||12)+':'+String(m).padStart(2,'0')+(h>=12?' PM':' AM');};
+  const enhanceTimeRange=(form,name,label)=>{
+    const original=form.elements[name];if(!original||original.dataset.structured==='true')return;
+    const holder=original.closest('label');if(!holder)return;
+    const old=original.value||'',times=old.match(/(\d{1,2}:\d{2}\s*(?:AM|PM)?)/ig)||[];
+    original.type='hidden';original.hidden=true;original.dataset.structured='true';
+    const wrap=document.createElement('div');wrap.className='admin-structured-range';
+    wrap.innerHTML='<label>'+label+' from<input type="time" data-range-start></label><label>To<input type="time" data-range-end></label>';
+    holder.append(wrap);
+    const start=wrap.querySelector('[data-range-start]'),end=wrap.querySelector('[data-range-end]');
+    start.value=toTime(times[0]||'');end.value=toTime(times[1]||'');
+    const sync=()=>{original.value=start.value&&end.value?displayTime(start.value)+' – '+displayTime(end.value):start.value?displayTime(start.value):'';original.dispatchEvent(new Event('change',{bubbles:true}));};
+    start.addEventListener('change',sync);end.addEventListener('change',sync);
+  };
+  const enhanceDays=(form)=>{
+    const original=form.elements.days_open;if(!original||original.dataset.structured==='true')return;
+    const holder=original.closest('label');if(!holder)return;
+    const existing=String(original.value||'').toLowerCase();original.type='hidden';original.dataset.structured='true';
+    const list=document.createElement('div');list.className='admin-choice-list';
+    list.innerHTML=weekdays.map(day=>'<label><input type="checkbox" value="'+day+'"> '+day+'</label>').join('');
+    list.querySelectorAll('input').forEach(input=>{input.checked=existing.includes(input.value.toLowerCase().slice(0,3))||existing.includes(input.value.toLowerCase());input.addEventListener('change',()=>{original.value=[...list.querySelectorAll('input:checked')].map(node=>node.value).join(', ');original.dispatchEvent(new Event('change',{bubbles:true}));});});
+    holder.append(list);
+  };
+  const enhanceAccessibilityDetails=(form)=>{
+    const original=form.elements.accessibility_details;if(!original||original.dataset.structured==='true')return;
+    const holder=original.closest('label');if(!holder)return;
+    const old=String(original.value||'').toLowerCase();original.type='hidden';original.hidden=true;original.dataset.structured='true';
+    const list=document.createElement('div');list.className='admin-choice-list admin-accessibility-list';
+    list.innerHTML=accessOptions.map(([value,label])=>'<label><input type="checkbox" value="'+value+'"> '+label+'</label>').join('');
+    const notes=document.createElement('textarea');notes.rows=2;notes.placeholder='Other accessibility notes (optional)';notes.className='admin-structured-notes';
+    const sync=()=>{const chosen=[...list.querySelectorAll('input:checked')].map(input=>accessOptions.find(option=>option[0]===input.value)?.[1]);original.value=[...chosen,notes.value.trim()].filter(Boolean).join('; ');original.dispatchEvent(new Event('change',{bubbles:true}));};
+    const known=accessOptions.map(option=>option[1].toLowerCase());notes.value=String(original.value||'').split(';').map(part=>part.trim()).filter(part=>part&&!known.some(label=>label===part.toLowerCase())).join('; ');
+    list.querySelectorAll('input').forEach(input=>{input.checked=old.includes((accessOptions.find(option=>option[0]===input.value)?.[1]||'').toLowerCase())||old.includes(input.value);input.addEventListener('change',sync);});
+    notes.addEventListener('input',sync);holder.append(list,notes);
+  };
+  const floorOptions=(buildingId,selected='')=>{
+    const building=locations.find(item=>isLocationKind(item,'building')&&String(item.id)===String(buildingId));
+    const count=Math.max(1,Math.min(100,Number(building?.floor_count)||1));
+    const options=['<option value="">Select a floor</option>','<option value="Ground Level">Ground Level</option>'];
+    for(let floor=2;floor<=count;floor++)options.push('<option value="'+floor+'th Floor">'+floor+'th Floor</option>');
+    if(selected&&!options.some(option=>option.includes('value="'+esc(selected)+'"')))options.push('<option value="'+esc(selected)+'">'+esc(selected)+'</option>');
+    return options.join('').replace('2th Floor','2nd Floor').replace('3th Floor','3rd Floor');
+  };
+  const enhanceFloor=(form)=>{
+    const original=form.elements.floor||form.elements.floor_label;if(!original||original.dataset.structured==='true')return;
+    const holder=original.closest('label');if(!holder)return;
+    const building=form.elements.buildingId||form.elements.building_id;
+    const select=document.createElement('select');select.name='__floor_picker';select.required=original.required;select.className=original.className;
+    let current=original.value||'Ground Level';original.type='hidden';original.required=false;original.dataset.structured='true';
+    const sync=()=>{select.innerHTML=floorOptions(building?.value,current);select.value=current;if(!select.value)select.value='Ground Level';};
+    sync();select.addEventListener('change',()=>{original.value=select.value;current=select.value;original.dispatchEvent(new Event('change',{bubbles:true}));});
+    if(building)building.addEventListener('change',()=>{const previous=select.value;select.innerHTML=floorOptions(building.value,previous);select.value=previous||'Ground Level';original.value=select.value;});
+    holder.append(select);
+  };
+  const enhanceStructuredFields=form=>{
+    ['service_hours','access_hours','lunch_break'].forEach(name=>enhanceTimeRange(form,name,name.replaceAll('_',' ')));
+    enhanceDays(form);enhanceAccessibilityDetails(form);enhanceFloor(form);
+    const floorCount=form.elements.floors;
+    if(floorCount&&floorCount.type==='number'){const select=document.createElement('select');select.name='floors';select.required=floorCount.required;select.className=floorCount.className;select.innerHTML=Array.from({length:10},(_,index)=>'<option value="'+(index+1)+'">'+(index+1)+' floor'+(index?'s':'')+'</option>').join('');select.value=floorCount.value||'1';floorCount.replaceWith(select);}
+  };
+
 
   const ensureEditor=()=>{
     if(document.getElementById('catalog-editor'))return;
@@ -136,7 +206,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('catalog-editor-form').dataset.dirty='false';
     document.getElementById('catalog-editor-status').textContent='';
-    dialog.showModal();dialog.querySelector('input,select,textarea')?.focus();
+    enhanceStructuredFields(document.getElementById('catalog-editor-form'));dialog.showModal();dialog.querySelector('input,select,textarea')?.focus();
   }
   function showDetails(item,type){
     let dialog=document.getElementById('catalog-details');
@@ -249,6 +319,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     for(const form of [buildingForm,facilityForm,roomForm].filter(Boolean)){
       if(form.elements.category)form.elements.category.innerHTML=categories.map(category=>`<option value="${esc(category.name)}">${esc(category.name)}</option>`).join('');
       if(form.elements.buildingId)form.elements.buildingId.innerHTML=buildingOptions();
+      enhanceStructuredFields(form);
       const preview=form.querySelector('[data-photo-preview]');if(form.elements.photo&&preview)window.CampusPhotoTools?.bindPreview(form.elements.photo,preview);
       const kind=form===buildingForm?'building':form===facilityForm?'facility':'room';
       const formDialog=window.AdminUI?.mountFormDialog(form,{title:`Add ${kind}`,description:'Enter the campus information below. Required fields are marked in the form.',triggerLabel:`Add ${kind}`});
