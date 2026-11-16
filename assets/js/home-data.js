@@ -64,8 +64,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             actual === alias || actual.includes(alias) || alias.includes(actual)
           );
         });
-        const buildingCount = matches.filter(place => place.kind === 'building').length;
-        const facilityCount = matches.filter(place => place.kind === 'facility').length;
+        const buildingCount = matches.filter(place => String(place.kind || '').toLowerCase() === 'building').length;
+        const facilityCount = matches.filter(place => String(place.kind || '').toLowerCase() === 'facility').length;
         const countLabel = [
           buildingCount ? `${buildingCount} ${buildingCount === 1 ? 'building' : 'buildings'}` : '',
           facilityCount ? `${facilityCount} ${facilityCount === 1 ? 'facility' : 'facilities'}` : ''
