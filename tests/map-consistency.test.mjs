@@ -43,6 +43,11 @@ test('Netlify map queries use schema foreign keys and frontend-compatible direct
   // general walkway network, and their endpoints are attached to map markers.
   assert.ok(mapPage.includes("(savedRoutes || []).filter(route=>route.status==='active')"));
   assert.ok(mapPage.includes(".sort((a,b)=>Number(a.sequence_no)-Number(b.sequence_no))"));
+  // The selected visitor path must use the same saved waypoint sequence as the graph.
+  assert.ok(mapPage.includes("let points = (route.points || []).filter(point => point.node_id && graph[`n:${point.node_id}`]).sort((a,b)=>Number(a.sequence_no)-Number(b.sequence_no));"));
+  // Keep the faint blue walkway network above the opaque campus map image.
+  assert.ok(mapPage.includes("opacity: 0.28, lineCap: 'round', lineJoin: 'round', interactive: false"));
+  assert.ok(!mapPage.includes('networkLayer.eachLayer(l => l.bringToBack())'));
   assert.ok(mapPage.includes("addEdge(previous,current,null,accessible)"));
   assert.ok(mapPage.includes("String(loc.markerId)===String(route.start_marker_id)"));
   assert.ok(mapPage.includes("String(loc.markerId)===String(route.destination_marker_id)"));
