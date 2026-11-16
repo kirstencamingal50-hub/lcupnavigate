@@ -66,16 +66,12 @@ document.addEventListener('DOMContentLoaded', async () => {
           })
           .sort((a, b) => String(a.name).localeCompare(String(b.name)));
         const countLabel = `${matches.length} ${matches.length === 1 ? 'building' : 'buildings'}`;
-        const buildingNames = matches.length
-          ? matches.map(building => esc(building.name)).join(' · ')
-          : 'No buildings have been assigned to this category yet.';
         const href = `pages/directory.html?type=building&category=${encodeURIComponent(item.name)}`;
         return `<a class="home-category-card" href="${href}">
           <span class="home-category-icon"><span class="material-symbols-rounded" aria-hidden="true">${item.icon}</span></span>
           <span class="home-category-copy">
             <strong>${esc(item.name)}</strong>
             <small>${esc(countLabel)}</small>
-            <small class="home-category-building-list">${buildingNames}</small>
           </span>
           <span class="material-symbols-rounded home-category-arrow" aria-hidden="true">arrow_forward</span>
         </a>`;
