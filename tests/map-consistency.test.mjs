@@ -109,3 +109,18 @@ test('saved route direction falls back to location IDs when marker IDs are unava
   assert.equal(getSavedRouteDirection(route, { id: 4 }, { id: 9 }), 'forward');
   assert.equal(getSavedRouteDirection(route, { id: 9 }, { id: 4 }), 'reverse');
 });
+
+
+test('saved route location endpoints take priority over shared building marker IDs', () => {
+  const route = { start_marker_id: 12, destination_marker_id: 29, start_location_id: 4, destination_location_id: 9 };
+  const roomInBuildingA = { id: 'room-101', routeLocationId: '4', markerId: 12 };
+  const roomInBuildingB = { id: 'room-202', routeLocationId: '9', markerId: 29 };
+  const unrelatedRoomWithSameStartMarker = { id: 'room-303', routeLocationId: '15', markerId: 12 };
+  assert.equal(getSavedRouteDirection(route, roomInBuildingA, roomInBuildingB), 'forward');
+  assert.equal(getSavedRouteDirection(route, roomInBuildingB, roomInBuildingA), 'reverse');
+  assert.equal(getSavedRouteDirection(route, unrelatedRoomWithSameStartMarker, roomInBuildingB), null);
+});
+
+test('room locations retain their parent building route location ID', () => {
+  assert.match(mapPage, /routeLocationId:building\.id/);
+});
