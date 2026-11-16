@@ -50,32 +50,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         : Array.isArray(announcementPayload?.items) ? announcementPayload.items : [];
     const locations = Array.isArray(directory.locations) ? directory.locations : [];
     const rooms = Array.isArray(directory.rooms) ? directory.rooms : [];
-    const buildings = locations.filter(record =>
-      record.kind === 'building' && record.active !== false
+    const campusPlaces = locations.filter(record =>
+      ['building', 'facility'].includes(String(record.kind || '').toLowerCase()) &&
+      record.active !== false
     );
 
     if (categoryRoot) {
       categoryRoot.innerHTML = homeCategories.map(item => {
         const aliases = item.aliases.map(normalize);
-        const matches = buildings
-          .filter(building => {
-            const actual = normalize(building.category);
-            return actual && aliases.some(alias =>
-              actual === alias || actual.includes(alias) || alias.includes(actual)
-            );
-          })
-          .sort((a, b) => String(a.name).localeCompare(String(b.name)));
-        const countLabel = `${matches.length} ${matches.length === 1 ? 'building' : 'buildings'}`;
-        const buildingNames = matches.length
-          ? matches.map(building => esc(building.name)).join(' · ')
-          : 'No buildings have been assigned to this category yet.';
-        const href = `pages/directory.html?type=building&category=${encodeURIComponent(item.name)}`;
+        const matches = campusPlaces.filter(place => {
+          const actual = normalize(place.category);
+          return actual && aliases.some(alias =>
+            actual === alias || actual.includes(alias) || alias.includes(actual)
+          );
+        });
+        const buildingCount = matches.filter(place => String(place.kind || '').toLowerCase() === 'building').length;
+        const facilityCount = matches.filter(place => String(place.kind || '').toLowerCase() === 'facility').length;
+        const countLabel = [
+          buildingCount ? `${buildingCount} ${buildingCount === 1 ? 'building' : 'buildings'}` : '',
+          facilityCount ? `${facilityCount} ${facilityCount === 1 ? 'facility' : 'facilities'}` : ''
+        ].filter(Boolean).join(' · ') || 'No places assigned yet';
+        const href = `pages/directory.html?category=${encodeURIComponent(item.name)}`;
         return `<a class="home-category-card" href="${href}">
           <span class="home-category-icon"><span class="material-symbols-rounded" aria-hidden="true">${item.icon}</span></span>
           <span class="home-category-copy">
             <strong>${esc(item.name)}</strong>
             <small>${esc(countLabel)}</small>
-            <small class="home-category-building-list">${buildingNames}</small>
           </span>
           <span class="material-symbols-rounded home-category-arrow" aria-hidden="true">arrow_forward</span>
         </a>`;
