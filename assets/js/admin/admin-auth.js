@@ -51,7 +51,7 @@
     const approvalNote = document.querySelector('.admin-auth-approval-note');
     const loginStatus = statusFor('login-status');
 
-    // Attach immediately so the browser cannot submit credentials as URL parameters.
+    // Attach all authentication handlers during initial page setup, not after a login attempt.
     loginForm.addEventListener('submit', async event => {
       event.preventDefault();
       if (!loginForm.reportValidity()) return;
@@ -63,17 +63,21 @@
           method: 'POST',
           body: { username: loginForm.elements.username.value.trim(), password: loginForm.elements.password.value }
         });
+        if (!user.user) throw new Error('Sign-in did not return an administrator session.');
+        location.replace('dashboard.html');
+      } catch (error) {
+        loginStatus.textContent = error.message;
+        button.disabled = false;
+      }
+    });
 
     const setupButton = statusFor('show-admin-setup');
     const setupForm = statusFor('admin-setup-form');
     const setupStatus = statusFor('admin-setup-status');
     if (setupButton && setupForm && setupStatus) {
-      try {
-        const state = await window.CampusApi.get('admin/bootstrap');
-        setupButton.hidden = !state.available;
-      } catch (error) {
-        setupStatus.textContent = error.message;
-      }
+      window.CampusApi.get('admin/bootstrap')
+        .then(state => { setupButton.hidden = !state.available; })
+        .catch(error => { setupStatus.textContent = error.message; });
       setupButton.addEventListener('click', () => {
         setupForm.hidden = !setupForm.hidden;
         setupButton.setAttribute('aria-expanded', String(!setupForm.hidden));
@@ -427,13 +431,6 @@
       loginForm.querySelectorAll('input, button[type="submit"]').forEach(control => { control.disabled = true; });
     }
 
-        if (!user.user) throw new Error('Sign-in did not return an administrator session.');
-        location.replace('dashboard.html');
-      } catch (error) {
-        loginStatus.textContent = error.message;
-        button.disabled = false;
-      }
-    });
 
     try {
       const config = await window.CampusApi.get('auth/google-config');

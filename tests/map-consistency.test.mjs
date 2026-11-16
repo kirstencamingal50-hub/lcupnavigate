@@ -68,3 +68,10 @@ test('admin map no longer exposes floor-plan uploads or manual graph connection 
   assert.doesNotMatch(mapScript, /floorplans|form\.elements\.route_node_id/);
   assert.match(adminMap, /generated automatically from saved route paths/i);
 });
+
+test('a published saved route is available in both endpoint directions without a duplicate route record', async () => {
+  const mapPage = await read('../pages/map.html');
+  assert.ok(mapPage.includes('const forward = Number(route.start_marker_id)'));
+  assert.ok(mapPage.includes('const reverse = Number(route.start_marker_id)'));
+  assert.ok(mapPage.includes('if (reverse) points = points.reverse()'));
+});

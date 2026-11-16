@@ -23,3 +23,16 @@ test('admin login prevents credentials from being submitted in the URL', async (
   assert.match(handler, /event\.preventDefault\(\)/);
   assert.match(handler, /method:\s*'POST'/);
 });
+
+test('signup and auth-view click handlers are registered outside the login submit callback', async () => {
+  const auth = await read('../assets/js/admin/admin-auth.js');
+  const loginHandler = auth.indexOf("loginForm.addEventListener('submit'");
+  const signupHandler = auth.indexOf("signupForm.addEventListener('submit'");
+  const viewHandler = auth.indexOf("document.querySelectorAll('[data-auth-view]')");
+  const loginHandlerEnd = auth.indexOf("\n    });", loginHandler);
+
+  assert.ok(loginHandler >= 0 && signupHandler >= 0 && viewHandler >= 0);
+  assert.ok(loginHandlerEnd > loginHandler);
+  assert.ok(signupHandler > loginHandlerEnd, 'signup handler must not be nested inside login submit');
+  assert.ok(viewHandler > loginHandlerEnd, 'tab click handlers must not be nested inside login submit');
+});
