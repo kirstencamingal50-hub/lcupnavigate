@@ -1,5 +1,5 @@
 import { currentUser } from './authorization.mjs';
-import { HttpError, jsonResponse, positiveId, requiredText, success, unwrap } from './http.mjs';
+import { HttpError, jsonResponse, optionalText, positiveId, requiredText, success, unwrap } from './http.mjs';
 import { getServiceClient } from './supabase.mjs';
 
 const db = () => getServiceClient();
