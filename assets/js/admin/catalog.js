@@ -78,10 +78,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const old=String(original.value||'').toLowerCase();original.type='hidden';original.hidden=true;original.dataset.structured='true';
     const list=document.createElement('div');list.className='admin-choice-list admin-accessibility-list';
     list.innerHTML=accessOptions.map(([value,label])=>'<label><input type="checkbox" value="'+value+'"> '+label+'</label>').join('');
-    list.querySelectorAll('input').forEach(input=>{input.checked=old.includes((accessOptions.find(option=>option[0]===input.value)?.[1]||'').toLowerCase())||old.includes(input.value);input.addEventListener('change',sync);});
     const notes=document.createElement('textarea');notes.rows=2;notes.placeholder='Other accessibility notes (optional)';notes.className='admin-structured-notes';
     const sync=()=>{const chosen=[...list.querySelectorAll('input:checked')].map(input=>accessOptions.find(option=>option[0]===input.value)?.[1]);original.value=[...chosen,notes.value.trim()].filter(Boolean).join('; ');original.dispatchEvent(new Event('change',{bubbles:true}));};
     const known=accessOptions.map(option=>option[1].toLowerCase());notes.value=String(original.value||'').split(';').map(part=>part.trim()).filter(part=>part&&!known.some(label=>label===part.toLowerCase())).join('; ');
+    list.querySelectorAll('input').forEach(input=>{input.checked=old.includes((accessOptions.find(option=>option[0]===input.value)?.[1]||'').toLowerCase())||old.includes(input.value);input.addEventListener('change',sync);});
     notes.addEventListener('input',sync);holder.append(list,notes);
   };
   const floorOptions=(buildingId,selected='')=>{
