@@ -977,3 +977,13 @@ html[data-high-contrast] body.admin-page :is(.admin-activity-list,.admin-form-pa
   .admin-page .admin-announcement-card > img,.admin-page .admin-announcement-placeholder { width:84px; height:84px; }
   .admin-announcement-actions { gap:5px; }
 }
+
+/* Structured admin form controls */
+.admin-structured-range{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:8px}
+.admin-structured-range label{display:grid;gap:5px;color:#526176;font-size:10px;font-weight:750}
+.admin-structured-range input[type=time]{width:100%;min-width:0;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;color:#1d2d44;background:#fff;font-size:12px}
+.admin-choice-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px;padding:10px;border:1px solid #dce5ef;border-radius:10px;background:#f8fafc}
+.admin-choice-list label{display:flex;align-items:center;gap:8px;min-width:0;padding:7px 8px;border:1px solid #e5ebf2;border-radius:7px;background:#fff;color:#40516a;font-size:11px;font-weight:600}
+.admin-choice-list input{flex:0 0 auto}
+.admin-structured-notes{width:100%;margin-top:8px;padding:9px 10px;border:1px solid #cbd5e1;border-radius:8px;color:#1d2d44;background:#fff;font-size:12px}
+@media(max-width:640px){.admin-choice-list,.admin-structured-range{grid-template-columns:1fr}}
