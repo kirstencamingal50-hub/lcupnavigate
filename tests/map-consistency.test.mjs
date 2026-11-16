@@ -71,6 +71,7 @@ test('admin map no longer exposes floor-plan uploads or manual graph connection 
 
 test('a published saved route is available in both endpoint directions without a duplicate route record', async () => {
   const mapPage = await read('../pages/map.html');
-  assert.match(mapPage, /const forward = Number\\(route\\.start_marker_id\\)[\\s\\S]*?const reverse = Number\\(route\\.start_marker_id\\)/);
-  assert.match(mapPage, /if \\(reverse\\) points = points\\.reverse\\(\\)/);
+  assert.ok(mapPage.includes('const forward = Number(route.start_marker_id)'));
+  assert.ok(mapPage.includes('const reverse = Number(route.start_marker_id)'));
+  assert.ok(mapPage.includes('if (reverse) points = points.reverse()'));
 });
