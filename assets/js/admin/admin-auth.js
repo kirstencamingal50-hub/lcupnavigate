@@ -75,12 +75,9 @@
     const setupForm = statusFor('admin-setup-form');
     const setupStatus = statusFor('admin-setup-status');
     if (setupButton && setupForm && setupStatus) {
-      try {
-        const state = await window.CampusApi.get('admin/bootstrap');
-        setupButton.hidden = !state.available;
-      } catch (error) {
-        setupStatus.textContent = error.message;
-      }
+      window.CampusApi.get('admin/bootstrap')
+        .then(state => { setupButton.hidden = !state.available; })
+        .catch(error => { setupStatus.textContent = error.message; });
       setupButton.addEventListener('click', () => {
         setupForm.hidden = !setupForm.hidden;
         setupButton.setAttribute('aria-expanded', String(!setupForm.hidden));
@@ -434,7 +431,6 @@
       loginForm.querySelectorAll('input, button[type="submit"]').forEach(control => { control.disabled = true; });
     }
 
-;
 
     try {
       const config = await window.CampusApi.get('auth/google-config');
