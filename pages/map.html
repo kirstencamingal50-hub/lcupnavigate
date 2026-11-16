@@ -622,7 +622,17 @@
         let points = (route.points || []).filter(point => point.node_id && graph[`n:${point.node_id}`]);
         if (direction === 'reverse') points = points.reverse();
         const path = points.map(point => `n:${point.node_id}`);
-        if (path.length < 2) return [];
+
+        // Saved waypoint lists contain graph nodes, while the selected
+        // locations are separate graph nodes attached to their building pin.
+        // Include those endpoint nodes so the rendered line terminates at the
+        // actual selected markers rather than at the last intermediate node.
+        if (path.length && graph[startId]?.neighbors[path[0]]) path.unshift(startId);
+        if (path.length && graph[endId]?.neighbors[path[path.length - 1]]) path.push(endId);
+
+        // Never display a saved path that does not connect both selected
+        // endpoints; fall back to the calculated graph route instead.
+        if (path.length < 2 || path[0] !== startId || path[path.length - 1] !== endId) return [];
         const geometryKey=routeGeometryKey(path);
         if(shownGeometry.has(geometryKey))return [];
         shownGeometry.add(geometryKey);
