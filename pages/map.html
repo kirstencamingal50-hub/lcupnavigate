@@ -642,7 +642,7 @@
         if (accessibleOnly && Number(route.accessible_confirmed) !== 1) return [];
         const direction = getSavedRouteDirection(route, startLocation, endLocation);
         if (!direction) return [];
-        let points = (route.points || []).filter(point => point.node_id && graph[`n:${point.node_id}`]);
+        let points = (route.points || []).filter(point => point.node_id && graph[`n:${point.node_id}`]).sort((a,b)=>Number(a.sequence_no)-Number(b.sequence_no));
         if (direction === 'reverse') points = points.reverse();
         const path = points.map(point => `n:${point.node_id}`);
 
@@ -709,7 +709,6 @@
       networkLayer = L.layerGroup(lines.map(line =>
         L.polyline(line, { color: '#3b82f6', weight: 6, opacity: 0.28, lineCap: 'round', lineJoin: 'round', interactive: false })
       )).addTo(map);
-      networkLayer.eachLayer(l => l.bringToBack());
     }
     netToggleBox.addEventListener('change', () => {
       if (netToggleBox.checked) showWalkways();
