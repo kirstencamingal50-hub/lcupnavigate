@@ -75,6 +75,9 @@ test('a published saved route is available in both endpoint directions without a
   assert.ok(mapPage.includes('const forward = Number(route.start_marker_id)'));
   assert.ok(mapPage.includes('const reverse = Number(route.start_marker_id)'));
   assert.ok(mapPage.includes('if (reverse) points = points.reverse()'));
+  assert.ok(mapPage.includes('graph[startId]?.neighbors[path[0]]'));
+  assert.ok(mapPage.includes('graph[endId]?.neighbors[path[path.length - 1]]'));
+  assert.ok(mapPage.includes("path[0] !== startId || path[path.length - 1] !== endId"));
 });
 
 test('saved routes resolve in both directions using marker or location IDs', () => {
