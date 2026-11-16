@@ -39,6 +39,13 @@ test('Netlify map queries use schema foreign keys and frontend-compatible direct
   assert.match(api, /node:map_nodes\(id,node_key,x,y,floor_number\)/);
   assert.match(api, /accessible_confirmed:\s*accessibleConfirmed/);
   assert.match(api, /filter\(edge => admin \|\| \(edge\.isValidFloorTransition && edge\.verified\)\)/);
+  // Published route segments are included separately from the verified
+  // general walkway network, and their endpoints are attached to map markers.
+  assert.match(mapPage, /savedRoutes \\|\\| \\[\\]\\)\\.filter\\(route=>route\\.status==='active'\\)/);
+  assert.match(mapPage, /Number\\(a\\.sequence_no\\)-Number\\(b\\.sequence_no\\)/);
+  assert.match(mapPage, /addEdge\\(previous,current,null,accessible\\)/);
+  assert.match(mapPage, /String\\(loc\\.markerId\\)===String\\(route\\.start_marker_id\\)/);
+  assert.match(mapPage, /String\\(loc\\.markerId\\)===String\\(route\\.destination_marker_id\\)/);
 });
 
 test('mapping mutations generate and preserve node keys and call the route RPC contract', () => {
