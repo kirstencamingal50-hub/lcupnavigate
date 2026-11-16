@@ -309,9 +309,25 @@
         if(loc.routeNodeId&&graph[loc.routeNodeId])addEdge(locId,loc.routeNodeId,null,Number(loc.accessibilityValue)===1);
       });
 
-      // Published routes are rendered from their own ordered waypoint records.
-      // Do not merge them into the general graph: doing so lets Dijkstra create
-      // hybrid paths that differ from the route approved by the administrator.
+      // Attach published route endpoints to their selected locations, but
+      // keep the route's intermediate segments out of the general graph.
+      // Exact endpoint matches are rendered from the saved ordered waypoints below.
+      (savedRoutes || []).filter(route => route.status === 'active').forEach(route => {
+        const routePoints = (route.points || [])
+          .filter(point => point.node_id && graph[`n:${point.node_id}`])
+          .sort((a,b) => Number(a.sequence_no) - Number(b.sequence_no));
+        if (routePoints.length < 2) return;
+        const firstNode = `n:${routePoints[0].node_id}`;
+        const lastNode = `n:${routePoints[routePoints.length - 1].node_id}`;
+        const accessible = route.accessibility_status === true || Number(route.accessibility_status) === 1;
+        locations.filter(loc => String(loc.markerId) === String(route.start_marker_id))
+          .forEach(loc => { if (graph[routeId(loc)] && graph[firstNode]) addEdge(routeId(loc), firstNode, null, accessible); });
+        locations.filter(loc => String(loc.markerId) === String(route.destination_marker_id))
+          .forEach(loc => { if (graph[routeId(loc)] && graph[lastNode]) addEdge(routeId(loc), lastNode, null, accessible); });
+      });
+
+      // Do not merge published intermediate segments into the general graph:
+      // doing so lets Dijkstra create hybrid paths unlike the admin-approved route.
     }
     rebuildRouteGraph();
 
