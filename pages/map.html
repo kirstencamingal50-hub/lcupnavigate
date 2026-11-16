@@ -490,19 +490,36 @@
       const duration = Math.min(Math.max(total / ROUTE_SPEED, 3), 14) * 1000;
       const start = performance.now();
 
+      if (latlngs.length < 2) {
+        routeLine.setLatLngs(latlngs);
+        animationFrame = null;
+        return;
+      }
+
       const drawStep = (now) => {
-        const t = Math.min((now - start) / duration, 1);
+        const t = Math.min(Math.max((now - start) / duration, 0), 1);
+
+        // Always commit the complete route on the final frame. This also
+        // handles repeated/zero-length waypoints at the end of saved paths.
+        if (t >= 1) {
+          routeLine.setLatLngs(latlngs);
+          animationFrame = null;
+          return;
+        }
+
         const d = t * total;
         let k = 1;
-        while (k < segLen.length - 1 && segLen[k] < d) k++;
+        while (k < segLen.length - 1 && segLen[k] <= d) k++;
+
         const pts = latlngs.slice(0, k);
-        if (latlngs.length > 1) {          const span = (segLen[k] - segLen[k - 1]) || 1;
-          const f = Math.min(Math.max((d - segLen[k - 1]) / span, 0), 1);
-          const a = L.latLng(latlngs[k - 1]), b = L.latLng(latlngs[k]);
-          pts.push(L.latLng(a.lat + (b.lat - a.lat) * f, a.lng + (b.lng - a.lng) * f));
-        }
+        const span = segLen[k] - segLen[k - 1];
+        const f = span > 0 ? Math.min(Math.max((d - segLen[k - 1]) / span, 0), 1) : 1;
+        const a = L.latLng(latlngs[k - 1]);
+        const b = L.latLng(latlngs[k]);
+        pts.push(L.latLng(a.lat + (b.lat - a.lat) * f, a.lng + (b.lng - a.lng) * f));
+
         routeLine.setLatLngs(pts);
-        animationFrame = t < 1 ? requestAnimationFrame(drawStep) : null;
+        animationFrame = requestAnimationFrame(drawStep);
       };
       animationFrame = requestAnimationFrame(drawStep);
     }
