@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const original=form.elements[name];if(!original||original.dataset.structured==='true')return;
     const holder=original.closest('label');if(!holder)return;
     const old=original.value||'',times=old.match(/(\\d{1,2}:\\d{2}\\s*(?:AM|PM)?)/ig)||[];
-    original.type='hidden';original.dataset.structured='true';
+    original.type='hidden';original.hidden=true;original.dataset.structured='true';
     const wrap=document.createElement('div');wrap.className='admin-structured-range';
     wrap.innerHTML='<label>'+label+' from<input type="time" data-range-start></label><label>To<input type="time" data-range-end></label>';
     holder.append(wrap);
@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const holder=original.closest('label');if(!holder)return;
     const building=form.elements.buildingId||form.elements.building_id;
     const select=document.createElement('select');select.name='__floor_picker';select.required=original.required;select.className=original.className;
-    const current=original.value||'Ground Level';original.type='hidden';original.dataset.structured='true';
+    let current=original.value||'Ground Level';original.type='hidden';original.required=false;original.dataset.structured='true';
     const sync=()=>{select.innerHTML=floorOptions(building?.value,current);select.value=current;if(!select.value)select.value='Ground Level';};
     sync();select.addEventListener('change',()=>{original.value=select.value;current=select.value;original.dispatchEvent(new Event('change',{bubbles:true}));});
     if(building)building.addEventListener('change',()=>{const previous=select.value;select.innerHTML=floorOptions(building.value,previous);select.value=previous||'Ground Level';original.value=select.value;});
@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('catalog-editor-form').dataset.dirty='false';
     document.getElementById('catalog-editor-status').textContent='';
-    enhanceStructuredFields(fields);dialog.showModal();dialog.querySelector('input,select,textarea')?.focus();
+    enhanceStructuredFields(document.getElementById('catalog-editor-form'));dialog.showModal();dialog.querySelector('input,select,textarea')?.focus();
   }
   function showDetails(item,type){
     let dialog=document.getElementById('catalog-details');
