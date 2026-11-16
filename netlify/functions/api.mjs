@@ -7,6 +7,18 @@ import { deleteFloorplan, facilityPhotos, mediaHandler, mediaUrl, uploadMetadata
 
 const adminDatabase = () => getServiceClient();
 
+// Supabase/PostgREST applies a server-side row cap to each request. Fetch
+// large campus datasets in stable, ordered pages so route waypoints and map
+// graph records are never silently truncated at the project row limit.
+async function fetchAllRows(buildQuery, pageSize = 500) {
+  const rows = [];
+  for (let offset = 0; ; offset += pageSize) {
+    const page = unwrap(await buildQuery().range(offset, offset + pageSize - 1)) || [];
+    rows.push(...page);
+    if (page.length < pageSize) return rows;
+  }
+}
+
 function authRedirectUrl(path = '/pages/admin/login.html') {
   const appUrl = process.env.APP_URL;
   if (!appUrl) throw new HttpError(503, 'Set APP_URL to the deployed HTTPS site URL before using administrator email flows.');
@@ -174,8 +186,8 @@ async function getDirectory() {
 async function getMap(admin = false) {
   const db = adminDatabase();
 
-  const [markerResult, nodeResult, connectionResult] = await Promise.all([
-    db.from('map_markers')
+  const [markers, nodes, rawConnections] = await Promise.all([
+    fetchAllRows(() => db.from('map_markers')
       .select(`
         id,
         location_id,
@@ -196,14 +208,14 @@ async function getMap(admin = false) {
         )
       `)
       .eq('active', true)
-      .order('id'),
+      .order('id')),
 
-    db.from('map_nodes')
+    fetchAllRows(() => db.from('map_nodes')
       .select('id,node_key,x,y,floor_number,active,verified')
       .eq('active', true)
-      .order('id'),
+      .order('id')),
 
-    db.from('map_connections')
+    fetchAllRows(() => db.from('map_connections')
       .select(`
         id,
         from_node_id,
@@ -217,12 +229,8 @@ async function getMap(admin = false) {
         to_node:map_nodes!fk_connection_to(floor_number)
       `)
       .eq('active', true)
-      .order('id')
+      .order('id'))
   ]);
-
-  const markers = unwrap(markerResult) || [];
-  const nodes = unwrap(nodeResult) || [];
-  const rawConnections = unwrap(connectionResult) || [];
 
   const connections = rawConnections.map(edge => {
     const fromFloor = edge.from_node?.floor_number;
@@ -288,18 +296,22 @@ async function getMap(admin = false) {
 async function getRoutes(availableOnly) {
   const db = adminDatabase();
 
-  let query = db.from('campus_routes')
-    .select('*, start_marker:map_markers!campus_routes_start_marker_id_fkey(id,location_id,x,y,location:locations!fk_marker_location(name,active)), destination_marker:map_markers!campus_routes_destination_marker_id_fkey(id,location_id,x,y,location:locations!fk_marker_location(name,active))')
-    .order('updated_at', { ascending: false })
-    .order('id', { ascending: false });
+  const routes = await fetchAllRows(() => {
+    let query = db.from('campus_routes')
+      .select('*, start_marker:map_markers!campus_routes_start_marker_id_fkey(id,location_id,x,y,location:locations!fk_marker_location(name,active)), destination_marker:map_markers!campus_routes_destination_marker_id_fkey(id,location_id,x,y,location:locations!fk_marker_location(name,active))')
+      .order('updated_at', { ascending: false })
+      .order('id', { ascending: false });
 
-  if (availableOnly) query = query.eq('status', 'active');
+    if (availableOnly) query = query.eq('status', 'active');
+    return query;
+  });
 
-  const routes = unwrap(await query) || [];
-
-  const pointsResult = unwrap(await db.from('campus_route_points')
+  // This table already contains more than the default 1,000-row API cap.
+  // Retrieve every ordered point before grouping records by route.
+  const pointsResult = await fetchAllRows(() => db.from('campus_route_points')
     .select('route_id,sequence_no,point_type,notes,node:map_nodes(id,node_key,x,y,floor_number)')
-    .order('sequence_no')) || [];
+    .order('sequence_no')
+    .order('route_id'));
 
   return routes.filter(route => {
     if (!availableOnly) return true;

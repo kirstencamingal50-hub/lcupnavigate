@@ -149,6 +149,7 @@
   
   <!-- Main Script Logic using ES Module -->
   <script type="module">
+    import { getSavedRouteDirection } from '../assets/js/route-utils.js';
     const MAP_W = 1330, MAP_H = 1620;
     let storedMap;
     let savedRoutes = [];
@@ -163,7 +164,7 @@
     const roomLocations = (storedDirectory.rooms || []).flatMap(room => {
       const building = mapPins.find(loc => loc.id === String(room.buildingId));
       if (!building) return [];
-      return [{ ...room,id:`room-${room.id}`,recordId:String(room.id),markerId:building.markerId,name:`${room.name}${room.roomNumber ? ` (${room.roomNumber})` : ''}`,category:`Room · ${room.category || building.name}`,buildingName:building.name,kind:'room',cat:'room',floor:Number(room.floorNumber || 0),px:[...building.px],routeNodeId:building.routeNodeId,accessibilityValue:room.accessibilityStatus,description:room.description || room.functionDescription || '' }];
+      return [{ ...room,id:`room-${room.id}`,recordId:String(room.id),routeLocationId:building.id,markerId:building.markerId,name:`${room.name}${room.roomNumber ? ` (${room.roomNumber})` : ''}`,category:`Room · ${room.category || building.name}`,buildingName:building.name,kind:'room',cat:'room',floor:Number(room.floorNumber || 0),px:[...building.px],routeNodeId:building.routeNodeId,accessibilityValue:room.accessibilityStatus,description:room.description || room.functionDescription || '' }];
     });
     const locations = [...mapPins, ...roomLocations];
     let junctions = Object.fromEntries(storedMap.nodes.map(node=>[`n:${node.id}`,[Number(node.x),Number(node.y)]]));
@@ -246,8 +247,7 @@
     mapPins.forEach(loc => {
       const marker = L.marker(toLatLng(loc.px), { icon: makeIcon(loc.num), keyboard: true, title: loc.name }).addTo(map);
       marker.on('click', () => openPin(loc));
-      marker._loc = loc;
-      marker._cat = loc.cat;
+      marker._loc = loc;      marker._cat = loc.cat;
       marker._name = loc.name;
       markers.push(marker);
     });
@@ -308,6 +308,36 @@
         const locId=routeId(loc);addNode(locId,loc.px);
         if(loc.routeNodeId&&graph[loc.routeNodeId])addEdge(locId,loc.routeNodeId,null,Number(loc.accessibilityValue)===1);
       });
+
+      // Attach published route endpoints to their selected locations, but
+      // keep the route's intermediate segments out of the general graph.
+      // Exact endpoint matches are rendered from the saved ordered waypoints below.
+      (savedRoutes || []).filter(route => route.status === 'active').forEach(route => {
+        const routePoints = (route.points || [])
+          .filter(point => point.node_id && graph[`n:${point.node_id}`])
+          .sort((a,b) => Number(a.sequence_no) - Number(b.sequence_no));
+        if (routePoints.length < 2) return;
+        const firstNode = `n:${routePoints[0].node_id}`;
+        const lastNode = `n:${routePoints[routePoints.length - 1].node_id}`;
+        const accessible = route.accessibility_status === true || Number(route.accessibility_status) === 1;
+        const hasLocationEndpoints = route.start_location_id !== null && route.start_location_id !== undefined &&
+          route.destination_location_id !== null && route.destination_location_id !== undefined;
+        const startLocations = hasLocationEndpoints
+          ? locations.filter(loc => String(loc.routeLocationId ?? loc.id) === String(route.start_location_id))
+          : locations.filter(loc => String(loc.markerId) === String(route.start_marker_id));
+        const destinationLocations = hasLocationEndpoints
+          ? locations.filter(loc => String(loc.routeLocationId ?? loc.id) === String(route.destination_location_id))
+          : locations.filter(loc => String(loc.markerId) === String(route.destination_marker_id));
+        startLocations.forEach(loc => {
+          if (graph[routeId(loc)] && graph[firstNode]) addEdge(routeId(loc), firstNode, null, accessible);
+        });
+        destinationLocations.forEach(loc => {
+          if (graph[routeId(loc)] && graph[lastNode]) addEdge(routeId(loc), lastNode, null, accessible);
+        });
+      });
+
+      // Do not merge published intermediate segments into the general graph:
+      // doing so lets Dijkstra create hybrid paths unlike the admin-approved route.
     }
     rebuildRouteGraph();
 
@@ -418,6 +448,7 @@
       routeInfo.textContent = 'Select locations to calculate routes';
       window.CampusAccessibility?.stop();
       clearRouteBtn.classList.add('hidden');
+      if (netToggleBox.checked) showWalkways();
     }
 
     const dropdowns = [
@@ -490,20 +521,36 @@
       const duration = Math.min(Math.max(total / ROUTE_SPEED, 3), 14) * 1000;
       const start = performance.now();
 
+      if (latlngs.length < 2) {
+        routeLine.setLatLngs(latlngs);
+        animationFrame = null;
+        return;
+      }
+
       const drawStep = (now) => {
-        const t = Math.min((now - start) / duration, 1);
+        const t = Math.min(Math.max((now - start) / duration, 0), 1);
+
+        // Always commit the complete route on the final frame. This also
+        // handles repeated/zero-length waypoints at the end of saved paths.
+        if (t >= 1) {
+          routeLine.setLatLngs(latlngs);
+          animationFrame = null;
+          return;
+        }
+
         const d = t * total;
         let k = 1;
-        while (k < segLen.length - 1 && segLen[k] < d) k++;
+        while (k < segLen.length - 1 && segLen[k] <= d) k++;
+
         const pts = latlngs.slice(0, k);
-        if (latlngs.length > 1) {
-          const span = (segLen[k] - segLen[k - 1]) || 1;
-          const f = Math.min(Math.max((d - segLen[k - 1]) / span, 0), 1);
-          const a = L.latLng(latlngs[k - 1]), b = L.latLng(latlngs[k]);
-          pts.push(L.latLng(a.lat + (b.lat - a.lat) * f, a.lng + (b.lng - a.lng) * f));
-        }
+        const span = segLen[k] - segLen[k - 1];
+        const f = span > 0 ? Math.min(Math.max((d - segLen[k - 1]) / span, 0), 1) : 1;
+        const a = L.latLng(latlngs[k - 1]);
+        const b = L.latLng(latlngs[k]);
+        pts.push(L.latLng(a.lat + (b.lat - a.lat) * f, a.lng + (b.lng - a.lng) * f));
+
         routeLine.setLatLngs(pts);
-        animationFrame = t < 1 ? requestAnimationFrame(drawStep) : null;
+        animationFrame = requestAnimationFrame(drawStep);
       };
       animationFrame = requestAnimationFrame(drawStep);
     }
@@ -529,21 +576,13 @@
 
     function renderRouteOptions() {
       routeOptions.innerHTML = '';
-      Object.entries(currentRoutes).forEach(([id, option]) => {
-        const label = option.name || (id === 'shortest' ? 'Shortest Route' : 'Alternative Route');
-        const badge = option.saved ? 'Saved route' : 'Available';
-        const border = 'border-slate-700 bg-slate-900/70';
-        const status = 'text-emerald-300';
+      Object.entries(currentRoutes).forEach(([id, option], index) => {
         const card = document.createElement('button');
         card.type = 'button';
-        card.className = `map-route-option text-left rounded-lg border ${border} p-2.5 transition-all hover:border-blue-500/60`;
+        card.className = 'map-route-option text-left rounded-lg border border-slate-700 bg-slate-900/70 p-2.5 transition-all hover:border-blue-500/60';
         card.innerHTML = `
-          <div class="flex items-center justify-between gap-2">
-            <div class="min-w-0 break-words font-bold text-white text-[11px] [overflow-wrap:anywhere]">${escapeHtml(label)}</div>
-            <span class="text-[10px] font-bold ${status}">${badge}</span>
-          </div>
-          ${option.savedName ? `<div class="text-[10px] text-slate-400 mt-1">${escapeHtml(option.savedName)}</div>` : ''}
-          <div class="text-[10px] text-slate-400 mt-1">~${Math.round(option.distance)} map units • ${option.path.length - 1} segments</div>
+          <div class="font-bold text-white text-[11px]">Path ${index + 1}</div>
+          <div class="text-[10px] text-slate-400 mt-1">~${Math.round(option.distance)} map units</div>
         `;
         card.addEventListener('click', () => selectRoute(id));
         routeOptions.appendChild(card);
@@ -557,12 +596,15 @@
         setNotice('This route is no longer available on the current map. Search again to refresh route data.', 'error');
         return;
       }
+      // During navigation, show only the selected route, not the full walkway network.
+      if (networkLayer) { map.removeLayer(networkLayer); networkLayer = null; }
       const latlngs = selected.path.map(nodeId => toLatLng(graph[nodeId].px));
       const color = selected.color || (id === 'shortest' ? '#3b82f6' : '#8b5cf6');
       animateRoute(latlngs, color);
       showRouteMarkers(latlngs);
       map.fitBounds(L.latLngBounds(latlngs), { padding: [60, 60] });
-      routeInfo.innerHTML = `<b>${escapeHtml(selected.name || (id === 'shortest' ? 'Shortest' : 'Alternative') + ' route')} selected:</b> ~${Math.round(selected.distance)} map units.`;
+      const pathNumber = Object.keys(currentRoutes).indexOf(id) + 1;
+      routeInfo.innerHTML = `<b>Path ${pathNumber} selected:</b> ~${Math.round(selected.distance)} map units.`;
       clearRouteBtn.classList.remove('hidden');
       routeNotice.classList.add('hidden');
     }
@@ -595,41 +637,62 @@
       const startLocation = locations.find(loc => routeId(loc) === startId);
       const endLocation = locations.find(loc => routeId(loc) === endId);
       const available = {};
-      const shownGeometry = new Set();
-      const shortest = dijkstra(startId, endId);
-      if (shortest) {
-        available.shortest = { ...shortest, name:'Shortest Route', color:'#3b82f6' };
-        shownGeometry.add(routeGeometryKey(shortest.path));
-        const alternative = getAlternativeResult(startId, endId, shortest);
-        if (alternative && !shownGeometry.has(routeGeometryKey(alternative.path))) {
-          available.alternative = { ...alternative, name:'Alternative Route', color:'#8b5cf6' };
-          shownGeometry.add(routeGeometryKey(alternative.path));
+      const savedOptions = savedRoutes
+        .filter(route => route.status === 'active')
+        .sort((a,b)=>Number(a.id)-Number(b.id))
+        .flatMap(route => {
+          if (accessibleOnly && Number(route.accessible_confirmed) !== 1) return [];
+          const direction = getSavedRouteDirection(route, startLocation, endLocation);
+          if (!direction) return [];
+          let points = (route.points || [])
+            .filter(point => point.node_id && graph[`n:${point.node_id}`])
+            .sort((a,b)=>Number(a.sequence_no)-Number(b.sequence_no));
+          if (direction === 'reverse') points = points.reverse();
+          const path = points.map(point => `n:${point.node_id}`);
+
+          // Always include the selected map locations as the true route endpoints.
+          // Their graph nodes use the exact placed marker coordinates (including
+          // rooms, which inherit their parent building's marker position).
+          // The short connector to the first/last saved waypoint is not a
+          // replacement for or modification of the administrator's waypoints.
+          if (!path.length) return [];
+          if (path[0] !== startId) {
+            if (!graph[startId] || !graph[path[0]]) return [];
+            if (!graph[startId].neighbors[path[0]]) addEdge(startId, path[0], null, Number(route.accessibility_status) === 1);
+            path.unshift(startId);
+          }
+          if (path[path.length - 1] !== endId) {
+            if (!graph[endId] || !graph[path[path.length - 1]]) return [];
+            if (!graph[endId].neighbors[path[path.length - 1]]) addEdge(path[path.length - 1], endId, null, Number(route.accessibility_status) === 1);
+            path.push(endId);
+          }
+          if (path.length < 2 || path[0] !== startId || path[path.length - 1] !== endId) return [];
+
+          const distance = Number(route.distance_map_units) || path.slice(1).reduce(
+            (sum, nodeId, index) => sum + dist(graph[path[index]].px, graph[nodeId].px), 0
+          );
+          const pointNotes = points.map(point => point.notes).filter(Boolean);
+          return [[`saved:${route.id}`, {
+            path, distance, notes: route.notes, pointNotes, color: '#0f9f87'
+          }]];
+        });
+
+      if (savedOptions.length) {
+        // If an administrator published this exact origin/destination pair,
+        // that approved path is the navigation route. Do not substitute a
+        // newly calculated shortest or hybrid path.
+        Object.assign(available, Object.fromEntries(savedOptions));
+      } else {
+        const shortest = dijkstra(startId, endId);
+        if (shortest) {
+          available.shortest = { ...shortest, name:'Shortest Route', color:'#3b82f6' };
+          const alternative = getAlternativeResult(startId, endId, shortest);
+          if (alternative && !samePath(alternative.path, shortest.path)) {
+            available.alternative = { ...alternative, name:'Alternative Route', color:'#8b5cf6' };
+          }
         }
       }
-      const savedOptions = savedRoutes.filter(route => route.status === 'active').sort((a,b)=>Number(a.id)-Number(b.id)).flatMap(route => {
-        if (accessibleOnly && Number(route.accessible_confirmed) !== 1) return [];
-        const forward = Number(route.start_marker_id) === Number(startLocation?.markerId) && Number(route.destination_marker_id) === Number(endLocation?.markerId);
-        const reverse = Number(route.start_marker_id) === Number(endLocation?.markerId) && Number(route.destination_marker_id) === Number(startLocation?.markerId);
-        if (!forward && !reverse) return [];
-        let points = (route.points || []).filter(point => point.node_id && graph[`n:${point.node_id}`]);
-        if (reverse) points = points.reverse();
-        const path = points.map(point => `n:${point.node_id}`);
-        if (path.length < 2) return [];
-        const geometryKey=routeGeometryKey(path);
-        if(shownGeometry.has(geometryKey))return [];
-        shownGeometry.add(geometryKey);
-        const distance = Number(route.distance_map_units) || path.slice(1).reduce((sum, nodeId, index) => sum + dist(graph[path[index]].px, graph[nodeId].px), 0);
-        const pointNotes=points.map(point=>point.notes).filter(Boolean);
-        return [[`saved:${route.id}`, { path, distance, name:route.name, savedName:route.name, saved:true, notes:route.notes, pointNotes, color:'#0f9f87' }]];
-      });
-      const savedNameTotals=new Map(),savedNameIndexes=new Map();
-      savedOptions.forEach(([,option])=>savedNameTotals.set(option.name,(savedNameTotals.get(option.name)||0)+1));
-      savedOptions.forEach(([,option])=>{
-        const total=savedNameTotals.get(option.name)||0;
-        if(total>1){const index=(savedNameIndexes.get(option.name)||0)+1;savedNameIndexes.set(option.name,index);option.name+=` · Path ${index}`;}
-      });
-      savedOptions.forEach(([,option],index)=>{option.name=`Path ${index+1}`;});
-      Object.assign(available, Object.fromEntries(savedOptions));
+
       if (!Object.keys(available).length) {
         setNotice(accessibleOnly ? 'No route can be confirmed accessible from the recorded data. Unknown or unverified accessibility is excluded; try standard routing or ask campus staff for assistance.' : 'No route is available between these locations. Check that the locations are connected in the route builder.', 'error');
         routeInfo.textContent = 'No path found';
@@ -638,7 +701,8 @@
       currentRoutes = available;
       renderRouteOptions();
 
-      selectRoute(shortest ? 'shortest' : Object.keys(available)[0]);
+      const preferredRouteId = savedOptions.length ? Object.keys(available)[0] : (available.shortest ? 'shortest' : Object.keys(available)[0]);
+      selectRoute(preferredRouteId);
     }
 
     findRouteBtn.addEventListener('click', calculateRoutes);
@@ -674,7 +738,6 @@
       networkLayer = L.layerGroup(lines.map(line =>
         L.polyline(line, { color: '#3b82f6', weight: 6, opacity: 0.28, lineCap: 'round', lineJoin: 'round', interactive: false })
       )).addTo(map);
-      networkLayer.eachLayer(l => l.bringToBack());
     }
     netToggleBox.addEventListener('change', () => {
       if (netToggleBox.checked) showWalkways();
