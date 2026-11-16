@@ -679,7 +679,8 @@
       currentRoutes = available;
       renderRouteOptions();
 
-      selectRoute(shortest ? 'shortest' : Object.keys(available)[0]);
+      const preferredRouteId = savedOptions.length ? Object.keys(available)[0] : (available.shortest ? 'shortest' : Object.keys(available)[0]);
+      selectRoute(preferredRouteId);
     }
 
     findRouteBtn.addEventListener('click', calculateRoutes);
