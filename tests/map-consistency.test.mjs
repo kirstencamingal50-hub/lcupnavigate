@@ -56,6 +56,19 @@ test('Netlify map queries use schema foreign keys and frontend-compatible direct
   assert.ok(mapPage.includes("String(loc.markerId)===String(route.destination_marker_id)"));
 });
 
+test('map and route API pagination loads every record beyond the Supabase row cap', () => {
+  assert.match(api, /async function fetchAllRows\(buildQuery, pageSize = 500\)/);
+  assert.match(api, /buildQuery\(\)\.range\(offset, offset \+ pageSize - 1\)/);
+  // Map markers, nodes, and connections all feed the route graph.
+  assert.match(api, /fetchAllRows\(\(\) => db\.from\('map_markers'\)/);
+  assert.match(api, /fetchAllRows\(\(\) => db\.from\('map_nodes'\)/);
+  assert.match(api, /fetchAllRows\(\(\) => db\.from\('map_connections'\)/);
+  // Both route headers and the complete waypoint table must be paged.
+  assert.match(api, /const routes = await fetchAllRows\(\(\) =>/);
+  assert.match(api, /const pointsResult = await fetchAllRows\(\(\) => db\.from\('campus_route_points'\)/);
+  assert.match(api, /\.order\('sequence_no'\)\s*\.order\('route_id'\)/);
+});
+
 test('mapping mutations generate and preserve node keys and call the route RPC contract', () => {
   assert.match(mutations, /[\x60]node-\$\{randomUUID\(\)\}[\x60]/);
   assert.match(mutations, /existing\?\.node_key/);
