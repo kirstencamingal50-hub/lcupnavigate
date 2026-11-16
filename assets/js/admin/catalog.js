@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const weekdays=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
   const accessOptions=[['wheelchair_entrance','Wheelchair-accessible entrance'],['elevator','Elevator'],['ramp','Ramp'],['accessible_restroom','Accessible restroom'],['accessible_parking','Accessible parking'],['handrails','Handrails'],['tactile_paving','Tactile paving'],['braille_signage','Braille signage'],['hearing_assistance','Hearing assistance']];
   const toTime=value=>{
-    const match=String(value||'').match(/(\\d{1,2}):(\\d{2})\\s*(AM|PM)?/i);if(!match)return '';
+    const match=String(value||'').match(/(\d{1,2}):(\d{2})\\s*(AM|PM)?/i);if(!match)return '';
     let hour=Number(match[1]);const meridiem=(match[3]||'').toUpperCase();
     if(meridiem==='PM'&&hour<12)hour+=12;if(meridiem==='AM'&&hour===12)hour=0;
     return String(hour).padStart(2,'0')+':'+match[2];
@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const enhanceTimeRange=(form,name,label)=>{
     const original=form.elements[name];if(!original||original.dataset.structured==='true')return;
     const holder=original.closest('label');if(!holder)return;
-    const old=original.value||'',times=old.match(/(\\d{1,2}:\\d{2}\\s*(?:AM|PM)?)/ig)||[];
+    const old=original.value||'',times=old.match(/(\d{1,2}:\d{2}\\s*(?:AM|PM)?)/ig)||[];
     original.type='hidden';original.hidden=true;original.dataset.structured='true';
     const wrap=document.createElement('div');wrap.className='admin-structured-range';
     wrap.innerHTML='<label>'+label+' from<input type="time" data-range-start></label><label>To<input type="time" data-range-end></label>';
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const enhanceAccessibilityDetails=(form)=>{
     const original=form.elements.accessibility_details;if(!original||original.dataset.structured==='true')return;
     const holder=original.closest('label');if(!holder)return;
-    const old=String(original.value||'').toLowerCase();original.type='hidden';original.dataset.structured='true';
+    const old=String(original.value||'').toLowerCase();original.type='hidden';original.hidden=true;original.dataset.structured='true';
     const list=document.createElement('div');list.className='admin-choice-list admin-accessibility-list';
     list.innerHTML=accessOptions.map(([value,label])=>'<label><input type="checkbox" value="'+value+'"> '+label+'</label>').join('');
     list.querySelectorAll('input').forEach(input=>{input.checked=old.includes(input.value.replaceAll('_',' '))||old.includes(input.value);input.addEventListener('change',sync);});
