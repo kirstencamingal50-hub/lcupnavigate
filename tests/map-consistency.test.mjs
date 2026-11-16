@@ -41,14 +41,17 @@ test('Netlify map queries use schema foreign keys and frontend-compatible direct
   assert.match(api, /filter\(edge => admin \|\| \(edge\.isValidFloorTransition && edge\.verified\)\)/);
   // Published route segments are included separately from the verified
   // general walkway network, and their endpoints are attached to map markers.
-  assert.ok(mapPage.includes("(savedRoutes || []).filter(route=>route.status==='active')"));
+  assert.ok(mapPage.includes(".filter(route => route.status === 'active')"));
   assert.ok(mapPage.includes(".sort((a,b)=>Number(a.sequence_no)-Number(b.sequence_no))"));
   // The selected visitor path must use the same saved waypoint sequence as the graph.
   assert.ok(mapPage.includes("let points = (route.points || []).filter(point => point.node_id && graph[`n:${point.node_id}`]).sort((a,b)=>Number(a.sequence_no)-Number(b.sequence_no));"));
   // Keep the faint blue walkway network above the opaque campus map image.
   assert.ok(mapPage.includes("opacity: 0.28, lineCap: 'round', lineJoin: 'round', interactive: false"));
   assert.ok(!mapPage.includes('networkLayer.eachLayer(l => l.bringToBack())'));
-  assert.ok(mapPage.includes("addEdge(previous,current,null,accessible)"));
+  assert.ok(mapPage.includes('If an administrator published this exact origin/destination pair'));
+  assert.ok(mapPage.includes('if (savedOptions.length)'));
+  assert.ok(mapPage.includes('During navigation, show only the selected route'));
+  assert.ok(!mapPage.includes('addEdge(previous,current,null,accessible)'));
   assert.ok(mapPage.includes("String(loc.markerId)===String(route.start_marker_id)"));
   assert.ok(mapPage.includes("String(loc.markerId)===String(route.destination_marker_id)"));
 });
@@ -84,9 +87,8 @@ test('admin map no longer exposes floor-plan uploads or manual graph connection 
 
 test('a published saved route is available in both endpoint directions without a duplicate route record', async () => {
   const mapPage = await read('../pages/map.html');
-  assert.ok(mapPage.includes('const forward = Number(route.start_marker_id)'));
-  assert.ok(mapPage.includes('const reverse = Number(route.start_marker_id)'));
-  assert.ok(mapPage.includes('if (reverse) points = points.reverse()'));
+  assert.ok(mapPage.includes("getSavedRouteDirection(route, startLocation, endLocation)"));
+  assert.ok(mapPage.includes("if (direction === 'reverse') points = points.reverse()"));
   assert.ok(mapPage.includes('graph[startId]?.neighbors[path[0]]'));
   assert.ok(mapPage.includes('graph[endId]?.neighbors[path[path.length - 1]]'));
   assert.ok(mapPage.includes("path[0] !== startId || path[path.length - 1] !== endId"));
