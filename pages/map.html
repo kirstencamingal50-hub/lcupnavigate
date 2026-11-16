@@ -247,8 +247,7 @@
     mapPins.forEach(loc => {
       const marker = L.marker(toLatLng(loc.px), { icon: makeIcon(loc.num), keyboard: true, title: loc.name }).addTo(map);
       marker.on('click', () => openPin(loc));
-      marker._loc = loc;
-      marker._cat = loc.cat;
+      marker._loc = loc;      marker._cat = loc.cat;
       marker._name = loc.name;
       markers.push(marker);
     });
@@ -497,8 +496,7 @@
         let k = 1;
         while (k < segLen.length - 1 && segLen[k] < d) k++;
         const pts = latlngs.slice(0, k);
-        if (latlngs.length > 1) {
-          const span = (segLen[k] - segLen[k - 1]) || 1;
+        if (latlngs.length > 1) {          const span = (segLen[k] - segLen[k - 1]) || 1;
           const f = Math.min(Math.max((d - segLen[k - 1]) / span, 0), 1);
           const a = L.latLng(latlngs[k - 1]), b = L.latLng(latlngs[k]);
           pts.push(L.latLng(a.lat + (b.lat - a.lat) * f, a.lng + (b.lng - a.lng) * f));
@@ -530,21 +528,13 @@
 
     function renderRouteOptions() {
       routeOptions.innerHTML = '';
-      Object.entries(currentRoutes).forEach(([id, option]) => {
-        const label = option.name || (id === 'shortest' ? 'Shortest Route' : 'Alternative Route');
-        const badge = option.saved ? 'Saved route' : 'Available';
-        const border = 'border-slate-700 bg-slate-900/70';
-        const status = 'text-emerald-300';
+      Object.entries(currentRoutes).forEach(([id, option], index) => {
         const card = document.createElement('button');
         card.type = 'button';
-        card.className = `map-route-option text-left rounded-lg border ${border} p-2.5 transition-all hover:border-blue-500/60`;
+        card.className = 'map-route-option text-left rounded-lg border border-slate-700 bg-slate-900/70 p-2.5 transition-all hover:border-blue-500/60';
         card.innerHTML = `
-          <div class="flex items-center justify-between gap-2">
-            <div class="min-w-0 break-words font-bold text-white text-[11px] [overflow-wrap:anywhere]">${escapeHtml(label)}</div>
-            <span class="text-[10px] font-bold ${status}">${badge}</span>
-          </div>
-          ${option.savedName ? `<div class="text-[10px] text-slate-400 mt-1">${escapeHtml(option.savedName)}</div>` : ''}
-          <div class="text-[10px] text-slate-400 mt-1">~${Math.round(option.distance)} map units • ${option.path.length - 1} segments</div>
+          <div class="font-bold text-white text-[11px]">Path ${index + 1}</div>
+          <div class="text-[10px] text-slate-400 mt-1">~${Math.round(option.distance)} map units</div>
         `;
         card.addEventListener('click', () => selectRoute(id));
         routeOptions.appendChild(card);
@@ -563,7 +553,8 @@
       animateRoute(latlngs, color);
       showRouteMarkers(latlngs);
       map.fitBounds(L.latLngBounds(latlngs), { padding: [60, 60] });
-      routeInfo.innerHTML = `<b>${escapeHtml(selected.name || (id === 'shortest' ? 'Shortest' : 'Alternative') + ' route')} selected:</b> ~${Math.round(selected.distance)} map units.`;
+      const pathNumber = Object.keys(currentRoutes).indexOf(id) + 1;
+      routeInfo.innerHTML = `<b>Path ${pathNumber} selected:</b> ~${Math.round(selected.distance)} map units.`;
       clearRouteBtn.classList.remove('hidden');
       routeNotice.classList.add('hidden');
     }
@@ -620,15 +611,9 @@
         shownGeometry.add(geometryKey);
         const distance = Number(route.distance_map_units) || path.slice(1).reduce((sum, nodeId, index) => sum + dist(graph[path[index]].px, graph[nodeId].px), 0);
         const pointNotes=points.map(point=>point.notes).filter(Boolean);
-        return [[`saved:${route.id}`, { path, distance, name:route.name, savedName:route.name, saved:true, notes:route.notes, pointNotes, color:'#0f9f87' }]];
+        return [[`saved:${route.id}`, { path, distance, notes:route.notes, pointNotes, color:'#0f9f87' }]];
       });
-      const savedNameTotals=new Map(),savedNameIndexes=new Map();
-      savedOptions.forEach(([,option])=>savedNameTotals.set(option.name,(savedNameTotals.get(option.name)||0)+1));
-      savedOptions.forEach(([,option])=>{
-        const total=savedNameTotals.get(option.name)||0;
-        if(total>1){const index=(savedNameIndexes.get(option.name)||0)+1;savedNameIndexes.set(option.name,index);option.name+=` · Path ${index}`;}
-      });
-      savedOptions.forEach(([,option],index)=>{option.name=`Path ${index+1}`;});
+
       Object.assign(available, Object.fromEntries(savedOptions));
       if (!Object.keys(available).length) {
         setNotice(accessibleOnly ? 'No route can be confirmed accessible from the recorded data. Unknown or unverified accessibility is excluded; try standard routing or ask campus staff for assistance.' : 'No route is available between these locations. Check that the locations are connected in the route builder.', 'error');
