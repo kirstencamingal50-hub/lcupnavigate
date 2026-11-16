@@ -164,7 +164,7 @@
     const roomLocations = (storedDirectory.rooms || []).flatMap(room => {
       const building = mapPins.find(loc => loc.id === String(room.buildingId));
       if (!building) return [];
-      return [{ ...room,id:`room-${room.id}`,recordId:String(room.id),markerId:building.markerId,name:`${room.name}${room.roomNumber ? ` (${room.roomNumber})` : ''}`,category:`Room · ${room.category || building.name}`,buildingName:building.name,kind:'room',cat:'room',floor:Number(room.floorNumber || 0),px:[...building.px],routeNodeId:building.routeNodeId,accessibilityValue:room.accessibilityStatus,description:room.description || room.functionDescription || '' }];
+      return [{ ...room,id:`room-${room.id}`,recordId:String(room.id),routeLocationId:building.id,markerId:building.markerId,name:`${room.name}${room.roomNumber ? ` (${room.roomNumber})` : ''}`,category:`Room · ${room.category || building.name}`,buildingName:building.name,kind:'room',cat:'room',floor:Number(room.floorNumber || 0),px:[...building.px],routeNodeId:building.routeNodeId,accessibilityValue:room.accessibilityStatus,description:room.description || room.functionDescription || '' }];
     });
     const locations = [...mapPins, ...roomLocations];
     let junctions = Object.fromEntries(storedMap.nodes.map(node=>[`n:${node.id}`,[Number(node.x),Number(node.y)]]));
