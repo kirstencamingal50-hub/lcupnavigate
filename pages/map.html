@@ -149,6 +149,7 @@
   
   <!-- Main Script Logic using ES Module -->
   <script type="module">
+    import { getSavedRouteDirection } from '../assets/js/route-utils.js';
     const MAP_W = 1330, MAP_H = 1620;
     let storedMap;
     let savedRoutes = [];
@@ -608,11 +609,10 @@
       }
       const savedOptions = savedRoutes.filter(route => route.status === 'active').sort((a,b)=>Number(a.id)-Number(b.id)).flatMap(route => {
         if (accessibleOnly && Number(route.accessible_confirmed) !== 1) return [];
-        const forward = Number(route.start_marker_id) === Number(startLocation?.markerId) && Number(route.destination_marker_id) === Number(endLocation?.markerId);
-        const reverse = Number(route.start_marker_id) === Number(endLocation?.markerId) && Number(route.destination_marker_id) === Number(startLocation?.markerId);
-        if (!forward && !reverse) return [];
+        const direction = getSavedRouteDirection(route, startLocation, endLocation);
+        if (!direction) return [];
         let points = (route.points || []).filter(point => point.node_id && graph[`n:${point.node_id}`]);
-        if (reverse) points = points.reverse();
+        if (direction === 'reverse') points = points.reverse();
         const path = points.map(point => `n:${point.node_id}`);
         if (path.length < 2) return [];
         const geometryKey=routeGeometryKey(path);
