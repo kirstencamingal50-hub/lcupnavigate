@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
+import { getSavedRouteDirection } from '../assets/js/route-utils.js';
 
 const read = path => readFile(new URL(path, import.meta.url), 'utf8');
 const [mapPage, api, mutations, routeMigration] = await Promise.all([
@@ -74,4 +75,19 @@ test('a published saved route is available in both endpoint directions without a
   assert.ok(mapPage.includes('const forward = Number(route.start_marker_id)'));
   assert.ok(mapPage.includes('const reverse = Number(route.start_marker_id)'));
   assert.ok(mapPage.includes('if (reverse) points = points.reverse()'));
+});
+
+test('saved routes resolve in both directions using marker or location IDs', () => {
+  const route = { start_marker_id: 12, destination_marker_id: 29, start_location_id: 4, destination_location_id: 9 };
+  const buildingA = { id: '4', markerId: '12' };
+  const buildingB = { id: '9', markerId: '29' };
+  assert.equal(getSavedRouteDirection(route, buildingA, buildingB), 'forward');
+  assert.equal(getSavedRouteDirection(route, buildingB, buildingA), 'reverse');
+  assert.equal(getSavedRouteDirection(route, buildingA, { id: 10, markerId: 35 }), null);
+});
+
+test('saved route direction falls back to location IDs when marker IDs are unavailable', () => {
+  const route = { start_location_id: 4, destination_location_id: 9 };
+  assert.equal(getSavedRouteDirection(route, { id: 4 }, { id: 9 }), 'forward');
+  assert.equal(getSavedRouteDirection(route, { id: 9 }, { id: 4 }), 'reverse');
 });
