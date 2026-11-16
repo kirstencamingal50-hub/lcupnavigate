@@ -3,20 +3,39 @@ import { HttpError, errorResponse, requestBody, requiredText, success, unwrap } 
 
 const db = () => getServiceClient();
 const MAX_CONTEXT_ROWS = 250;
+const STOP_WORDS = new Set([
+  'where', 'is', 'the', 'a', 'an', 'in', 'on', 'at', 'of', 'to', 'for',
+  'find', 'show', 'me', 'please', 'can', 'could', 'i', 'do', 'tell',
+  'about', 'what', 'which', 'are', 'available', 'located', 'near',
+  'give', 'directions', 'how', 'get', 'there', 'office', 'building',
+  'room', 'place', 'campus'
+]);
 
 function clean(value) {
-  return String(value ?? '').replace(/\s+/g, ' ').trim();
+  return String(value ?? '').replace(/\\s+/g, ' ').trim();
+}
+
+function words(value) {
+  return clean(value).toLowerCase().match(/[a-z0-9]+/g) || [];
 }
 
 function score(question, record) {
-  const words = [...new Set(clean(question).toLowerCase().match(/[a-z0-9]{3,}/g) || [])];
-  const haystack = clean([
+  const terms = [...new Set(words(question).filter(word => word.length >= 3 && !STOP_WORDS.has(word)))];
+  if (!terms.length) return 0;
+
+  const nameWords = new Set(words(record.name));
+  const haystackWords = new Set(words([
     record.name, record.kind, record.description, record.category,
     record.building_name, record.parent_building_name, record.department_name,
     record.room_number, record.floor_number, record.services,
     record.contact_email, record.service_hours
-  ].join(' ')).toLowerCase();
-  return words.reduce((total, word) => total + (haystack.includes(word) ? (record.name?.toLowerCase().includes(word) ? 4 : 1) : 0), 0);
+  ].join(' ')));
+
+  return terms.reduce((total, word) => {
+    if (nameWords.has(word)) return total + 6;
+    if (haystackWords.has(word)) return total + 2;
+    return total;
+  }, 0);
 }
 
 async function campusContext(question) {
@@ -48,24 +67,70 @@ async function campusContext(question) {
       return { ...department, name: department.name, department_name: department.name, building_name: [...new Set(buildingNames)].join(', '), room_number: roomNames.join(', '), record_type: 'department' };
     })
   ];
-  return records.map(record => ({ ...record, relevance: score(question, record) }))
+
+  const ranked = records
+    .map(record => ({ ...record, relevance: score(question, record) }))
     .filter(record => record.relevance > 0)
-    .sort((a, b) => b.relevance - a.relevance)
-    .slice(0, 12);
+    .sort((a, b) => b.relevance - a.relevance);
+
+  if (!ranked.length) return [];
+
+  // Keep only genuinely relevant matches. Generic words such as "office",
+  // "building", and "where" must never pull unrelated campus records in.
+  const bestScore = ranked[0].relevance;
+  const minimumScore = bestScore >= 6 ? Math.max(2, bestScore - 2) : bestScore;
+  return ranked.filter(record => record.relevance >= minimumScore).slice(0, 8);
+}
+
+function displayName(item, question = '') {
+  const name = clean(item.name);
+  if (item.record_type === 'room' && /^registrar$/i.test(name) && /registrar/i.test(question)) {
+    return "Registrar's Office";
+  }
+  return name;
+}
+
+function locationDescription(item) {
+  return [
+    item.building_name,
+    item.floor_label || (item.floor_number != null ? `Floor ${item.floor_number}` : null),
+    item.room_number ? `Room ${item.room_number}` : null
+  ].filter(Boolean).join(', ');
 }
 
 function publicAnswer(question, matches) {
   if (!matches.length) {
     return 'I could not find a matching campus record. Try the exact building, department, office, room, or facility name, or browse the Campus Directory.';
   }
+
   const placeRecords = matches.filter(item => ['building', 'facility', 'room', 'location', 'department'].includes(item.record_type));
-  const lines = matches.slice(0, 5).map(item => {
-    const location = [item.building_name, item.floor_number != null ? `Floor ${item.floor_number}` : null, item.room_number ? `Room ${item.room_number}` : null].filter(Boolean).join(' · ');
+  if (!placeRecords.length && matches[0].record_type === 'announcement') {
+    const item = matches[0];
+    return `Here is the campus update I found: ${clean(item.title)}. ${clean(item.body)}`.trim();
+  }
+
+  // A direct office/room question should receive one direct answer, not a
+  // generic list of loosely related buildings and facilities.
+  const best = placeRecords[0];
+  if (best && best.record_type === 'room' && best.building_name) {
+    const where = locationDescription(best);
+    const label = displayName(best, question);
+    return `${label} is located in ${where}.`;
+  }
+
+  if (placeRecords.length === 1) {
+    const item = placeRecords[0];
+    const where = locationDescription(item);
+    return where ? `${displayName(item, question)} is located at ${where}.` : `I found ${displayName(item, question)} in the campus records.`;
+  }
+
+  const lines = placeRecords.slice(0, 5).map(item => {
+    const location = locationDescription(item);
     const details = [clean(item.description), clean(item.service_hours) ? `Hours: ${clean(item.service_hours)}` : null, clean(item.contact_email) ? `Email: ${clean(item.contact_email)}` : null].filter(Boolean);
-    return `• ${clean(item.name)}${location ? ` — ${location}` : ''}${details.length ? `\n  ${details.join(' · ')}` : ''}`;
+    return `• ${displayName(item, question)}${location ? ` — ${location}` : ''}${details.length ? `\\n  ${details.join(' · ')}` : ''}`;
   });
-  if (!placeRecords.length && matches[0].record_type === 'announcement') return `Here is the campus update I found:\n\n${lines.join('\n')}`;
-  return `Here is what I found in the campus records:\n\n${lines.join('\n')}\n\nSelect “Show on Map” on a location result to open it on the campus map.`;
+
+  return `Here is the most relevant campus information I found:\\n\\n${lines.join('\\n')}\\n\\nSelect “Show on Map” to view a location on the campus map.`;
 }
 
 function answer(question, matches) {
@@ -84,15 +149,18 @@ export const handler = async event => {
       .filter(item => ['building', 'facility', 'room', 'location', 'department'].includes(item.record_type))
       .slice(0, 6)
       .map(item => {
-        const targetName = item.record_type === 'department'
-          ? String(item.building_name || '').split(',')[0].trim()
-          : item.name;
+        const targetName = item.record_type === 'room'
+          ? item.building_name
+          : item.record_type === 'department'
+            ? String(item.building_name || '').split(',')[0].trim()
+            : item.name;
         return {
           id: item.id,
-          name: item.name,
+          name: displayName(item, question),
           kind: item.record_type,
           building: item.building_name || null,
           floor: item.floor_number ?? null,
+          floor_label: item.floor_label || null,
           room: item.room_number || null,
           description: item.description || null,
           image: item.image_path || null,
