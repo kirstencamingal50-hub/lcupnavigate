@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
+import { getSavedRouteDirection } from '../assets/js/route-utils.js';
 
 const read = path => readFile(new URL(path, import.meta.url), 'utf8');
 const [mapPage, api, mutations, routeMigration] = await Promise.all([
@@ -38,6 +39,22 @@ test('Netlify map queries use schema foreign keys and frontend-compatible direct
   assert.match(api, /node:map_nodes\(id,node_key,x,y,floor_number\)/);
   assert.match(api, /accessible_confirmed:\s*accessibleConfirmed/);
   assert.match(api, /filter\(edge => admin \|\| \(edge\.isValidFloorTransition && edge\.verified\)\)/);
+  // Published route segments are included separately from the verified
+  // general walkway network, and their endpoints are attached to map markers.
+  assert.ok(mapPage.includes(".filter(route => route.status === 'active')"));
+  assert.ok(mapPage.includes(".sort((a,b)=>Number(a.sequence_no)-Number(b.sequence_no))"));
+  // The selected visitor path must use the same saved waypoint sequence as the graph.
+  assert.ok(mapPage.includes('let points = (route.points || [])'));
+  assert.ok(mapPage.includes('.filter(point => point.node_id && graph[`n:${point.node_id}`])'));
+  // Keep the faint blue walkway network above the opaque campus map image.
+  assert.ok(mapPage.includes("opacity: 0.28, lineCap: 'round', lineJoin: 'round', interactive: false"));
+  assert.ok(!mapPage.includes('networkLayer.eachLayer(l => l.bringToBack())'));
+  assert.ok(mapPage.includes('If an administrator published this exact origin/destination pair'));
+  assert.ok(mapPage.includes('if (savedOptions.length)'));
+  assert.ok(mapPage.includes('During navigation, show only the selected route'));
+  assert.ok(!mapPage.includes('addEdge(previous,current,null,accessible)'));
+  assert.ok(mapPage.includes("String(loc.markerId)===String(route.start_marker_id)"));
+  assert.ok(mapPage.includes("String(loc.markerId)===String(route.destination_marker_id)"));
 });
 
 test('mapping mutations generate and preserve node keys and call the route RPC contract', () => {
@@ -71,7 +88,39 @@ test('admin map no longer exposes floor-plan uploads or manual graph connection 
 
 test('a published saved route is available in both endpoint directions without a duplicate route record', async () => {
   const mapPage = await read('../pages/map.html');
-  assert.ok(mapPage.includes('const forward = Number(route.start_marker_id)'));
-  assert.ok(mapPage.includes('const reverse = Number(route.start_marker_id)'));
-  assert.ok(mapPage.includes('if (reverse) points = points.reverse()'));
+  assert.ok(mapPage.includes("getSavedRouteDirection(route, startLocation, endLocation)"));
+  assert.ok(mapPage.includes("if (direction === 'reverse') points = points.reverse()"));
+  assert.ok(mapPage.includes('graph[startId]?.neighbors[path[0]]'));
+  assert.ok(mapPage.includes('graph[endId]?.neighbors[path[path.length - 1]]'));
+  assert.ok(mapPage.includes("path[0] !== startId || path[path.length - 1] !== endId"));
+});
+
+test('saved routes resolve in both directions using marker or location IDs', () => {
+  const route = { start_marker_id: 12, destination_marker_id: 29, start_location_id: 4, destination_location_id: 9 };
+  const buildingA = { id: '4', markerId: '12' };
+  const buildingB = { id: '9', markerId: '29' };
+  assert.equal(getSavedRouteDirection(route, buildingA, buildingB), 'forward');
+  assert.equal(getSavedRouteDirection(route, buildingB, buildingA), 'reverse');
+  assert.equal(getSavedRouteDirection(route, buildingA, { id: 10, markerId: 35 }), null);
+});
+
+test('saved route direction falls back to location IDs when marker IDs are unavailable', () => {
+  const route = { start_location_id: 4, destination_location_id: 9 };
+  assert.equal(getSavedRouteDirection(route, { id: 4 }, { id: 9 }), 'forward');
+  assert.equal(getSavedRouteDirection(route, { id: 9 }, { id: 4 }), 'reverse');
+});
+
+
+test('saved route location endpoints take priority over shared building marker IDs', () => {
+  const route = { start_marker_id: 12, destination_marker_id: 29, start_location_id: 4, destination_location_id: 9 };
+  const roomInBuildingA = { id: 'room-101', routeLocationId: '4', markerId: 12 };
+  const roomInBuildingB = { id: 'room-202', routeLocationId: '9', markerId: 29 };
+  const unrelatedRoomWithSameStartMarker = { id: 'room-303', routeLocationId: '15', markerId: 12 };
+  assert.equal(getSavedRouteDirection(route, roomInBuildingA, roomInBuildingB), 'forward');
+  assert.equal(getSavedRouteDirection(route, roomInBuildingB, roomInBuildingA), 'reverse');
+  assert.equal(getSavedRouteDirection(route, unrelatedRoomWithSameStartMarker, roomInBuildingB), null);
+});
+
+test('room locations retain their parent building route location ID', () => {
+  assert.match(mapPage, /routeLocationId:building\.id/);
 });
