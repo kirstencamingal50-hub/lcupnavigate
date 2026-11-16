@@ -52,8 +52,11 @@ test('Netlify map queries use schema foreign keys and frontend-compatible direct
   assert.ok(mapPage.includes('if (savedOptions.length)'));
   assert.ok(mapPage.includes('During navigation, show only the selected route'));
   assert.ok(!mapPage.includes('addEdge(previous,current,null,accessible)'));
-  assert.ok(mapPage.includes("String(loc.markerId)===String(route.start_marker_id)"));
-  assert.ok(mapPage.includes("String(loc.markerId)===String(route.destination_marker_id)"));
+  assert.ok(mapPage.includes("locations.filter(loc => String(loc.routeLocationId ?? loc.id) === String(route.start_location_id))"));
+  assert.ok(mapPage.includes("locations.filter(loc => String(loc.routeLocationId ?? loc.id) === String(route.destination_location_id))"));
+  assert.ok(mapPage.includes("if (path[0] !== startId)"));
+  assert.ok(mapPage.includes("if (path[path.length - 1] !== endId)"));
+  assert.ok(mapPage.includes("path.push(endId)"));
 });
 
 test('map and route API pagination loads every record beyond the Supabase row cap', () => {
