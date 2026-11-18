@@ -38,7 +38,7 @@
           <select name="buildingId" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"></select>
         </label>
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Category
-          <select name="category" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"></select>
+          <select name="category_ids" multiple required size="5" aria-describedby="category-help" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"></select><small id="category-help" class="mt-1 block text-xs text-slate-500">Select one or more categories. Hold Ctrl (Windows) or Command (Mac) to choose multiple.</small>
         </label>
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Floor Level<select name="floor" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"><option value="Ground Level">Ground Level</option><option value="2nd Floor">2nd Floor</option><option value="3rd Floor">3rd Floor</option><option value="4th Floor">4th Floor</option><option value="5th Floor">5th Floor</option><option value="6th Floor">6th Floor</option><option value="7th Floor">7th Floor</option><option value="8th Floor">8th Floor</option><option value="9th Floor">9th Floor</option><option value="10th Floor">10th Floor</option><option value="Basement">Basement</option></select>
         </label>
@@ -103,7 +103,7 @@
   </main>
 
   <script src="../../assets/js/admin/admin-photos.js"></script>
-  <script src="../../assets/js/admin/catalog.js?v=20261118-catalog-archive-gallery-2"></script>
+  <script src="../../assets/js/admin/catalog.js?v=20261118-multi-category"></script>
   <script src="../../assets/js/app.js?v=20261118-remove-department-nav"></script>
 </body>
 </html>

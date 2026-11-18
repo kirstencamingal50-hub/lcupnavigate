@@ -5,7 +5,8 @@ import { test } from 'node:test';
 
 const migrationUrl = new URL('../supabase/migrations/20261113230000_initial_navigate_schema.sql', import.meta.url);
 const routeMigrationUrl = new URL('../supabase/migrations/20261114230000_route_save_rpc.sql', import.meta.url);
-const migration = `${await readFile(migrationUrl, 'utf8')}\n${await readFile(routeMigrationUrl, 'utf8')}`;
+const multiCategoryMigrationUrl = new URL('../supabase/migrations/20261118100000_add_multiple_categories.sql', import.meta.url);
+const migration = `${await readFile(migrationUrl, 'utf8')}\n${await readFile(routeMigrationUrl, 'utf8')}\n${await readFile(multiCategoryMigrationUrl, 'utf8')}`;
 
 test('Supabase schema applies, preserves data model coverage, and protects role assignment', async () => {
   const db = new PGlite();
@@ -47,6 +48,17 @@ test('Supabase schema applies, preserves data model coverage, and protects role 
       'campus_route_points', 'campus_route_segments', 'floor_plans',
       'announcements', 'favorites', 'audit_logs'
     ]) assert.ok(tableNames.has(name), `Missing table ${name}`);
+
+    const categoryColumns = await db.query(`
+      select table_name, column_name
+      from information_schema.columns
+      where table_schema = 'public' and column_name = 'category_ids'
+    `);
+    assert.deepEqual(
+      new Set(categoryColumns.rows.map(row => row.table_name)),
+      new Set(['locations', 'rooms']),
+      'buildings, facilities, and rooms must support multiple categories'
+    );
 
     const relationships = await db.query(`
       select conname from pg_constraint

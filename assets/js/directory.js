@@ -50,8 +50,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       const itemCategory = normalizeCategory(item.category);
       const categoryMatch = !category || category === 'all' ||
         (selectedAliases
-          ? Boolean(itemCategory) && selectedAliases.some(alias => itemCategory.includes(normalizeCategory(alias)) || normalizeCategory(alias).includes(itemCategory))
-          : itemCategory.includes(normalizeCategory(category)) || normalizeCategory(item.kind).includes(normalizeCategory(category)));
+          ? itemCategories.some(itemCategory => selectedAliases.some(alias => itemCategory.includes(normalizeCategory(alias)) || normalizeCategory(alias).includes(itemCategory)))
+          : itemCategories.some(itemCategory => itemCategory.includes(normalizeCategory(category))) || normalizeCategory(item.kind).includes(normalizeCategory(category)));
       return (!query || text.includes(query)) && categoryMatch && (selectedKind === 'all' || item.kind === selectedKind);
     });
     if (sort.value === 'name-desc') filtered.sort((a, b) => String(b.name).localeCompare(String(a.name)));
@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           ${item.image ? `<img src="../${escapeHtml(item.image)}" alt="" loading="lazy">` : `<span class="material-symbols-rounded" aria-hidden="true">${item.kind === 'room' ? 'meeting_room' : item.kind === 'building' ? 'location_city' : 'storefront'}</span>`}
         </a>
         <div class="directory-card-body">
-          <div class="directory-card-meta"><span class="directory-kind">${kindLabel}</span><span>${escapeHtml(item.category || 'Campus')}</span></div>
+          <div class="directory-card-meta"><span class="directory-kind">${kindLabel}</span><span>${escapeHtml((item.category_names?.length ? item.category_names : [item.category]).filter(Boolean).join(' · ') || 'Campus')}</span></div>
           <h2><a href="${detailUrl}">${escapeHtml(item.name)}</a></h2>
           <p class="directory-card-description">${escapeHtml(item.description || 'More information is available in this directory profile.')}</p>
           ${item.parent_building ? `<p class="directory-parent"><span class="material-symbols-rounded" aria-hidden="true">location_on</span>${escapeHtml(item.parent_building)}${item.room_number ? ` · Room ${escapeHtml(item.room_number)}` : ''}</p>` : ''}

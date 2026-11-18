@@ -69,6 +69,20 @@ async function updateById(table, id, fields, notFound) {
   return row.id;
 }
 
+async function selectedCategoryIds(database, body) {
+  const raw = Array.isArray(body.category_ids)
+    ? body.category_ids
+    : body.category_id == null || body.category_id === ''
+      ? []
+      : [body.category_id];
+  const ids = [...new Set(raw.map(value => positiveId(value, 'Category ID')))];
+  if (ids.length) {
+    const rows = unwrap(await database.from('categories').select('id').in('id', ids)) || [];
+    if (rows.length !== ids.length) throw new HttpError(400, 'One or more selected categories are invalid. Refresh the category list and try again.');
+  }
+  return ids;
+}
+
 async function locations(event, method, body, query) {
   const user = await editor(event);
   const database = db();
@@ -85,7 +99,8 @@ async function locations(event, method, body, query) {
       throw new HttpError(400, 'Invalid location kind.');
     }
 
-    const categoryId = nullableId(body.category_id, 'Category ID');
+    const categoryIds = await selectedCategoryIds(database, body);
+    const categoryId = categoryIds[0] ?? null;
     const parentId = nullableId(body.parent_building_id, 'Parent building ID');
 
     if (parentId && parentId === id) {
@@ -259,6 +274,7 @@ async function rooms(event, method, body, query) {
     }
 
     const number = requiredText(body.room_number, 'Room number', 50);
+    const categoryIds = await selectedCategoryIds(database, body);
 
     const fields = {
       building_id: buildingId,
@@ -286,7 +302,8 @@ async function rooms(event, method, body, query) {
       accessibility_status: booleanValue(body.accessibility_status, 'Accessibility status'),
       accessibility_details: optionalText(body.accessibility_details, 'Accessibility details', 1000),
       image_path: storedMediaPath(body.image_path),
-      category_id: nullableId(body.category_id, 'Category ID')
+      category_id: categoryIds[0] ?? null,
+      category_ids: categoryIds
     };
 
     if (
