@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
     archiveList.innerHTML = rows.map(row => {
-      const type = row.recordType === 'building' ? 'Building' : row.recordType === 'facility' ? 'Facility' : 'Room';
+      const type = row.recordType === 'building' ? 'Building' : row.recordType === 'facility' ? 'Facility / Office' : 'Room / Office';
       const detail = row.recordType === 'room' ? `${row.building_name || 'Building unavailable'} · ${row.floor_label || 'Floor unavailable'} · Room ${row.room_number || '—'}` : (row.category || 'Campus');
       return `<article class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 py-3 last:border-0" data-archive-id="${escape(row.id)}" data-archive-resource="${row.resource}">
         <div class="min-w-0"><strong class="block text-sm text-slate-900">${escape(row.name)}</strong><span class="text-xs text-slate-500">${type} · ${escape(detail)}</span></div>
