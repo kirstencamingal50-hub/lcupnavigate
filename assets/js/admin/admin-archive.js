@@ -71,7 +71,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.AdminUI?.toast('Record permanently deleted.');
       }
       await refreshArchive();
-      await refresh();
     } catch (error) {
       window.AdminUI?.toast(error.message, 'error');
       button.disabled = false;
