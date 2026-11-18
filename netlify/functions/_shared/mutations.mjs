@@ -328,9 +328,10 @@ async function rooms(event, method, body, query) {
 
   if (method === 'DELETE') {
     const id = positiveId(body.id ?? query.id);
-    const record = unwrap(await database.from('rooms').select('id,active').eq('id', id).maybeSingle());
+    const record = unwrap(await database.from('rooms').select('id,active,route_node_id').eq('id', id).maybeSingle());
     if (!record) throw new HttpError(404, 'Room not found.');
     if (record.active) throw new HttpError(409, 'Archive this room before permanently deleting it.');
+    if (record.route_node_id) throw new HttpError(409, 'This room is linked to a campus route node. Remove or reassign that map connection before permanently deleting the room.');
     const photos = await database.from('facility_photos').select('id', { count: 'exact', head: true }).eq('room_id', id);
     if (photos.error) throw photos.error;
     if (photos.count) throw new HttpError(409, 'Remove this room’s gallery photos before permanently deleting it.');
