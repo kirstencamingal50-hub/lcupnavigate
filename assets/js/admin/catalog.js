@@ -117,10 +117,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('catalog-editor-title').textContent=item.kind==='building'?'Edit building':'Edit facility';
       fields.innerHTML=field('Name','name',item.name,'text',true,'maxlength="150"')+
         selectField('Category','category_id',categoryList,item.category_id||categories.find(category=>category.name===item.category)?.id)+
-        (item.kind==='building'?field('Building number','building_number',item.building_number||'','text',false,'maxlength="40"')+field('Number of floors','floor_count',item.floor_count||1,'number',true,'min="1" max="100"'):selectField('Associated building','parent_building_id','<option value="">No building selected</option>'+buildingOptions(item.parent_building_id),item.parent_building_id,false)+field('Floor','floor_label',item.floor_label||'','text',false,'maxlength="80"'))+
+        (item.kind==='building'?field('Building number','building_number',item.building_number||'','text',false,'maxlength="40"')+field('Number of floors','floor_count',item.floor_count||1,'number',true,'min="1" max="100"'):selectField('Associated building','parent_building_id','<option value="">No building selected</option>'+buildingOptions(item.parent_building_id),item.parent_building_id,false)+presetField('Floor level','floor_label',floorOptions,item.floor_label||''))+
         field('Capacity','capacity',item.capacity??'','number',false,'min="0"')+
         '<label class="admin-edit-wide">Description<textarea name="description" rows="4" maxlength="4000">'+esc(item.description||'')+'</textarea></label>'+
-        accessibilityFeatureFields(item.accessibility_features||String(item.accessibility_details||'').split(/\\r?\\n/).map(value=>value.trim().replaceAll(' ','_')))+extraLocationFields(item)+galleryMarkup(type,item);
+        accessibilityFeatureFields(item.accessibility_features||String(item.accessibility_details||'').split(/\r?\n/).map(value=>value.trim().replaceAll(' ','_')))+extraLocationFields(item)+galleryMarkup(type,item);
     }else if(type==='room'){
       document.getElementById('catalog-editor-title').textContent='Edit room or classroom';
       fields.innerHTML=field('Room name','name',item.name,'text',true,'maxlength="150"')+
@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         presetField('Floor level','floor_label',floorOptions,item.floor_label||'')+
         field('Maximum capacity','capacity',item.capacity??'','number',false,'min="0"')+
         '<label class="admin-edit-wide">Description<textarea name="description" rows="3" maxlength="4000">'+esc(item.description||'')+'</textarea></label>'+ 
-        field('Contact information','contact_info',item.contact_info||'','text',false,'maxlength="180"')+accessibilityFeatureFields(String(item.accessibility_details||'').split(/\\r?\\n/).map(value=>value.trim().replaceAll(' ','_')))+extraRoomFields(item)+galleryMarkup(type,item);
+        field('Contact information','contact_info',item.contact_info||'','text',false,'maxlength="180"')+accessibilityFeatureFields(String(item.accessibility_details||'').split(/\r?\n/).map(value=>value.trim().replaceAll(' ','_')))+extraRoomFields(item)+galleryMarkup(type,item);
     }
 
     document.getElementById('catalog-editor-form').dataset.dirty='false';
