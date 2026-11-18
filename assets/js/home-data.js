@@ -59,10 +59,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       categoryRoot.innerHTML = homeCategories.map(item => {
         const aliases = item.aliases.map(normalize);
         const matches = campusPlaces.filter(place => {
-          const actual = normalize(place.category);
-          return actual && aliases.some(alias =>
-            actual === alias || actual.includes(alias) || alias.includes(actual)
-          );
+          const actual = (place.category_names?.length ? place.category_names : [place.category]).map(normalize).filter(Boolean);
+          return actual.some(category => aliases.some(alias =>
+            category === alias || category.includes(alias) || alias.includes(category)
+          ));
         });
         const buildingCount = matches.filter(place => String(place.kind || '').toLowerCase() === 'building').length;
         const facilityCount = matches.filter(place => String(place.kind || '').toLowerCase() === 'facility').length;
