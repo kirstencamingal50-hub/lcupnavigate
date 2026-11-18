@@ -99,7 +99,8 @@ async function locations(event, method, body, query) {
       throw new HttpError(400, 'Invalid location kind.');
     }
 
-    const categoryIds = await selectedCategoryIds(database, body);\n    const categoryId = categoryIds[0] ?? null;
+    const categoryIds = await selectedCategoryIds(database, body);
+    const categoryId = categoryIds[0] ?? null;
     const parentId = nullableId(body.parent_building_id, 'Parent building ID');
 
     if (parentId && parentId === id) {
@@ -272,7 +273,8 @@ async function rooms(event, method, body, query) {
       throw new HttpError(400, 'Select a valid campus building.');
     }
 
-    const number = requiredText(body.room_number, 'Room number', 50);\n    const categoryIds = await selectedCategoryIds(database, body);
+    const number = requiredText(body.room_number, 'Room number', 50);
+    const categoryIds = await selectedCategoryIds(database, body);
 
     const fields = {
       building_id: buildingId,
