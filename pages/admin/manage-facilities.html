@@ -35,7 +35,7 @@
           <select name="category" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"></select>
         </label>
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Floor
-          <input name="floor" required maxlength="60" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
+          <select name="floor" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"><option value="Ground Level">Ground Level</option><option value="2nd Floor">2nd Floor</option><option value="3rd Floor">3rd Floor</option><option value="4th Floor">4th Floor</option><option value="5th Floor">5th Floor</option><option value="6th Floor">6th Floor</option><option value="7th Floor">7th Floor</option><option value="8th Floor">8th Floor</option><option value="9th Floor">9th Floor</option><option value="10th Floor">10th Floor</option><option value="Basement">Basement</option></select>
         </label>
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Maximum capacity
           <input name="capacity" type="number" min="0" value="0" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
@@ -56,23 +56,23 @@
         </label>
         
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Service hours
-          <input name="service_hours" maxlength="500" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
+          <select name="service_hours" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"><option value="">Select service hours</option><option value="8:00 AM – 5:00 PM">8:00 AM – 5:00 PM</option><option value="7:00 AM – 4:00 PM">7:00 AM – 4:00 PM</option><option value="8:00 AM – 12:00 PM">8:00 AM – 12:00 PM</option><option value="1:00 PM – 5:00 PM">1:00 PM – 5:00 PM</option><option value="24 hours">24 hours</option><option value="By appointment">By appointment</option><option value="Varies">Varies</option></select>
         </label>
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Access hours
           <input name="access_hours" maxlength="500" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
         </label>
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Days open
-          <input name="days_open" maxlength="160" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
+          <select name="days_open" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"><option value="">Select days open</option><option value="Monday – Friday">Monday – Friday</option><option value="Monday – Saturday">Monday – Saturday</option><option value="Monday – Sunday">Monday – Sunday</option><option value="Weekdays only">Weekdays only</option><option value="Weekends only">Weekends only</option><option value="By appointment">By appointment</option><option value="Closed">Closed</option></select>
         </label>
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Lunch break
-          <input name="lunch_break" maxlength="160" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
+          <select name="lunch_break" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"><option value="">Select lunch hours</option><option value="12:00 PM – 1:00 PM">12:00 PM – 1:00 PM</option><option value="12:00 PM – 12:30 PM">12:00 PM – 12:30 PM</option><option value="12:00 PM – 1:30 PM">12:00 PM – 1:30 PM</option><option value="No lunch break">No lunch break</option><option value="Varies">Varies</option></select>
         </label>
         
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Accessibility information
           <select name="accessibility_status" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"><option value="">Not recorded</option><option value="1">Accessible</option><option value="0">Not accessible</option></select>
         </label>
         
-        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500 md:col-span-2">Accessibility details
+        <fieldset class="md:col-span-2 rounded-xl border border-blue-100 bg-blue-50/60 p-4"><legend class="px-1 text-xs font-bold text-slate-800">Accessibility features</legend><p class="mb-3 text-xs text-slate-500">Select the accessibility features confirmed for this room or facility.</p><div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3"><label class="flex items-center gap-2 text-xs font-medium normal-case text-slate-700"><input type="checkbox" name="accessibility_features" value="wheelchair_entrance"> Wheelchair-accessible entrance</label><label class="flex items-center gap-2 text-xs font-medium normal-case text-slate-700"><input type="checkbox" name="accessibility_features" value="elevator"> Elevator</label><label class="flex items-center gap-2 text-xs font-medium normal-case text-slate-700"><input type="checkbox" name="accessibility_features" value="ramp"> Ramp</label><label class="flex items-center gap-2 text-xs font-medium normal-case text-slate-700"><input type="checkbox" name="accessibility_features" value="accessible_restroom"> Accessible restroom</label><label class="flex items-center gap-2 text-xs font-medium normal-case text-slate-700"><input type="checkbox" name="accessibility_features" value="accessible_parking"> Accessible parking</label><label class="flex items-center gap-2 text-xs font-medium normal-case text-slate-700"><input type="checkbox" name="accessibility_features" value="handrails"> Handrails</label><label class="flex items-center gap-2 text-xs font-medium normal-case text-slate-700"><input type="checkbox" name="accessibility_features" value="tactile_paving"> Tactile paving</label><label class="flex items-center gap-2 text-xs font-medium normal-case text-slate-700"><input type="checkbox" name="accessibility_features" value="braille_signage"> Braille signage</label><label class="flex items-center gap-2 text-xs font-medium normal-case text-slate-700"><input type="checkbox" name="accessibility_features" value="hearing_assistance"> Hearing assistance</label></div></fieldset><label class="text-[10px] font-bold uppercase tracking-wide text-slate-500 md:col-span-2">Accessibility details
           <textarea name="accessibility_details" rows="2" maxlength="1000" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"></textarea>
         </label>
         <div class="md:col-span-2 flex items-center justify-between gap-3">
