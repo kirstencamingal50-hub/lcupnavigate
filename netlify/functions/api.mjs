@@ -130,7 +130,8 @@ async function getDirectory() {
     ...row,
     image_path: row.image_path ? mediaUrl(row.image_path) : null,
     image: row.image_path ? mediaUrl(row.image_path) : null,
-    category: row.category?.name || null,\n    category_names: (Array.isArray(row.category_ids) && row.category_ids.length ? row.category_ids : row.category_id == null ? [] : [row.category_id]).map(id => categoryNames.get(String(id))).filter(Boolean),
+    category: row.category?.name || null,
+    category_names: (Array.isArray(row.category_ids) && row.category_ids.length ? row.category_ids : row.category_id == null ? [] : [row.category_id]).map(id => categoryNames.get(String(id))).filter(Boolean),
     parent_building_name: parentBuilding?.name || null,
     parentBuilding: parentBuilding ? {
       id: parentBuilding.id,
@@ -159,7 +160,8 @@ async function getDirectory() {
       floorNumber: row.floor_number,
       building_name: row.building?.name || null,
       buildingName: row.building?.name || null,
-      category: row.category?.name || null,\n      category_names: (Array.isArray(row.category_ids) && row.category_ids.length ? row.category_ids : row.category_id == null ? [] : [row.category_id]).map(id => categoryNames.get(String(id))).filter(Boolean),
+      category: row.category?.name || null,
+      category_names: (Array.isArray(row.category_ids) && row.category_ids.length ? row.category_ids : row.category_id == null ? [] : [row.category_id]).map(id => categoryNames.get(String(id))).filter(Boolean),
       image_path: row.image_path ? mediaUrl(row.image_path) : null,
       image: row.image_path ? mediaUrl(row.image_path) : null,
       photos: roomPhotos.get(String(row.id)) || []
