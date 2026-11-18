@@ -34,7 +34,7 @@
           <input name="name" required maxlength="150" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
         </label>
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Category
-          <select name="category" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"></select>
+          <select name="category_ids" multiple required size="5" aria-describedby="category-help" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"></select><small id="category-help" class="mt-1 block text-xs text-slate-500">Select one or more categories. Hold Ctrl (Windows) or Command (Mac) to choose multiple.</small>
         </label>
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Number of floors
           <input name="floors" type="number" min="1" value="1" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
