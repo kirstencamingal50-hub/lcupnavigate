@@ -302,7 +302,8 @@ async function rooms(event, method, body, query) {
       accessibility_status: booleanValue(body.accessibility_status, 'Accessibility status'),
       accessibility_details: optionalText(body.accessibility_details, 'Accessibility details', 1000),
       image_path: storedMediaPath(body.image_path),
-      category_id: categoryIds[0] ?? null,\n      category_ids: categoryIds
+      category_id: categoryIds[0] ?? null,
+      category_ids: categoryIds
     };
 
     if (
