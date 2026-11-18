@@ -34,6 +34,16 @@
         <a href="manage-announcements.html#announcement-form"><span class="material-symbols-rounded">campaign</span><span><strong>Create Announcement</strong><small>Share a campus update</small></span><b aria-hidden="true">›</b></a>
       </div>
     </section>
+    <section aria-labelledby="archive-title" class="mb-7">
+      <div class="admin-section-heading"><div><h2 id="archive-title">Archived campus records</h2><p>Archived buildings, facilities, and rooms are hidden from the public directory. Restore them or permanently delete them here.</p></div><button type="button" class="admin-button-secondary" data-archive-refresh><span class="material-symbols-rounded" aria-hidden="true">refresh</span>Refresh archive</button></div>
+      <div class="flex flex-wrap gap-2 mb-3" role="group" aria-label="Filter archived records">
+        <button type="button" class="admin-button-primary" data-archive-type="all" aria-pressed="true">All</button>
+        <button type="button" class="admin-button-secondary" data-archive-type="building" aria-pressed="false">Buildings</button>
+        <button type="button" class="admin-button-secondary" data-archive-type="facility" aria-pressed="false">Facilities</button>
+        <button type="button" class="admin-button-secondary" data-archive-type="room" aria-pressed="false">Rooms</button>
+      </div>
+      <div id="admin-archive-list" class="admin-data-panel p-4" aria-live="polite"><p class="admin-loading">Loading archived records…</p></div>
+    </section>
   </main>
   <script src="../../assets/js/app.js?v=20261115-admin-nav"></script>
   <script src="../../assets/js/admin/admin-dashboard.js?v=20261115-overview-only"></script>
