@@ -245,6 +245,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   function renderAll(){renderLocations('building');renderLocations('facility');renderRooms();renderCategories();}
   try{
     await refresh();
+    document.querySelectorAll('[data-catalog-add-panel]').forEach(panel=>panel.hidden=false);
     if(categoryPage){renderCategories();document.querySelectorAll('[data-category-form]').forEach(form=>form.addEventListener('submit',async event=>{event.preventDefault();const button=form.querySelector('[type="submit"]');button.disabled=true;try{await CampusApi.save('categories',{name:form.elements.category.value.trim()});await refresh();renderCategories();form.reset();status('Category saved.');}catch(error){status(error.message);}finally{button.disabled=false;}}));return;}
     for(const form of [buildingForm,facilityForm,roomForm].filter(Boolean)){
       if(form.elements.category)form.elements.category.innerHTML=categories.map(category=>`<option value="${esc(category.name)}">${esc(category.name)}</option>`).join('');
