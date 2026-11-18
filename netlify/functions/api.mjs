@@ -60,7 +60,7 @@ function normalizeAnnouncement(row, includeStoragePath = false) {
 async function getDirectory() {
   const db = adminDatabase();
 
-  const [locationResult, roomResult, photoResult, planResult] = await Promise.all([
+  const [locationResult, roomResult, photoResult, planResult, categoryResult] = await Promise.all([
     db.from('locations')
       .select(`
         *,
@@ -84,13 +84,15 @@ async function getDirectory() {
     db.from('floor_plans')
       .select('id,building_id,floor_number,original_name,mime_type,file_size,verified,stored_name')
       .order('building_id')
-      .order('floor_number')
+      .order('floor_number'),
+
+    db.from('categories').select('id,name')
   ]);
 
   const locations = unwrap(locationResult) || [];
   const roomRows = unwrap(roomResult) || [];
   const photos = unwrap(photoResult) || [];
-  const plans = unwrap(planResult) || [];
+  const plans = unwrap(planResult) || [];\n  const categoryNames = new Map((unwrap(categoryResult) || []).map(category => [String(category.id), category.name]));
 
   const locationPhotos = new Map();
   const roomPhotos = new Map();
@@ -127,7 +129,7 @@ async function getDirectory() {
     ...row,
     image_path: row.image_path ? mediaUrl(row.image_path) : null,
     image: row.image_path ? mediaUrl(row.image_path) : null,
-    category: row.category?.name || null,
+    category: row.category?.name || null,\n    category_names: (Array.isArray(row.category_ids) && row.category_ids.length ? row.category_ids : row.category_id == null ? [] : [row.category_id]).map(id => categoryNames.get(String(id))).filter(Boolean),
     parent_building_name: parentBuilding?.name || null,
     parentBuilding: parentBuilding ? {
       id: parentBuilding.id,
@@ -156,7 +158,7 @@ async function getDirectory() {
       floorNumber: row.floor_number,
       building_name: row.building?.name || null,
       buildingName: row.building?.name || null,
-      category: row.category?.name || null,
+      category: row.category?.name || null,\n      category_names: (Array.isArray(row.category_ids) && row.category_ids.length ? row.category_ids : row.category_id == null ? [] : [row.category_id]).map(id => categoryNames.get(String(id))).filter(Boolean),
       image_path: row.image_path ? mediaUrl(row.image_path) : null,
       image: row.image_path ? mediaUrl(row.image_path) : null,
       photos: roomPhotos.get(String(row.id)) || []
