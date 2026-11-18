@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     days_open:optionalText(form,'days_open'),
     lunch_break:optionalText(form,'lunch_break'),
     accessibility_status:form.elements.accessibility_status?.value===''||!form.elements.accessibility_status?null:Number(form.elements.accessibility_status.value),
-    accessibility_details:optionalText(form,'accessibility_details')
+    accessibility_details:[...form.querySelectorAll('[name="accessibility_features"]:checked')].map(control=>control.value.replaceAll('_',' ')).concat(optionalText(form,'accessibility_details')||[]).filter(Boolean).join('\\n')||null
   });
   const catOptions=(selected='')=>categories.map(item=>`<option value="${esc(item.id)}" ${String(item.id)===String(selected)?'selected':''}>${esc(item.name)}</option>`).join('');
   const buildingOptions=(selected='')=>locations.filter(item=>isLocationKind(item,'building')).map(item=>`<option value="${esc(item.id)}" ${String(item.id)===String(selected)?'selected':''}>${esc(item.name)}</option>`).join('');
