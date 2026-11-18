@@ -44,7 +44,7 @@ test('Netlify map queries use schema foreign keys and frontend-compatible direct
   assert.ok(mapPage.includes(".filter(route => route.status === 'active')"));
   assert.ok(mapPage.includes(".sort((a,b)=>Number(a.sequence_no)-Number(b.sequence_no))"));
   // The selected visitor path must use the same saved waypoint sequence as the graph.
-  assert.ok(mapPage.includes("let points = (route.points || []).filter(point => point.node_id && graph[`n:${point.node_id}`]).sort((a,b)=>Number(a.sequence_no)-Number(b.sequence_no));"));
+  assert.match(mapPage, /let points = \(route\.points \|\| \[\]\)\s*\.filter\(point => point\.node_id && graph\[`n:\$\{point\.node_id\}`\]\)\s*\.sort\(\(a,b\)=>Number\(a\.sequence_no\)-Number\(b\.sequence_no\)\);/);
   // Keep the faint blue walkway network above the opaque campus map image.
   assert.ok(mapPage.includes("opacity: 0.28, lineCap: 'round', lineJoin: 'round', interactive: false"));
   assert.ok(!mapPage.includes('networkLayer.eachLayer(l => l.bringToBack())'));
@@ -105,8 +105,8 @@ test('a published saved route is available in both endpoint directions without a
   const mapPage = await read('../pages/map.html');
   assert.ok(mapPage.includes("getSavedRouteDirection(route, startLocation, endLocation)"));
   assert.ok(mapPage.includes("if (direction === 'reverse') points = points.reverse()"));
-  assert.ok(mapPage.includes('graph[startId]?.neighbors[path[0]]'));
-  assert.ok(mapPage.includes('graph[endId]?.neighbors[path[path.length - 1]]'));
+  assert.ok(mapPage.includes('graph[startId].neighbors[path[0]]'));
+  assert.ok(mapPage.includes('graph[endId].neighbors[path[path.length - 1]]'));
   assert.ok(mapPage.includes("path[0] !== startId || path[path.length - 1] !== endId"));
 });
 
@@ -137,5 +137,5 @@ test('saved route location endpoints take priority over shared building marker I
 });
 
 test('room locations retain their parent building route location ID', () => {
-  assert.match(mapPage, /routeLocationId:building\\.id/);
+  assert.match(mapPage, /routeLocationId:building\.id/);
 });

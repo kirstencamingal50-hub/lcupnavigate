@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="../../assets/css/admin.css?v=20261105-admin-ux">
   <script src="../../assets/js/campus-api.js"></script>
   <script src="../../assets/js/admin/admin-auth.js"></script>
-  <link rel="stylesheet" href="../../assets/css/admin-ui-polish.css?v=20261115-ui-fix">
+  <link rel="stylesheet" href="../../assets/css/admin-ui-polish.css?v=20261118-catalog-gallery">
 </head>
 <body class="admin-page min-h-screen">
   <div data-component="header"></div>
@@ -29,13 +29,23 @@
       <div class="admin-section-heading"><div><h2 id="quick-actions-title">Quick actions</h2><p>Go straight to a common task.</p></div></div>
       <div class="admin-quick-actions">
         <a href="manage-buildings.html#add-building-form"><span class="material-symbols-rounded">add_business</span><span><strong>Add Building</strong><small>Create a campus location record</small></span><b aria-hidden="true">›</b></a>
-        <a href="manage-facilities.html#add-facility-form"><span class="material-symbols-rounded">add_location_alt</span><span><strong>Add Facility</strong><small>Add an office or campus service</small></span><b aria-hidden="true">›</b></a>
+        <a href="manage-facilities.html#add-facility-form"><span class="material-symbols-rounded">add_location_alt</span><span><strong>Add Facility</strong><small>Add an office or campus facility</small></span><b aria-hidden="true">›</b></a>
         <a href="manage-rooms.html#add-classroom-form"><span class="material-symbols-rounded">add_home_work</span><span><strong>Add Room</strong><small>Add a classroom or campus room</small></span><b aria-hidden="true">›</b></a>
         <a href="manage-announcements.html#announcement-form"><span class="material-symbols-rounded">campaign</span><span><strong>Create Announcement</strong><small>Share a campus update</small></span><b aria-hidden="true">›</b></a>
       </div>
     </section>
+    <section aria-labelledby="archive-title" class="mb-7">
+      <div class="admin-section-heading"><div><h2 id="archive-title">Archived campus records</h2><p>Archived buildings, facilities, and rooms are hidden from the public directory. Restore them or permanently delete them here.</p></div><button type="button" class="admin-button-secondary" data-archive-refresh><span class="material-symbols-rounded" aria-hidden="true">refresh</span>Refresh archive</button></div>
+      <div class="flex flex-wrap gap-2 mb-3" role="group" aria-label="Filter archived records">
+        <button type="button" class="admin-button-primary" data-archive-type="all" aria-pressed="true">All</button>
+        <button type="button" class="admin-button-secondary" data-archive-type="building" aria-pressed="false">Buildings</button>
+        <button type="button" class="admin-button-secondary" data-archive-type="facility" aria-pressed="false">Facilities</button>
+        <button type="button" class="admin-button-secondary" data-archive-type="room" aria-pressed="false">Rooms</button>
+      </div>
+      <div id="admin-archive-list" class="admin-data-panel p-4" aria-live="polite"><p class="admin-loading">Loading archived records…</p></div>
+    </section>
   </main>
-  <script src="../../assets/js/app.js?v=20261115-admin-nav"></script>
-  <script src="../../assets/js/admin/admin-dashboard.js?v=20261115-overview-only"></script>
+  <script src="../../assets/js/app.js?v=20261118-remove-department-nav"></script>
+  <script src="../../assets/js/admin/admin-dashboard.js?v=20261118-archive-tab"></script>
 </body>
 </html>

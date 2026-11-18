@@ -14,7 +14,7 @@ test('admin login prevents credentials from being submitted in the URL', async (
   assert.doesNotMatch(form, /\bmethod="get"/i);
 
   const handlerIndex = auth.indexOf("loginForm.addEventListener('submit'");
-  const bootstrapIndex = auth.indexOf("const state = await window.CampusApi.get('admin/bootstrap')");
+  const bootstrapIndex = auth.indexOf("window.CampusApi.get('admin/bootstrap')");
   assert.notEqual(handlerIndex, -1, 'login handler exists');
   assert.notEqual(bootstrapIndex, -1, 'bootstrap request exists');
   assert.ok(handlerIndex < bootstrapIndex, 'login handler attaches before asynchronous bootstrap');

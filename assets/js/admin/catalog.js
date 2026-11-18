@@ -25,18 +25,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const upload=async input=>{const file=input?.files?.[0];if(!file)return null;const data=new FormData();data.append('file',file);data.append('type','photo');return(await CampusApi.request('uploads',{method:'POST',body:data})).path;};
   const optionalText=(form,name)=>form.elements[name]?.value.trim()||null;
   const detailPayload=form=>({
-    department_name:optionalText(form,'department_name'),
     contact_email:optionalText(form,'contact_email'),
     contact_phone:optionalText(form,'contact_phone'),
-    website_url:optionalText(form,'website_url'),
     service_hours:optionalText(form,'service_hours'),
     access_hours:optionalText(form,'access_hours'),
     days_open:optionalText(form,'days_open'),
     lunch_break:optionalText(form,'lunch_break'),
-    services:optionalText(form,'services'),
-    nearby_landmarks:optionalText(form,'nearby_landmarks'),
     accessibility_status:form.elements.accessibility_status?.value===''||!form.elements.accessibility_status?null:Number(form.elements.accessibility_status.value),
-    accessibility_details:optionalText(form,'accessibility_details')
+    accessibility_details:form.id==='add-building-form'?optionalText(form,'accessibility_details'):[...form.querySelectorAll('[name="accessibility_features"]:checked')].map(control=>control.value.replaceAll('_',' ')).concat(optionalText(form,'accessibility_details')||[]).filter(Boolean).join('\n')||null
   });
   const catOptions=(selected='')=>categories.map(item=>`<option value="${esc(item.id)}" ${String(item.id)===String(selected)?'selected':''}>${esc(item.name)}</option>`).join('');
   const buildingOptions=(selected='')=>locations.filter(item=>isLocationKind(item,'building')).map(item=>`<option value="${esc(item.id)}" ${String(item.id)===String(selected)?'selected':''}>${esc(item.name)}</option>`).join('');
@@ -63,22 +59,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     ['accessible_restroom','Accessible restroom'],['accessible_parking','Accessible parking'],['handrails','Handrails'],
     ['tactile_paving','Tactile paving'],['braille_signage','Braille signage'],['hearing_assistance','Hearing assistance']
   ];
-  const accessibilityFeatureFields=selected=>`<fieldset class="admin-edit-wide rounded-xl border border-blue-100 bg-blue-50/60 p-4"><legend class="px-1 font-bold">Building accessibility features</legend><p class="mb-3 text-xs text-slate-500">Building-wide features only; do not use this list for an individual room.</p><div class="grid gap-2 sm:grid-cols-2">${accessibilityFeatureOptions.map(([value,label])=>`<label class="flex items-center gap-2 text-xs"><input type="checkbox" name="accessibility_features" value="${value}" ${selected.includes(value)?'checked':''}>${label}</label>`).join('')}</div></fieldset>`;
-  const extraLocationFields=item=>field('Department','department_name',item.department_name||'','text',false,'maxlength="160"')+
-    field('Contact email','contact_email',item.contact_email||'','email',false,'maxlength="254"')+field('Contact phone','contact_phone',item.contact_phone||'','tel',false,'maxlength="40"')+
-    field('Website','website_url',item.website_url||'','url',false,'maxlength="500"')+field('Service hours','service_hours',item.service_hours||'','text',false,'maxlength="500"')+
-    field('Access hours','access_hours',item.access_hours||'','text',false,'maxlength="500"')+field('Days open','days_open',item.days_open||'','text',false,'maxlength="160"')+
-    field('Lunch break','lunch_break',item.lunch_break||'','text',false,'maxlength="160"')+areaField('Services','services',item.services,4000)+
-    field('Nearby landmarks','nearby_landmarks',item.nearby_landmarks||'','text',false,'maxlength="1000"')+
+  const accessibilityFeatureFields=selected=>`<fieldset class="admin-edit-wide rounded-xl border border-blue-100 bg-blue-50/60 p-4"><legend class="px-1 font-bold">Accessibility features</legend><p class="mb-3 text-xs text-slate-500">Select the accessibility features confirmed for this location.</p><div class="grid gap-2 sm:grid-cols-2">${accessibilityFeatureOptions.map(([value,label])=>`<label class="flex items-center gap-2 text-xs"><input type="checkbox" name="accessibility_features" value="${value}" ${selected.includes(value)?'checked':''}>${label}</label>`).join('')}</div></fieldset>`;
+  const serviceHourOptions=['Select service hours','8:00 AM – 5:00 PM','8:00 AM – 12:00 PM','1:00 PM – 5:00 PM','7:00 AM – 4:00 PM','24 hours','By appointment','Varies'];
+  const dayOptions=['Select days open','Monday – Friday','Monday – Saturday','Monday – Sunday','Weekdays only','Weekends only','By appointment','Closed'];
+  const lunchOptions=['Select lunch hours','12:00 PM – 1:00 PM','12:00 PM – 12:30 PM','12:00 PM – 1:30 PM','No lunch break','Varies'];
+  const floorOptions=['Ground Level','2nd Floor','3rd Floor','4th Floor','5th Floor','6th Floor','7th Floor','8th Floor','9th Floor','10th Floor','Basement'];
+  const presetField=(label,name,options,value)=>selectField(label,name,options.map((option,index)=>`<option value="${index===0?'':esc(option)}" ${value===option?'selected':''}>${esc(option)}</option>`).join('')+(value&&!options.includes(value)?`<option selected value="${esc(value)}">${esc(value)}</option>`:''),value||'',false);
+  const extraLocationFields=item=>field('Contact email','contact_email',item.contact_email||'','email',false,'maxlength="254"')+
+    field('Contact phone','contact_phone',item.contact_phone||'','tel',false,'maxlength="40"')+
+    presetField('Service hours','service_hours',serviceHourOptions,item.service_hours)+
+    field('Access hours','access_hours',item.access_hours||'','text',false,'maxlength="500"')+
+    presetField('Days open','days_open',dayOptions,item.days_open)+
+    presetField('Lunch hours','lunch_break',lunchOptions,item.lunch_break)+
     selectField('Accessibility information','accessibility_status','<option value="">Not recorded</option><option value="1">Accessible</option><option value="0">Not accessible</option>',item.accessibility_status===null||item.accessibility_status===undefined?'':String(item.accessibility_status),false)+
-    areaField('Accessibility details','accessibility_details',item.accessibility_details,1000);
-  const extraRoomFields=item=>field('Department','department_name',item.department_name||'','text',false,'maxlength="160"')+
-    field('Contact email','contact_email',item.contact_email||'','email',false,'maxlength="254"')+field('Contact phone','contact_phone',item.contact_phone||'','tel',false,'maxlength="40"')+
-    field('Website','website_url',item.website_url||'','url',false,'maxlength="500"')+field('Service hours','service_hours',item.service_hours||'','text',false,'maxlength="500"')+
-    field('Days open','days_open',item.days_open||'','text',false,'maxlength="160"')+field('Lunch break','lunch_break',item.lunch_break||'','text',false,'maxlength="160"')+
-    areaField('Services','services',item.services,4000)+field('Nearby landmarks','nearby_landmarks',item.nearby_landmarks||'','text',false,'maxlength="1000"')+
+    areaField('Accessibility features (one per line)','accessibility_details',item.accessibility_details,1000);
+  const extraRoomFields=item=>field('Contact email','contact_email',item.contact_email||'','email',false,'maxlength="254"')+
+    field('Contact phone','contact_phone',item.contact_phone||'','tel',false,'maxlength="40"')+
+    presetField('Service hours','service_hours',serviceHourOptions,item.service_hours)+
+    presetField('Days open','days_open',dayOptions,item.days_open)+
+    presetField('Lunch hours','lunch_break',lunchOptions,item.lunch_break)+
     selectField('Accessibility information','accessibility_status','<option value="">Not recorded</option><option value="1">Accessible</option><option value="0">Not accessible</option>',item.accessibility_status===null||item.accessibility_status===undefined?'':String(item.accessibility_status),false)+
-    areaField('Accessibility details','accessibility_details',item.accessibility_details,1000);
+    areaField('Accessibility features (one per line)','accessibility_details',item.accessibility_details,1000);
   function galleryMarkup(type,item){
     const ownerType=type==='location'?'location':'room';
     const photos=item.photos||[];
@@ -116,22 +117,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('catalog-editor-title').textContent=item.kind==='building'?'Edit building':'Edit facility';
       fields.innerHTML=field('Name','name',item.name,'text',true,'maxlength="150"')+
         selectField('Category','category_id',categoryList,item.category_id||categories.find(category=>category.name===item.category)?.id)+
-        (item.kind==='building'?field('Building number','building_number',item.building_number||'','text',false,'maxlength="40"')+field('Number of floors','floor_count',item.floor_count||1,'number',true,'min="1" max="100"'):selectField('Associated building','parent_building_id','<option value="">No building selected</option>'+buildingOptions(item.parent_building_id),item.parent_building_id,false)+field('Floor','floor_label',item.floor_label||'','text',false,'maxlength="80"'))+
+        (item.kind==='building'?field('Building number','building_number',item.building_number||'','text',false,'maxlength="40"')+field('Number of floors','floor_count',item.floor_count||1,'number',true,'min="1" max="100"'):selectField('Associated building','parent_building_id','<option value="">No building selected</option>'+buildingOptions(item.parent_building_id),item.parent_building_id,false)+presetField('Floor level','floor_label',floorOptions,item.floor_label||''))+
         field('Capacity','capacity',item.capacity??'','number',false,'min="0"')+
         '<label class="admin-edit-wide">Description<textarea name="description" rows="4" maxlength="4000">'+esc(item.description||'')+'</textarea></label>'+
-        (item.kind==='building'?accessibilityFeatureFields(item.accessibility_features||[]):'')+extraLocationFields(item)+galleryMarkup(type,item);
+        accessibilityFeatureFields(item.accessibility_features||String(item.accessibility_details||'').split(/\r?\n/).map(value=>value.trim().replaceAll(' ','_')))+extraLocationFields(item)+galleryMarkup(type,item);
     }else if(type==='room'){
       document.getElementById('catalog-editor-title').textContent='Edit room or classroom';
       fields.innerHTML=field('Room name','name',item.name,'text',true,'maxlength="150"')+
         field('Room number','room_number',item.room_number,'text',true,'maxlength="50"')+
         selectField('Building','building_id','<option value="">Select a building</option>'+buildingOptions(item.building_id),item.building_id)+
         selectField('Category','category_id',categoryList,item.category_id)+
-        field('Floor name','floor_label',item.floor_label||'','text',false,'maxlength="80"')+
+        presetField('Floor level','floor_label',floorOptions,item.floor_label||'')+
         field('Maximum capacity','capacity',item.capacity??'','number',false,'min="0"')+
         '<label class="admin-edit-wide">Description<textarea name="description" rows="3" maxlength="4000">'+esc(item.description||'')+'</textarea></label>'+ 
-        '<label class="admin-edit-wide">Room function<textarea name="function_description" rows="2" maxlength="1000">'+esc(item.function_description||'')+'</textarea></label>'+ 
-        field('Department head','department_head',item.department_head||'','text',false,'maxlength="120"')+
-        field('Contact information','contact_info',item.contact_info||'','text',false,'maxlength="180"')+extraRoomFields(item)+galleryMarkup(type,item);
+        field('Contact information','contact_info',item.contact_info||'','text',false,'maxlength="180"')+accessibilityFeatureFields(String(item.accessibility_details||'').split(/\r?\n/).map(value=>value.trim().replaceAll(' ','_')))+extraRoomFields(item)+galleryMarkup(type,item);
     }
 
     document.getElementById('catalog-editor-form').dataset.dirty='false';
@@ -147,13 +146,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     const title=type==='room'?'Room':type==='building'?'Building':'Facility';
     dialog.querySelector('[data-details-title]').textContent=`${title}: ${item.name}`;
-    const preferred=['name','category','building_number','building_name','room_number','floor_label','floor_count','capacity','department_name','department_head','contact_info','contact_email','contact_phone','website_url','service_hours','access_hours','days_open','lunch_break','description','function_description','services','nearby_landmarks','accessibility_status','accessibility_details','accessibility_features'];
-    const labels={name:'Name',category:'Category',building_number:'Building code',building_name:'Building',room_number:'Room number',floor_label:'Floor',floor_count:'Floors',capacity:'Capacity',department_name:'Department',department_head:'Department head',contact_info:'Contact information',contact_email:'Email',contact_phone:'Phone',website_url:'Website',service_hours:'Service hours',access_hours:'Access hours',days_open:'Days open',lunch_break:'Lunch break',description:'Description',function_description:'Room function',services:'Services',nearby_landmarks:'Nearby landmarks',accessibility_status:'Accessibility',accessibility_details:'Accessibility details',accessibility_features:'Accessibility features'};
+    const preferred=['name','category','building_number','building_name','room_number','floor_label','floor_count','capacity','contact_info','contact_email','contact_phone','service_hours','access_hours','days_open','lunch_break','description','accessibility_status','accessibility_details','accessibility_features'];
+    const labels={name:'Name',category:'Category',building_number:'Building code',building_name:'Building',room_number:'Room number',floor_label:'Floor level',floor_count:'Floors',capacity:'Capacity',contact_info:'Contact information',contact_email:'Email',contact_phone:'Phone',service_hours:'Service hours',access_hours:'Access hours',days_open:'Days open',lunch_break:'Lunch hours',description:'Description',accessibility_status:'Accessibility',accessibility_details:'Accessibility features',accessibility_features:'Accessibility features'};
     const entries=preferred.filter(key=>item[key]!==null&&item[key]!==undefined&&item[key]!=='').map(key=>{
       const raw=item[key],value=Array.isArray(raw)?raw.map(part=>String(part).replaceAll('_',' ')).join(', '):key==='accessibility_status'?(Number(raw)?'Accessible':'Not accessible'):String(raw);
       return `<div><dt>${esc(labels[key]||key)}</dt><dd>${esc(value)}</dd></div>`;
     });
-    const photo=item.image||item.photos?.find(photo=>Number(photo.isCover))?.image||item.photos?.[0]?.image||item.image_path;
+    const gallery=(item.photos||[]).filter(photo=>photo.image);
+    const photo=item.image||gallery.find(photo=>Number(photo.isCover))?.image||gallery[0]?.image||item.image_path;
     dialog.querySelector('[data-details-content]').innerHTML=`${photo?`<img class="admin-details-photo" src="${esc(imageSrc(photo))}" alt="${esc(item.name)}">`:''}<dl class="admin-details-grid">${entries.join('')||'<p class="admin-empty-state">No additional details are saved for this record.</p>'}</dl>`;
     dialog.showModal();
   }
@@ -164,11 +164,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     try{
       if(pendingEdit.type==='location'){
         const isBuilding=item.kind==='building';
-        const accessibilityFeatures=isBuilding?[...form.querySelectorAll('[name="accessibility_features"]:checked')].map(control=>control.value):[];
-        await CampusApi.save('locations',{name:value('name'),kind:item.kind,category_id:Number(value('category_id')),description:value('description')||null,building_number:isBuilding?(value('building_number')||null):(item.building_number||null),floor_label:isBuilding?null:(value('floor_label')||null),floor_count:isBuilding?Number(value('floor_count')||item.floor_count||1):1,parent_building_id:isBuilding?null:(value('parent_building_id')||null),capacity:value('capacity')===''?null:Number(value('capacity')),image_path:item.image_object_path||null,department_name:value('department_name')||null,contact_email:value('contact_email')||null,contact_phone:value('contact_phone')||null,website_url:value('website_url')||null,service_hours:value('service_hours')||null,access_hours:value('access_hours')||null,days_open:value('days_open')||null,lunch_break:value('lunch_break')||null,services:value('services')||null,nearby_landmarks:value('nearby_landmarks')||null,accessibility_status:value('accessibility_status')===''?null:Number(value('accessibility_status')),accessibility_details:value('accessibility_details')||null,accessibility_features:accessibilityFeatures},item.id);
+        const accessibilityFeatures=[...form.querySelectorAll('[name="accessibility_features"]:checked')].map(control=>control.value);
+        await CampusApi.save('locations',{name:value('name'),kind:item.kind,category_id:Number(value('category_id')),description:value('description')||null,building_number:isBuilding?(value('building_number')||null):(item.building_number||null),floor_label:isBuilding?null:(value('floor_label')||null),floor_count:isBuilding?Number(value('floor_count')||item.floor_count||1):1,parent_building_id:isBuilding?null:(value('parent_building_id')||null),capacity:value('capacity')===''?null:Number(value('capacity')),image_path:item.image_object_path||null,department_name:item.department_name||null,contact_email:value('contact_email')||null,contact_phone:value('contact_phone')||null,website_url:item.website_url||null,service_hours:value('service_hours')||null,access_hours:value('access_hours')||null,days_open:value('days_open')||null,lunch_break:value('lunch_break')||null,services:item.services||null,nearby_landmarks:item.nearby_landmarks||null,accessibility_status:value('accessibility_status')===''?null:Number(value('accessibility_status')),accessibility_details:isBuilding?(value('accessibility_details')||null):[...accessibilityFeatures.map(feature=>feature.replaceAll('_',' ')),value('accessibility_details')].filter(Boolean).join('\n')||null,accessibility_features:isBuilding?accessibilityFeatures:[]},item.id);
       }else{
         const floorLabel=value('floor_label');
-        await CampusApi.save('rooms',{name:value('name'),room_number:value('room_number'),building_id:Number(value('building_id')),category_id:Number(value('category_id')),floor_label:floorLabel||null,floor_number:Number((floorLabel.match(/\d+/)||[])[0]||item.floor_number||0),capacity:value('capacity')===''?null:Number(value('capacity')),description:value('description')||null,function_description:value('function_description')||null,department_head:value('department_head')||null,contact_info:value('contact_info')||null,image_path:item.image_path||null,department_name:value('department_name')||null,contact_email:value('contact_email')||null,contact_phone:value('contact_phone')||null,website_url:value('website_url')||null,service_hours:value('service_hours')||null,days_open:value('days_open')||null,lunch_break:value('lunch_break')||null,services:value('services')||null,nearby_landmarks:value('nearby_landmarks')||null,accessibility_status:value('accessibility_status')===''?null:Number(value('accessibility_status')),accessibility_details:value('accessibility_details')||null},item.id);
+        await CampusApi.save('rooms',{name:value('name'),room_number:value('room_number'),route_node_id:item.route_node_id||null,building_id:Number(value('building_id')),category_id:Number(value('category_id')),floor_label:floorLabel||null,floor_number:Number((floorLabel.match(/\d+/)||[])[0]||item.floor_number||0),capacity:value('capacity')===''?null:Number(value('capacity')),description:value('description')||null,function_description:item.function_description||null,department_head:item.department_head||null,contact_info:value('contact_info')||null,image_path:item.image_path||null,department_name:item.department_name||null,contact_email:value('contact_email')||null,contact_phone:value('contact_phone')||null,website_url:item.website_url||null,service_hours:value('service_hours')||null,days_open:value('days_open')||null,lunch_break:value('lunch_break')||null,services:item.services||null,nearby_landmarks:item.nearby_landmarks||null,accessibility_status:value('accessibility_status')===''?null:Number(value('accessibility_status')),accessibility_details:[...form.querySelectorAll('[name="accessibility_features"]:checked')].map(control=>control.value.replaceAll('_',' ')).concat(value('accessibility_details')||[]).filter(Boolean).join('\n')||null},item.id);
       }
       form.dataset.dirty='false';await refresh();renderAll();
       const savedItem=pendingEdit.type==='location'
@@ -201,14 +201,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const mapHref=`../map.html?search=${encodeURIComponent(item.name)}`;
     const subtitle=room?`${parent||'Building unavailable'} · ${item.floor_label||'Floor unavailable'} · Room ${item.room_number||'—'}`:building?parent:`Located in ${parent}`;
     return `<article class="catalog-directory-card" data-id="${esc(item.id)}">
-      <div class="catalog-directory-photo">${image?`<img src="${esc(imageSrc(image))}" alt="" loading="lazy">`:`<span class="material-symbols-rounded" aria-hidden="true">${room?'meeting_room':building?'location_city':'storefront'}</span>`}</div>
+      <div class="catalog-directory-photo">${image?`<a href="${esc(imageSrc(image))}" target="_blank" rel="noopener noreferrer" aria-label="Open cover photo of ${esc(item.name)}"><img src="${esc(imageSrc(image))}" alt="" loading="lazy"></a>`:`<span class="material-symbols-rounded" aria-hidden="true">${room?'meeting_room':building?'location_city':'storefront'}</span>`}${gallery.length>1?`<div class="catalog-photo-strip" aria-label="${gallery.length} campus photos">${gallery.map((entry,index)=>`<a href="${esc(imageSrc(entry.image))}" target="_blank" rel="noopener noreferrer" aria-label="Open photo ${index+1} of ${esc(item.name)}"><img src="${esc(imageSrc(entry.image))}" alt="${esc(entry.altText||entry.caption||item.name+' photo '+(index+1))}" loading="lazy"></a>`).join('')}</div>`:''}</div>
       <div class="catalog-directory-info"><div class="catalog-directory-meta"><span>${kindLabel}</span><span>${esc(item.category||'Campus')}</span></div><h3>${esc(item.name)}</h3><p class="catalog-directory-description">${esc(item.description||'More information is available in this directory profile.')}</p><p class="catalog-directory-location">${esc(subtitle)}</p></div>
       <div class="catalog-directory-actions"><a href="${mapHref}"><span class="material-symbols-rounded" aria-hidden="true">map</span><span>Show on map</span></a><a href="${detailHref}"><span>Public page</span><span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></a><span class="catalog-row-action-group"><button data-action="details" class="admin-row-action">View details</button><button data-action="edit" class="admin-row-action">Edit</button><button data-action="archive" class="admin-row-action is-danger">Archive</button></span></div>
     </article>`;
   }).join('')}</div>`;
   function renderLocations(kind){
     const target=document.getElementById(kind==='building'?'buildings-list':'facilities-list');if(!target)return;if(locationLoadError){target.innerHTML=`<div class="p-5 text-center text-sm text-red-700"><strong>Could not load ${kind==='building'?'buildings':'facilities'}.</strong><p class="mt-1">${esc(locationLoadError.message||'The campus API request failed.')}</p><button type="button" class="mt-3 underline" onclick="location.reload()">Retry</button></div>`;return;}
-    const term=searchTerms[kind].toLocaleLowerCase();const all=locations.filter(item=>isLocationKind(item,kind));const filtered=all.filter(item=>`${item.name} ${item.category||''} ${item.building_number||''}`.toLocaleLowerCase().includes(term)&&(!categoryFilters[kind]||item.category===categoryFilters[kind])).sort((a,b)=>sortOrders[kind]==='name-desc'?b.name.localeCompare(a.name):a.name.localeCompare(b.name));
+    const term=searchTerms[kind].toLocaleLowerCase();const all=locations.filter(item=>isLocationKind(item,kind)&&item.active!==false);const filtered=all.filter(item=>`${item.name} ${item.category||''} ${item.building_number||''}`.toLocaleLowerCase().includes(term)&&(!categoryFilters[kind]||item.category===categoryFilters[kind])).sort((a,b)=>sortOrders[kind]==='name-desc'?b.name.localeCompare(a.name):a.name.localeCompare(b.name));
     pageNumbers[kind]=Math.max(0,Math.min(pageNumbers[kind],Math.max(0,Math.ceil(filtered.length/pageSize)-1)));const rows=filtered.slice(pageNumbers[kind]*pageSize,(pageNumbers[kind]+1)*pageSize);
     target.innerHTML=listToolbar(kind,kind==='building'?'Buildings':'Facilities',filtered.length)+(rows.length?catalogCards(rows,kind):emptyState(kind==='building'?'buildings':'facilities',!!term||!!categoryFilters[kind]))+pagination(kind,filtered.length);
     target.querySelector('[data-list-search]')?.addEventListener('input',event=>{const cursor=event.target.selectionStart;searchTerms[kind]=event.target.value;pageNumbers[kind]=0;renderLocations(kind);const input=target.querySelector('[data-list-search]');input.focus();input.setSelectionRange(cursor,cursor);});
@@ -216,13 +216,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     target.querySelector('[data-sort-order]')?.addEventListener('change',event=>{sortOrders[kind]=event.target.value;pageNumbers[kind]=0;renderLocations(kind);});
     bindPagination(target,kind,filtered.length);
     target.querySelector('.catalog-list-cards')?.addEventListener('click',async event=>{const button=event.target.closest('[data-action]');if(!button)return;const item=all.find(record=>String(record.id)===button.closest('[data-id]').dataset.id);if(!item)return;if(button.dataset.action==='details'){showDetails(item,kind);return;}if(button.dataset.action==='edit'){openEditor('location',item);return;}if(button.dataset.action==='archive'&&!await window.AdminUI.confirm({title:`Archive ${kind}?`,message:`Archive “${item.name}”? It will no longer appear in active campus records. Related records are not automatically deleted; the server will enforce relationship rules.`,confirmLabel:'Archive record',danger:true}))return;button.disabled=true;
-      try{await CampusApi.remove('locations',item.id);status('Campus record archived.');notify(`${kind[0].toUpperCase()+kind.slice(1)} archived.`);await refresh();renderAll();
+      try{await CampusApi.request('locations',{method:'PATCH',body:{id:item.id,active:false}});status('Campus record archived.');notify(`${kind[0].toUpperCase()+kind.slice(1)} archived.`);await refresh();renderAll();
       }catch(error){status(error.message);notify(error.message,'error');}finally{button.disabled=false;}
     });
   }
   function renderRooms(){
     const target=document.getElementById('classrooms-list');if(!target)return;if(roomLoadError){target.innerHTML=`<div class="p-5 text-center text-sm text-red-700"><strong>Could not load rooms and classrooms.</strong><p class="mt-1">${esc(roomLoadError.message||'The campus API request failed.')}</p><button type="button" class="mt-3 underline" onclick="location.reload()">Retry</button></div>`;return;}const term=searchTerms.room.toLocaleLowerCase();
-    const filtered=rooms.filter(room=>`${room.name} ${room.room_number} ${room.building_name} ${room.floor_label||''}`.toLocaleLowerCase().includes(term)&&(!categoryFilters.room||room.category===categoryFilters.room)).sort((a,b)=>sortOrders.room==='name-desc'?b.name.localeCompare(a.name):a.name.localeCompare(b.name));
+    const filtered=rooms.filter(room=>room.active!==false&&`${room.name} ${room.room_number} ${room.building_name} ${room.floor_label||''}`.toLocaleLowerCase().includes(term)&&(!categoryFilters.room||room.category===categoryFilters.room)).sort((a,b)=>sortOrders.room==='name-desc'?b.name.localeCompare(a.name):a.name.localeCompare(b.name));
     pageNumbers.room=Math.max(0,Math.min(pageNumbers.room,Math.max(0,Math.ceil(filtered.length/pageSize)-1)));const rows=filtered.slice(pageNumbers.room*pageSize,(pageNumbers.room+1)*pageSize);
     target.innerHTML=listToolbar('room','Rooms and classrooms',filtered.length)+(rows.length?catalogCards(rows,'room'):emptyState('rooms',!!term||!!categoryFilters.room))+pagination('room',filtered.length);
     target.querySelector('[data-list-search]')?.addEventListener('input',event=>{const cursor=event.target.selectionStart;searchTerms.room=event.target.value;pageNumbers.room=0;renderRooms();const input=target.querySelector('[data-list-search]');input.focus();input.setSelectionRange(cursor,cursor);});
@@ -230,7 +230,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     target.querySelector('[data-sort-order]')?.addEventListener('change',event=>{sortOrders.room=event.target.value;pageNumbers.room=0;renderRooms();});
     bindPagination(target,'room',filtered.length);
     target.querySelector('.catalog-list-cards')?.addEventListener('click',async event=>{const button=event.target.closest('[data-action]');if(!button)return;const item=rooms.find(room=>String(room.id)===button.closest('[data-id]').dataset.id);if(!item)return;if(button.dataset.action==='details'){showDetails(item,'room');return;}if(button.dataset.action==='edit'){openEditor('room',item);return;}if(button.dataset.action==='archive'&&!await window.AdminUI.confirm({title:'Archive room?',message:`Archive room ${item.room_number} — ${item.name}? Related map and route records will not be automatically removed.`,confirmLabel:'Archive room',danger:true}))return;button.disabled=true;
-      try{if(button.dataset.action==='archive'){await CampusApi.remove('rooms',item.id);status('Room archived.');notify('Room archived successfully.');}await refresh();renderAll();
+      try{if(button.dataset.action==='archive'){await CampusApi.request('rooms',{method:'PATCH',body:{id:item.id,active:false}});status('Room archived.');notify('Room archived successfully.');}await refresh();renderAll();
       }catch(error){status(error.message);notify(error.message,'error');}finally{button.disabled=false;}
     });
   }
@@ -245,6 +245,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   function renderAll(){renderLocations('building');renderLocations('facility');renderRooms();renderCategories();}
   try{
     await refresh();
+    document.querySelectorAll('[data-catalog-add-panel]').forEach(panel=>panel.hidden=false);
     if(categoryPage){renderCategories();document.querySelectorAll('[data-category-form]').forEach(form=>form.addEventListener('submit',async event=>{event.preventDefault();const button=form.querySelector('[type="submit"]');button.disabled=true;try{await CampusApi.save('categories',{name:form.elements.category.value.trim()});await refresh();renderCategories();form.reset();status('Category saved.');}catch(error){status(error.message);}finally{button.disabled=false;}}));return;}
     for(const form of [buildingForm,facilityForm,roomForm].filter(Boolean)){
       if(form.elements.category)form.elements.category.innerHTML=categories.map(category=>`<option value="${esc(category.name)}">${esc(category.name)}</option>`).join('');
