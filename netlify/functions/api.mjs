@@ -92,7 +92,8 @@ async function getDirectory() {
   const locations = unwrap(locationResult) || [];
   const roomRows = unwrap(roomResult) || [];
   const photos = unwrap(photoResult) || [];
-  const plans = unwrap(planResult) || [];\n  const categoryNames = new Map((unwrap(categoryResult) || []).map(category => [String(category.id), category.name]));
+  const plans = unwrap(planResult) || [];
+  const categoryNames = new Map((unwrap(categoryResult) || []).map(category => [String(category.id), category.name]));
 
   const locationPhotos = new Map();
   const roomPhotos = new Map();
