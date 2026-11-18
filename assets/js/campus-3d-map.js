@@ -234,6 +234,8 @@ import { OrbitControls } from 'https://esm.sh/three@0.164.1/examples/jsm/control
     if (entering) {
       view.classList.remove('hidden');
       mapElement.classList.add('hidden');
+      wrapper.querySelector('.absolute.top-3.left-3')?.classList.add('hidden');
+      document.getElementById('showAllBtn')?.classList.add('hidden');
       button.textContent = '2D Map';
       button.setAttribute('aria-pressed', 'true');
       try {
@@ -246,6 +248,7 @@ import { OrbitControls } from 'https://esm.sh/three@0.164.1/examples/jsm/control
     } else {
       view.classList.add('hidden');
       mapElement.classList.remove('hidden');
+      wrapper.querySelector('.absolute.top-3.left-3')?.classList.remove('hidden');
       button.textContent = '3D View';
       button.setAttribute('aria-pressed', 'false');
       window.dispatchEvent(new Event('resize'));
