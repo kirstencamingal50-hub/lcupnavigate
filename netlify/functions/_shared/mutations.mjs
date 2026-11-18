@@ -221,7 +221,8 @@ async function locations(event, method, body, query) {
       database.from('locations').select('id', { count: 'exact', head: true }).eq('parent_building_id', id),
       database.from('map_markers').select('id', { count: 'exact', head: true }).eq('location_id', id),
       database.from('facility_photos').select('id', { count: 'exact', head: true }).eq('location_id', id),
-      database.from('floor_plans').select('id', { count: 'exact', head: true }).eq('building_id', id)
+      database.from('floor_plans').select('id', { count: 'exact', head: true }).eq('building_id', id),
+      database.from('announcements').select('id', { count: 'exact', head: true }).eq('location_id', id)
     ]);
     for (const result of checks) if (result.error) throw result.error;
     if (checks.some(result => (result.count || 0) > 0)) {
