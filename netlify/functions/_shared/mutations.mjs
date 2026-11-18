@@ -218,6 +218,7 @@ async function locations(event, method, body, query) {
 
     const checks = await Promise.all([
       database.from('rooms').select('id', { count: 'exact', head: true }).eq('building_id', id),
+      database.from('locations').select('id', { count: 'exact', head: true }).eq('parent_building_id', id),
       database.from('map_markers').select('id', { count: 'exact', head: true }).eq('location_id', id),
       database.from('facility_photos').select('id', { count: 'exact', head: true }).eq('location_id', id),
       database.from('floor_plans').select('id', { count: 'exact', head: true }).eq('building_id', id)
