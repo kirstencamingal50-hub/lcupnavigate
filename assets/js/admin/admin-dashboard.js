@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           confirmLabel: 'Delete permanently',
           danger: true
         });
-        if (!confirmed) return;
+        if (!confirmed) { button.disabled = false; return; }
         await CampusApi.remove(resource, id);
         window.AdminUI?.toast('Record permanently deleted.');
       }
