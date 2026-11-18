@@ -107,3 +107,10 @@ html[data-theme="dark"] .admin-account-table select { color:#e7edf5; border-colo
 html[data-theme="dark"] .admin-account-action { color:#b7d7fa; border-color:#46566d; background:#243247; }
 @media(max-width:900px) { .admin-account-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:600px) { .admin-accounts-hero { padding:20px; } .admin-accounts-hero-icon { flex-basis:48px; width:48px; height:48px; font-size:26px; } .admin-account-metrics { gap:8px; } .admin-account-metrics article { gap:8px; padding:12px; } .admin-account-metrics article > .material-symbols-rounded { flex-basis:34px; width:34px; height:34px; font-size:19px; } .admin-account-metrics article strong { font-size:20px; } .admin-account-directory-heading { align-items:flex-start; padding:17px; } .admin-account-directory-heading p { max-width:250px; line-height:1.5; } }
+
+
+/* Catalog name-card photo gallery */
+.catalog-directory-photo{position:relative;overflow:hidden}
+.catalog-photo-strip{display:flex;gap:5px;overflow-x:auto;padding:6px;background:rgba(15,23,42,.78);scrollbar-width:thin}
+.catalog-photo-strip img{width:58px;height:44px;flex:0 0 58px;object-fit:cover;border:1px solid rgba(255,255,255,.65);border-radius:6px}
+[data-catalog-add-panel][hidden]{display:none!important}
