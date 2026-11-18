@@ -27,7 +27,7 @@
         <a href="dashboard.html" class="text-xs text-blue-600 font-bold hover:underline">Back to Dashboard</a>
       </div>
     </div>
-    <section class="admin-form-panel rounded-2xl p-5" aria-labelledby="add-classroom-title">
+    <section data-catalog-add-panel hidden class="admin-form-panel rounded-2xl p-5" aria-labelledby="add-classroom-title">
       <h2 id="add-classroom-title" class="text-sm font-bold">Add Classroom</h2>
       <form id="add-classroom-form" class="mt-4 grid gap-3 md:grid-cols-2">
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Classroom Name
@@ -48,24 +48,18 @@
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Maximum capacity
           <input name="capacity" type="number" min="0" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
         </label>
-        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Department Head
-          <input name="head" maxlength="120" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
-        </label>
+        
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Contact Info
           <input name="contact" maxlength="180" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
         </label>
-        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Department
-          <input name="department_name" maxlength="160" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
-        </label>
+        
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Contact email
           <input name="contact_email" type="email" maxlength="254" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
         </label>
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Contact phone
           <input name="contact_phone" type="tel" maxlength="40" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
         </label>
-        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Official website
-          <input name="website_url" type="url" maxlength="500" placeholder="https://" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
-        </label>
+        
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Service hours
           <input name="service_hours" maxlength="500" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
         </label>
@@ -75,9 +69,7 @@
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Lunch break
           <input name="lunch_break" maxlength="160" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
         </label>
-        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Nearby landmarks
-          <input name="nearby_landmarks" maxlength="1000" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
-        </label>
+        
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Accessibility information
           <select name="accessibility_status" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"><option value="">Not recorded</option><option value="1">Accessible</option><option value="0">Not accessible</option></select>
         </label>
@@ -88,12 +80,8 @@
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500 md:col-span-2">Full description
           <textarea name="description" rows="4" maxlength="4000" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"></textarea>
         </label>
-        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500 md:col-span-2">Room function
-          <textarea name="function_description" rows="2" maxlength="1000" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"></textarea>
-        </label>
-        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500 md:col-span-2">Services
-          <textarea name="services" rows="3" maxlength="4000" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"></textarea>
-        </label>
+        
+        
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500 md:col-span-2">Accessibility details
           <textarea name="accessibility_details" rows="2" maxlength="1000" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"></textarea>
         </label>
@@ -103,7 +91,7 @@
         </div>
       </form>
     </section>
-    <div id="classrooms-list" class="admin-data-panel p-2 sm:p-4"><p class="p-5 text-center text-sm text-slate-500">NaviGATE catalog is starting…</p></div>
+    <div id="classrooms-list" class="admin-data-panel p-2 sm:p-4"><p class="p-5 text-center text-sm text-slate-500">NaviGATE catalog is loading</p></div>
     <script>
       (() => {
         const panel = document.getElementById('classrooms-list');
