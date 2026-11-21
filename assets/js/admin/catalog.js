@@ -28,13 +28,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     contact_email:optionalText(form,'contact_email'),
     contact_phone:optionalText(form,'contact_phone'),
     service_hours:optionalText(form,'service_hours'),
-    access_hours:optionalText(form,'access_hours'),
     days_open:optionalText(form,'days_open'),
     lunch_break:optionalText(form,'lunch_break'),
     accessibility_status:form.elements.accessibility_status?.value===''||!form.elements.accessibility_status?null:Number(form.elements.accessibility_status.value),
     accessibility_details:form.id==='add-building-form'?optionalText(form,'accessibility_details'):[...form.querySelectorAll('[name="accessibility_features"]:checked')].map(control=>control.value.replaceAll('_',' ')).concat(optionalText(form,'accessibility_details')||[]).filter(Boolean).join('\n')||null
   });
   const catOptions=(selected=[])=>{const ids=(Array.isArray(selected)?selected:[selected]).map(String);return categories.map(item=>`<option value="${esc(item.id)}" ${ids.includes(String(item.id))?'selected':''}>${esc(item.name)}</option>`).join('');};
+  const selectedCategoryIds=form=>[...(form.querySelector('[name="category_ids"]')?.selectedOptions||[])].map(option=>Number(option.value)).filter(Number.isFinite);
+  const enhanceCategoryDropdown=select=>{
+    if(!select||select.dataset.dropdownEnhanced)return;
+    select.dataset.dropdownEnhanced='true';select.removeAttribute('required');
+    const dropdown=document.createElement('details');dropdown.className='relative w-full text-sm';
+    const summary=document.createElement('summary');summary.className='flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-700 shadow-sm';
+    summary.innerHTML='<span data-category-selection>Select categories</span><span class="material-symbols-rounded text-slate-500" aria-hidden="true">expand_more</span>';
+    const menu=document.createElement('div');menu.className='absolute left-0 top-full z-40 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white p-2 shadow-xl';
+    [...select.options].forEach(option=>{
+      const label=document.createElement('label');label.className='flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm font-medium normal-case text-slate-700 hover:bg-slate-50';
+      const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.value=option.value;checkbox.checked=option.selected;checkbox.className='rounded border-slate-300';
+      checkbox.addEventListener('change',()=>{option.selected=checkbox.checked;updateLabel();select.dispatchEvent(new Event('change',{bubbles:true}));});
+      const text=document.createElement('span');text.textContent=option.textContent;label.append(checkbox,text);menu.append(label);
+    });
+    const updateLabel=()=>{const selected=[...select.selectedOptions].map(option=>option.textContent);summary.querySelector('[data-category-selection]').textContent=selected.length?selected.join(', '):'Select categories';};
+    dropdown.append(summary,menu);select.after(dropdown);select.hidden=true;updateLabel();
+    select.form?.addEventListener('reset',()=>setTimeout(()=>{menu.querySelectorAll('input').forEach((checkbox,index)=>checkbox.checked=!!select.options[index]?.selected);updateLabel();},0));
+  };
+  const enhanceAccessibilityDropdown=fieldset=>{
+    if(!fieldset||fieldset.dataset.dropdownEnhanced)return;
+    fieldset.dataset.dropdownEnhanced='true';
+    const details=document.createElement('details');details.className='admin-edit-wide relative rounded-xl border border-blue-100 bg-blue-50/60 p-3';
+    const summary=document.createElement('summary');summary.className='flex cursor-pointer list-none items-center justify-between gap-3 font-bold text-slate-800';
+    summary.innerHTML='<span>Accessibility features</span><span data-accessibility-selection class="text-xs font-medium text-slate-500">Select features</span>';
+    const content=document.createElement('div');content.className='mt-3 grid gap-2 rounded-lg bg-white/70 p-3 sm:grid-cols-2';
+    [...fieldset.children].forEach(child=>{if(child.tagName!=='LEGEND')content.append(child);});
+    const updateLabel=()=>{const count=details.querySelectorAll('[name="accessibility_features"]:checked').length;summary.querySelector('[data-accessibility-selection]').textContent=count?count+' selected':'Select features';};
+    details.append(summary,content);fieldset.replaceWith(details);details.addEventListener('change',updateLabel);updateLabel();
+  };
+  const enhanceDropdownFields=root=>{
+    root.querySelectorAll('select[name="category_ids"]').forEach(enhanceCategoryDropdown);
+    root.querySelectorAll('fieldset').forEach(fieldset=>{if(fieldset.querySelector('[name="accessibility_features"]'))enhanceAccessibilityDropdown(fieldset);});
+  };
   const buildingOptions=(selected='')=>locations.filter(item=>isLocationKind(item,'building')).map(item=>`<option value="${esc(item.id)}" ${String(item.id)===String(selected)?'selected':''}>${esc(item.name)}</option>`).join('');
 
   const ensureEditor=()=>{
@@ -53,7 +85,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
   const field=(label,name,value,type='text',required=false,extra='')=>`<label>${label}${required?' <span class="text-red-600" aria-label="required">*</span>':''}<input name="${name}" type="${type}" value="${esc(value)}" ${required?'required':''} ${extra}></label>`;
   const selectField=(label,name,options,selected,required=true)=>`<label>${label}${required?' <span class="text-red-600" aria-label="required">*</span>':''}<select name="${name}" ${required?'required':''}>${options}</select></label>`;
-  const multiSelectField=(label,name,options,selected=[])=>`<label class="admin-edit-wide">${label} <span class="text-red-600" aria-label="required">*</span><select name="${name}" multiple size="${Math.min(6,Math.max(3,categories.length))}" required class="catalog-multi-category">${catOptions(selected)}</select><small class="block text-slate-500">Select one or more categories. Use Ctrl (Windows) or Command (Mac) to select multiple.</small></label>`;
+  const multiSelectField=(label,name,options,selected=[])=>`<div class="admin-edit-wide grid gap-1"><span class="font-semibold text-slate-700">${label} <span class="text-red-600" aria-label="required">*</span></span><select name="${name}" multiple size="${Math.min(6,Math.max(3,categories.length))}" class="catalog-multi-category">${catOptions(selected)}</select><small class="block text-slate-500">Choose one or more categories from the dropdown.</small></div>`;
   const areaField=(label,name,value,max=1000)=>`<label class="admin-edit-wide">${label}<textarea name="${name}" rows="2" maxlength="${max}">${esc(value||'')}</textarea></label>`;
   const accessibilityFeatureOptions=[
     ['wheelchair_entrance','Wheelchair-accessible entrance'],['elevator','Elevator'],['ramp','Ramp'],
@@ -69,7 +101,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const extraLocationFields=item=>field('Contact email','contact_email',item.contact_email||'','email',false,'maxlength="254"')+
     field('Contact phone','contact_phone',item.contact_phone||'','tel',false,'maxlength="40"')+
     presetField('Service hours','service_hours',serviceHourOptions,item.service_hours)+
-    field('Access hours','access_hours',item.access_hours||'','text',false,'maxlength="500"')+
     presetField('Days open','days_open',dayOptions,item.days_open)+
     presetField('Lunch hours','lunch_break',lunchOptions,item.lunch_break)+
     selectField('Accessibility information','accessibility_status','<option value="">Not recorded</option><option value="1">Accessible</option><option value="0">Not accessible</option>',item.accessibility_status===null||item.accessibility_status===undefined?'':String(item.accessibility_status),false)+
@@ -134,6 +165,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         field('Contact information','contact_info',item.contact_info||'','text',false,'maxlength="180"')+accessibilityFeatureFields(String(item.accessibility_details||'').split(/\r?\n/).map(value=>value.trim().replaceAll(' ','_')))+extraRoomFields(item)+galleryMarkup(type,item);
     }
 
+    enhanceDropdownFields(fields);
     document.getElementById('catalog-editor-form').dataset.dirty='false';
     document.getElementById('catalog-editor-status').textContent='';
     dialog.showModal();dialog.querySelector('input,select,textarea')?.focus();
@@ -147,8 +179,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     const title=type==='room'?'Room':type==='building'?'Building':'Facility';
     dialog.querySelector('[data-details-title]').textContent=`${title}: ${item.name}`;
-    const preferred=['name','category','building_number','building_name','room_number','floor_label','floor_count','capacity','contact_info','contact_email','contact_phone','service_hours','access_hours','days_open','lunch_break','description','accessibility_status','accessibility_details','accessibility_features'];
-    const labels={name:'Name',category:'Category',building_number:'Building code',building_name:'Building',room_number:'Room number',floor_label:'Floor level',floor_count:'Floors',capacity:'Capacity',contact_info:'Contact information',contact_email:'Email',contact_phone:'Phone',service_hours:'Service hours',access_hours:'Access hours',days_open:'Days open',lunch_break:'Lunch hours',description:'Description',accessibility_status:'Accessibility',accessibility_details:'Accessibility features',accessibility_features:'Accessibility features'};
+    const preferred=['name','category','building_number','building_name','room_number','floor_label','floor_count','capacity','contact_info','contact_email','contact_phone','service_hours','days_open','lunch_break','description','accessibility_status','accessibility_details','accessibility_features'];
+    const labels={name:'Name',category:'Category',building_number:'Building code',building_name:'Building',room_number:'Room number',floor_label:'Floor level',floor_count:'Floors',capacity:'Capacity',contact_info:'Contact information',contact_email:'Email',contact_phone:'Phone',service_hours:'Service hours',days_open:'Days open',lunch_break:'Lunch hours',description:'Description',accessibility_status:'Accessibility',accessibility_details:'Accessibility features',accessibility_features:'Accessibility features'};
     const entries=preferred.filter(key=>item[key]!==null&&item[key]!==undefined&&item[key]!=='').map(key=>{
       const raw=item[key],value=Array.isArray(raw)?raw.map(part=>String(part).replaceAll('_',' ')).join(', '):key==='accessibility_status'?(Number(raw)?'Accessible':'Not accessible'):String(raw);
       return `<div><dt>${esc(labels[key]||key)}</dt><dd>${esc(value)}</dd></div>`;
@@ -160,23 +192,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   async function saveEditor(event){
     event.preventDefault();const form=event.currentTarget,button=form.querySelector('[type="submit"]'),message=document.getElementById('catalog-editor-status');
-    if(!form.reportValidity())return;button.disabled=true;message.textContent='Saving changes…';
+    if(!form.reportValidity())return;if(!selectedCategoryIds(form).length){message.textContent='Select at least one category.';return;}button.disabled=true;message.textContent='Saving changes…';
     const data=new FormData(form),value=name=>String(data.get(name)||'').trim(),item=pendingEdit.item;
     try{
       if(pendingEdit.type==='location'){
         const isBuilding=item.kind==='building';
         const accessibilityFeatures=[...form.querySelectorAll('[name="accessibility_features"]:checked')].map(control=>control.value);
-        await CampusApi.save('locations',{name:value('name'),kind:item.kind,category_ids:[...form.querySelector('[name="category_ids"]').selectedOptions].map(option=>Number(option.value)),description:value('description')||null,building_number:isBuilding?(value('building_number')||null):(item.building_number||null),floor_label:isBuilding?null:(value('floor_label')||null),floor_count:isBuilding?Number(value('floor_count')||item.floor_count||1):1,parent_building_id:isBuilding?null:(value('parent_building_id')||null),capacity:value('capacity')===''?null:Number(value('capacity')),image_path:item.image_object_path||null,department_name:item.department_name||null,contact_email:value('contact_email')||null,contact_phone:value('contact_phone')||null,website_url:item.website_url||null,service_hours:value('service_hours')||null,access_hours:value('access_hours')||null,days_open:value('days_open')||null,lunch_break:value('lunch_break')||null,services:item.services||null,nearby_landmarks:item.nearby_landmarks||null,accessibility_status:value('accessibility_status')===''?null:Number(value('accessibility_status')),accessibility_details:isBuilding?(value('accessibility_details')||null):[...accessibilityFeatures.map(feature=>feature.replaceAll('_',' ')),value('accessibility_details')].filter(Boolean).join('\n')||null,accessibility_features:isBuilding?accessibilityFeatures:[]},item.id);
+        await CampusApi.save('locations',{name:value('name'),kind:item.kind,category_ids:selectedCategoryIds(form),description:value('description')||null,building_number:isBuilding?(value('building_number')||null):(item.building_number||null),floor_label:isBuilding?null:(value('floor_label')||null),floor_count:isBuilding?Number(value('floor_count')||item.floor_count||1):1,parent_building_id:isBuilding?null:(value('parent_building_id')||null),capacity:value('capacity')===''?null:Number(value('capacity')),image_path:item.image_object_path||null,department_name:item.department_name||null,contact_email:value('contact_email')||null,contact_phone:value('contact_phone')||null,website_url:item.website_url||null,service_hours:value('service_hours')||null,days_open:value('days_open')||null,lunch_break:value('lunch_break')||null,services:item.services||null,nearby_landmarks:item.nearby_landmarks||null,accessibility_status:value('accessibility_status')===''?null:Number(value('accessibility_status')),accessibility_details:isBuilding?(value('accessibility_details')||null):[...accessibilityFeatures.map(feature=>feature.replaceAll('_',' ')),value('accessibility_details')].filter(Boolean).join('\n')||null,accessibility_features:isBuilding?accessibilityFeatures:[]},item.id);
       }else{
         const floorLabel=value('floor_label');
-        await CampusApi.save('rooms',{name:value('name'),room_number:value('room_number'),route_node_id:item.route_node_id||null,building_id:Number(value('building_id')),category_ids:[...form.querySelector('[name="category_ids"]').selectedOptions].map(option=>Number(option.value)),floor_label:floorLabel||null,floor_number:Number((floorLabel.match(/\d+/)||[])[0]||item.floor_number||0),capacity:value('capacity')===''?null:Number(value('capacity')),description:value('description')||null,function_description:item.function_description||null,department_head:item.department_head||null,contact_info:value('contact_info')||null,image_path:item.image_path||null,department_name:item.department_name||null,contact_email:value('contact_email')||null,contact_phone:value('contact_phone')||null,website_url:item.website_url||null,service_hours:value('service_hours')||null,days_open:value('days_open')||null,lunch_break:value('lunch_break')||null,services:item.services||null,nearby_landmarks:item.nearby_landmarks||null,accessibility_status:value('accessibility_status')===''?null:Number(value('accessibility_status')),accessibility_details:[...form.querySelectorAll('[name="accessibility_features"]:checked')].map(control=>control.value.replaceAll('_',' ')).concat(value('accessibility_details')||[]).filter(Boolean).join('\n')||null},item.id);
+        await CampusApi.save('rooms',{name:value('name'),room_number:value('room_number'),route_node_id:item.route_node_id||null,building_id:Number(value('building_id')),category_ids:selectedCategoryIds(form),floor_label:floorLabel||null,floor_number:Number((floorLabel.match(/\d+/)||[])[0]||item.floor_number||0),capacity:value('capacity')===''?null:Number(value('capacity')),description:value('description')||null,function_description:item.function_description||null,department_head:item.department_head||null,contact_info:value('contact_info')||null,image_path:item.image_path||null,department_name:item.department_name||null,contact_email:value('contact_email')||null,contact_phone:value('contact_phone')||null,website_url:item.website_url||null,service_hours:value('service_hours')||null,days_open:value('days_open')||null,lunch_break:value('lunch_break')||null,services:item.services||null,nearby_landmarks:item.nearby_landmarks||null,accessibility_status:value('accessibility_status')===''?null:Number(value('accessibility_status')),accessibility_details:[...form.querySelectorAll('[name="accessibility_features"]:checked')].map(control=>control.value.replaceAll('_',' ')).concat(value('accessibility_details')||[]).filter(Boolean).join('\n')||null},item.id);
       }
       form.dataset.dirty='false';await refresh();renderAll();
       const savedItem=pendingEdit.type==='location'
         ?locations.find(record=>String(record.id)===String(item.id))
         :rooms.find(record=>String(record.id)===String(item.id));
       if(!savedItem)throw new Error('The record was saved, but could not be reloaded. Refresh the page to verify the latest information.');
-      if(pendingEdit.type==='location'&&JSON.stringify((savedItem.category_ids||[]).map(Number).sort())!==JSON.stringify([...form.querySelector('[name="category_ids"]').selectedOptions].map(option=>Number(option.value)).sort()))throw new Error('The record was saved, but its selected categories did not match. Please try again.');
+      if(pendingEdit.type==='location'&&JSON.stringify((savedItem.category_ids||[]).map(Number).sort())!==JSON.stringify(selectedCategoryIds(form).sort()))throw new Error('The record was saved, but its selected categories did not match. Please try again.');
       pendingEdit.item=savedItem;
       const recordLabel=pendingEdit.type==='location'?(item.kind==='building'?'Building':'Facility'):'Room';
       const selectedCategory=(savedItem.category_names||[]).join(', ')||categories.find(category=>String(category.id)===String(savedItem.category_id))?.name;
@@ -253,13 +285,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       if(form.elements.category_ids)form.elements.category_ids.innerHTML=catOptions([]);
       if(form.elements.buildingId)form.elements.buildingId.innerHTML=buildingOptions();
       const preview=form.querySelector('[data-photo-preview]');if(form.elements.photo&&preview)window.CampusPhotoTools?.bindPreview(form.elements.photo,preview);
+      enhanceDropdownFields(form);
       const kind=form===buildingForm?'building':form===facilityForm?'facility':'room';
       const formDialog=window.AdminUI?.mountFormDialog(form,{title:`Add ${kind}`,description:'Enter the campus information below. Required fields are marked in the form.',triggerLabel:`Add ${kind}`});
-      form.addEventListener('submit',async event=>{event.preventDefault();const button=form.querySelector('[type="submit"]');button.disabled=true;status('Saving to the campus database…');
+      form.addEventListener('submit',async event=>{event.preventDefault();if(!selectedCategoryIds(form).length){status('Select at least one category.');return;}const button=form.querySelector('[type="submit"]');button.disabled=true;status('Saving to the campus database…');
         try{const image_path=await upload(form.elements.photo);let payload,resource;
-          if(form===buildingForm){resource='locations';payload={name:form.elements.name.value.trim(),kind:'building',category_ids:[...form.elements.category_ids.selectedOptions].map(option=>Number(option.value)),description:optionalText(form,'description'),building_number:optionalText(form,'building_number'),floor_count:Number(form.elements.floors.value),capacity:form.elements.capacity.value===''?null:Number(form.elements.capacity.value),access_hours:optionalText(form,'access_hours'),image_path,...detailPayload(form),accessibility_features:[...form.querySelectorAll('[name="accessibility_features"]:checked')].map(control=>control.value)};}
-          else if(form===facilityForm){resource='locations';payload={name:form.elements.name.value.trim(),kind:'facility',category_ids:[...form.elements.category_ids.selectedOptions].map(option=>Number(option.value)),parent_building_id:form.elements.buildingId.value||null,floor_label:optionalText(form,'floor'),description:optionalText(form,'description'),floor_count:1,capacity:form.elements.capacity.value===''?null:Number(form.elements.capacity.value),access_hours:optionalText(form,'access_hours'),image_path,...detailPayload(form)};}
-          else{resource='rooms';payload={name:form.elements.name.value.trim(),building_id:Number(form.elements.buildingId.value),category_ids:[...form.elements.category_ids.selectedOptions].map(option=>Number(option.value)),room_number:form.elements.room.value.trim(),floor_label:form.elements.floor.value.trim(),floor_number:Number((form.elements.floor.value.match(/\d+/)||[])[0]||0),capacity:form.elements.capacity.value===''?null:Number(form.elements.capacity.value),department_head:optionalText(form,'head'),contact_info:optionalText(form,'contact'),description:optionalText(form,'description'),function_description:optionalText(form,'function_description'),image_path,...detailPayload(form)};}
+          if(form===buildingForm){resource='locations';payload={name:form.elements.name.value.trim(),kind:'building',category_ids:selectedCategoryIds(form),description:optionalText(form,'description'),building_number:optionalText(form,'building_number'),floor_count:Number(form.elements.floors.value),capacity:form.elements.capacity.value===''?null:Number(form.elements.capacity.value),image_path,...detailPayload(form),accessibility_features:[...form.querySelectorAll('[name="accessibility_features"]:checked')].map(control=>control.value)};}
+          else if(form===facilityForm){resource='locations';payload={name:form.elements.name.value.trim(),kind:'facility',category_ids:selectedCategoryIds(form),parent_building_id:form.elements.buildingId.value||null,floor_label:optionalText(form,'floor'),description:optionalText(form,'description'),floor_count:1,capacity:form.elements.capacity.value===''?null:Number(form.elements.capacity.value),image_path,...detailPayload(form)};}
+          else{resource='rooms';payload={name:form.elements.name.value.trim(),building_id:Number(form.elements.buildingId.value),category_ids:selectedCategoryIds(form),room_number:form.elements.room.value.trim(),floor_label:form.elements.floor.value.trim(),floor_number:Number((form.elements.floor.value.match(/\d+/)||[])[0]||0),capacity:form.elements.capacity.value===''?null:Number(form.elements.capacity.value),department_head:optionalText(form,'head'),contact_info:optionalText(form,'contact'),description:optionalText(form,'description'),function_description:optionalText(form,'function_description'),image_path,...detailPayload(form)};}
           await CampusApi.save(resource,payload);await refresh();renderAll();form.reset();if(form.elements.floors)form.elements.floors.value='1';if(form.elements.floor)form.elements.floor.value='Ground Level';if(form.elements.capacity)form.elements.capacity.value='0';formDialog?.close();status('Saved to the campus database.');notify(`${kind[0].toUpperCase()+kind.slice(1)} added successfully.`);
         }catch(error){status(error.message);notify(error.message,'error');}finally{button.disabled=false;}
       });
