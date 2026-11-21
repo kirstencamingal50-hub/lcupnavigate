@@ -24,19 +24,31 @@
       <a href="dashboard.html" class="shrink-0 text-xs text-blue-600 font-bold hover:underline">Back to Dashboard</a>
     </div>
 
-    <section class="admin-form-panel max-w-2xl p-5" aria-labelledby="campus-categories-title">
-      <h2 id="campus-categories-title" class="text-base font-bold">Shared categories</h2>
+    <section class="admin-form-panel rounded-2xl p-5" aria-labelledby="campus-categories-title">
+      <div class="flex flex-wrap items-center justify-between gap-3"><div><h2 id="campus-categories-title" class="text-base font-bold">Add Category</h2><p class="mt-1 text-xs text-slate-500">Create a category for organizing buildings, facilities, and rooms.</p></div></div>
       <form class="mt-4 flex gap-2" data-category-form="campus">
         <label class="sr-only" for="new-campus-category">New campus category</label>
         <input id="new-campus-category" name="category" required maxlength="80" placeholder="Add a campus category" class="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm" />
         <button type="submit" class="shrink-0 rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700">Add</button>
       </form>
-      <div id="categories-list" class="mt-4 space-y-2"></div>
+      </section>
+
+    <section class="admin-data-panel mt-4 overflow-hidden rounded-2xl" aria-labelledby="category-list-title">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4"><div><h2 id="category-list-title" class="text-sm font-bold text-slate-800">Category List</h2><p class="mt-1 text-xs text-slate-500">Manage the categories used throughout NaviGATE.</p></div><span id="category-count" class="text-xs font-semibold text-slate-500"></span></div>
+      <div id="categories-list" class="category-list divide-y divide-slate-100"></div>
     </section>
     <p id="category-status" class="min-h-5 text-xs text-slate-500" role="status" aria-live="polite"></p>
   </main>
 
-  <script src="../../assets/js/admin/catalog.js?v=20261115-independent-campus-lists"></script>
+  <style>
+    .category-list-row{display:grid;grid-template-columns:48px minmax(0,1fr) auto;align-items:center;gap:14px;padding:14px 20px;background:#fff}
+    .category-list-number{display:grid;width:32px;height:32px;place-items:center;border:1px solid #e2e8f0;border-radius:9px;color:#64748b;font-size:11px;font-weight:800}
+    .category-list-name{min-width:0;color:#1e293b;font-size:13px;font-weight:700;overflow-wrap:anywhere}
+    .category-list-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:7px}
+    .category-list-row input{min-width:0;width:100%;border:1px solid #cbd5e1;border-radius:8px;padding:8px 10px;font-size:13px}
+    @media(max-width:520px){.category-list-row{grid-template-columns:34px minmax(0,1fr);gap:10px;padding:12px}.category-list-actions{grid-column:2;justify-content:flex-start}}
+  </style>
+  <script src="../../assets/js/admin/catalog.js?v=20261121-category-list"></script>
   <script src="../../assets/js/app.js?v=20261118-remove-department-nav"></script>
 </body>
 </html>
