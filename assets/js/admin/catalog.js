@@ -194,6 +194,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const emptyState=(label,filtered)=>`<div class="catalog-directory-empty"><span class="material-symbols-rounded" aria-hidden="true">${filtered?'search_off':'location_city'}</span><h3>${filtered?'No matching records':`No ${label.toLowerCase()} yet`}</h3><p>${filtered?`Try another search to find ${label.toLowerCase()}.`:`Add a ${label.replace(/s$/,'').toLowerCase()} above to see it in this directory.`}</p></div>`;
   const catalogCards=(rows,kind)=>`<div class="catalog-list-cards ${kind==='building'||kind==='room'?'catalog-list-rows':''}">${rows.map(item=>{
     const room=kind==='room',building=kind==='building';
+    const gallery=(item.photos||[]).filter(entry=>entry.image);
     const parent=room?item.building_name:building?`${item.floor_count||1} floor${Number(item.floor_count)===1?'':'s'}`:locations.find(location=>String(location.id)===String(item.parent_building_id))?.name||'Building not assigned';
     const photo=item.photos?.find(entry=>Number(entry.isCover))||item.photos?.[0];
     const image=item.image||photo?.image||item.image_path;
