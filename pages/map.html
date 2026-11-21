@@ -288,6 +288,7 @@
 
     const filterBtns = document.querySelectorAll('.filter-btn');
     const hiddenCategories = new Set();
+    let allMarkersHidden = false;
     const paintFilter = (btn, selected) => {
       btn.classList.toggle('active', selected);
       btn.classList.toggle('bg-blue-600', selected);
@@ -297,24 +298,26 @@
     };
     const updateVisibleMarkers = () => {
       markers.forEach(marker => {
-        const visible = hiddenCategories.size === 0 || !hiddenCategories.has(marker._cat);
+        const visible = !allMarkersHidden && !hiddenCategories.has(marker._cat);
         if (visible) map.addLayer(marker);
         else map.removeLayer(marker);
       });
       filterBtns.forEach(btn => {
         const cat = btn.getAttribute('data-cat');
-        paintFilter(btn, cat === 'all' ? hiddenCategories.size === 0 : !hiddenCategories.has(cat));
+        paintFilter(btn, cat === 'all' ? !allMarkersHidden && hiddenCategories.size === 0 : !allMarkersHidden && !hiddenCategories.has(cat));
       });
     };
     filterBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const cat = btn.getAttribute('data-cat');
         if (cat === 'all') {
+          const showingEverything = !allMarkersHidden && hiddenCategories.size === 0;
+          allMarkersHidden = showingEverything;
           hiddenCategories.clear();
-        } else if (hiddenCategories.has(cat)) {
-          hiddenCategories.delete(cat);
         } else {
-          hiddenCategories.add(cat);
+          allMarkersHidden = false;
+          if (hiddenCategories.has(cat)) hiddenCategories.delete(cat);
+          else hiddenCategories.add(cat);
         }
         updateVisibleMarkers();
       });
