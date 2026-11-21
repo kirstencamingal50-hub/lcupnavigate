@@ -52,20 +52,6 @@
       z-index: 1;
     }
     .leaflet-container { background: #ffffff !important; }
-    .campus-3d-view{position:absolute;inset:0;z-index:5;overflow:hidden;background:#eaf1f8;border:0;border-radius:0}
-    .campus-3d-view.hidden{display:none}
-    #campus3DCanvas{display:block;width:100%;height:100%;touch-action:none}
-    .campus-3d-overlay{position:absolute;left:12px;right:12px;bottom:12px;max-width:440px;padding:12px 14px;border:1px solid rgba(148,163,184,.45);border-radius:14px;background:rgba(255,255,255,.94);color:#0f172a;box-shadow:0 8px 24px rgba(15,23,42,.16);font:12px/1.5 Inter,Arial,sans-serif;pointer-events:auto}
-    .campus-3d-overlay strong{display:block;font-size:14px}
-    .campus-3d-overlay>span{display:block;color:#475569;margin-top:2px}
-    .campus-3d-legend{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0}
-    .campus-3d-legend span{display:flex;align-items:center;gap:5px;color:#334155}
-    .campus-3d-legend i{width:9px;height:9px;border-radius:50%;display:inline-block}
-    .campus-3d-legend .accessible{background:#16a34a}
-    .campus-3d-legend .unverified{background:#64748b}
-    .campus-3d-legend .inaccessible{background:#dc4545}
-    #campus3DInfo{border-top:1px solid #e2e8f0;padding-top:7px;color:#334155}
-    @media(max-width:640px){.campus-3d-overlay{left:8px;right:8px;bottom:8px;padding:9px 10px;font-size:11px}}
     .np { position:relative; width:42px; height:46px; display:grid; place-items:start center; }
     .np-dot { display:grid; width:36px; height:36px; place-items:center; border:2px solid #fff; border-radius:13px 13px 13px 4px; transform:rotate(-45deg); color:#fff; background:linear-gradient(145deg,#2879c8,#15518e); box-shadow:0 5px 13px rgba(15,45,79,.34); transition:transform .18s,background .18s; }
     .np-dot::after { content:' '; display:block; width:9px; height:9px; border:2px solid rgba(255,255,255,.9); border-radius:50%; background:#fff; transform:rotate(45deg); }
@@ -101,7 +87,6 @@
         <button class="filter-btn active px-2.5 py-1 rounded-xl bg-blue-600 text-xs font-bold text-white shrink-0" data-cat="all">All</button>
         <button class="filter-btn px-2.5 py-1 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 hover:text-white shrink-0" data-cat="building">Buildings</button>
         <button class="filter-btn px-2.5 py-1 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 hover:text-white shrink-0" data-cat="facility">Facilities</button>
-        <button id="toggle3DView" type="button" class="px-3 py-1 rounded-xl bg-emerald-600 text-xs font-bold text-white shrink-0" aria-pressed="false">3D View</button>
       </div>
     </div>
 
