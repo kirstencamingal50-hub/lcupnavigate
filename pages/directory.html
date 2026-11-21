@@ -37,13 +37,6 @@
           <button type="button" data-directory-kind="room" aria-pressed="false">Rooms</button>
         </div>
         <div class="directory-result-tools">
-          <div class="directory-3d-control" id="directory3DControl">
-            <button type="button" id="directory3DToggle" aria-expanded="false" aria-controls="directory3DMenu">
-              <span class="material-symbols-rounded" aria-hidden="true">view_in_ar</span> 3D View
-              <span class="material-symbols-rounded" aria-hidden="true">expand_more</span>
-            </button>
-            <div id="directory3DMenu" class="directory-3d-menu" hidden><p>Select a campus location with an available 3D model.</p><div id="directory3DOptions"></div></div>
-          </div>
           <p id="directory-count" role="status" aria-live="polite">Loading directory…</p>
           <label for="directory-sort" class="sr-only">Sort results</label>
           <select id="directory-sort" aria-label="Sort results">
@@ -61,12 +54,6 @@
     </section>
   </main>
   <div data-component="bottom-nav"></div>
-  <dialog id="directory3DDialog" class="directory-3d-dialog" aria-labelledby="directory3DTitle">
-    <div class="directory-3d-dialog-head"><div><span class="directory-3d-eyebrow">Interactive model</span><h2 id="directory3DTitle">3D View</h2></div><button type="button" id="directory3DClose" aria-label="Close 3D view"><span class="material-symbols-rounded">close</span></button></div>
-    <model-viewer id="directory3DViewer" camera-controls auto-rotate shadow-intensity="1" exposure="1" loading="eager"></model-viewer>
-    <p class="directory-3d-help">Drag to rotate. Scroll or pinch to zoom.</p>
-  </dialog>
-  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
   <script src="../assets/js/campus-api.js"></script>
   <script type="module" src="../assets/js/directory.js?v=20261115-category-aliases"></script>
   <script src="../assets/js/app.js?v=20261118-admin-navigation"></script>
