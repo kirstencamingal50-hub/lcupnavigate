@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         '<label class="admin-edit-wide">Description<textarea name="description" rows="4" maxlength="4000">'+esc(item.description||'')+'</textarea></label>'+
         accessibilityFeatureFields(item.accessibility_features||String(item.accessibility_details||'').split(/\r?\n/).map(value=>value.trim().replaceAll(' ','_')))+extraLocationFields(item)+`<label class="admin-edit-wide catalog-model-field">${item.kind==='building'?'3D Building Model':'3D Facility Model'} (.glb)<input name="model_3d_file" type="file" accept=".glb,model/gltf-binary,application/octet-stream"><small>Optional GLB model, maximum 100 MB. ${item.model_3d_url?'Upload a new file to replace the current model.':'No 3D model uploaded yet.'}</small></label>`+galleryMarkup(type,item);
     }else if(type==='room'){
-      document.getElementById('catalog-editor-title').textContent='Edit room or classroom';
+      document.getElementById('catalog-editor-title').textContent='Edit room or office';
       fields.innerHTML=field('Room name','name',item.name,'text',true,'maxlength="150"')+
         field('Room number','room_number',item.room_number,'text',true,'maxlength="50"')+
         selectField('Building','building_id','<option value="">Select a building</option>'+buildingOptions(item.building_id),item.building_id)+
@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const target=document.getElementById('classrooms-list');if(!target)return;if(roomLoadError){target.innerHTML=`<div class="p-5 text-center text-sm text-red-700"><strong>Could not load rooms and classrooms.</strong><p class="mt-1">${esc(roomLoadError.message||'The campus API request failed.')}</p><button type="button" class="mt-3 underline" onclick="location.reload()">Retry</button></div>`;return;}const term=searchTerms.room.toLocaleLowerCase();
     const filtered=rooms.filter(room=>room.active!==false&&`${room.name} ${room.room_number} ${room.building_name} ${room.floor_label||''}`.toLocaleLowerCase().includes(term)&&(!categoryFilters.room||(room.category_names||[room.category]).includes(categoryFilters.room))).sort((a,b)=>sortOrders.room==='name-desc'?b.name.localeCompare(a.name):a.name.localeCompare(b.name));
     pageNumbers.room=Math.max(0,Math.min(pageNumbers.room,Math.max(0,Math.ceil(filtered.length/pageSize)-1)));const rows=filtered.slice(pageNumbers.room*pageSize,(pageNumbers.room+1)*pageSize);
-    target.innerHTML=listToolbar('room','Rooms and classrooms',filtered.length)+(rows.length?catalogCards(rows,'room'):emptyState('rooms',!!term||!!categoryFilters.room))+pagination('room',filtered.length);
+    target.innerHTML=listToolbar('room','Rooms and offices',filtered.length)+(rows.length?catalogCards(rows,'room'):emptyState('rooms',!!term||!!categoryFilters.room))+pagination('room',filtered.length);
     target.querySelector('[data-list-search]')?.addEventListener('input',event=>{const cursor=event.target.selectionStart;searchTerms.room=event.target.value;pageNumbers.room=0;renderRooms();const input=target.querySelector('[data-list-search]');input.focus();input.setSelectionRange(cursor,cursor);});
     target.querySelector('[data-category-filter]')?.addEventListener('change',event=>{categoryFilters.room=event.target.value;pageNumbers.room=0;renderRooms();});
     target.querySelector('[data-sort-order]')?.addEventListener('change',event=>{sortOrders.room=event.target.value;pageNumbers.room=0;renderRooms();});
