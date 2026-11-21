@@ -82,13 +82,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       const detailUrl = item.kind === 'room' ? `office.html?id=${encodeURIComponent(item.id)}` : `building.html?id=${encodeURIComponent(item.id)}`;
       const coverPhoto = Array.isArray(item.photos) ? (item.photos.find(photo => Number(photo.isCover)) || item.photos[0]) : null;
       const image = item.image || coverPhoto?.image || '';
-      const backgroundImage = image ? `url("${escapeHtml(mediaSrc(image))}")` : '';
       const features = item.kind === 'building' && Array.isArray(item.accessibilityFeatures)
         ? item.accessibilityFeatures.filter(feature => featureLabels[feature]).map(feature => `<span class="directory-feature"><span class="material-symbols-rounded" aria-hidden="true">accessible</span>${escapeHtml(featureLabels[feature])}</span>`).join('')
         : '';
       return `<article class="directory-card">
-        <a class="directory-card-name" href="${detailUrl}" aria-label="View ${escapeHtml(item.name)}" style="${backgroundImage ? `background-image:linear-gradient(0deg,rgba(7,20,38,.88),rgba(7,20,38,.12)),${backgroundImage}` : ''}">
-          ${!image ? `<span class="directory-card-name-fallback material-symbols-rounded" aria-hidden="true">${item.kind === 'room' ? 'meeting_room' : item.kind === 'building' ? 'location_city' : 'storefront'}</span>` : ''}
+        <a class="directory-card-name" href="${detailUrl}" aria-label="View ${escapeHtml(item.name)}">
+          <span class="directory-card-name-fallback material-symbols-rounded" aria-hidden="true">${item.kind === 'room' ? 'meeting_room' : item.kind === 'building' ? 'location_city' : 'storefront'}</span>
+          ${image ? `<img class="directory-card-photo" src="${escapeHtml(mediaSrc(image))}" alt="" loading="lazy" decoding="async">` : ''}
           <span class="directory-card-meta"><span class="directory-kind">${kindLabel}</span><span>${escapeHtml((item.category_names?.length ? item.category_names : [item.category]).filter(Boolean).join(' · ') || 'Campus')}</span></span>
           <strong>${escapeHtml(item.name)}</strong>
         </a>
@@ -100,6 +100,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div class="directory-card-actions"><a href="map.html?search=${encodeURIComponent(item.name)}"><span class="material-symbols-rounded" aria-hidden="true">map</span>Show on map</a><a href="${detailUrl}" aria-label="View details for ${escapeHtml(item.name)}">Details<span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></a></div>
       </article>`;
     }).join('');
+    container.querySelectorAll('.directory-card-photo').forEach(photo => {
+      photo.addEventListener('error', () => photo.remove(), { once: true });
+    });
   }
 
   container.innerHTML = '<p class="directory-loading" role="status">Loading campus directory…</p>';
