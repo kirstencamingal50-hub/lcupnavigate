@@ -126,7 +126,7 @@ html[data-theme="dark"] .admin-account-action { color:#b7d7fa; border-color:#465
 .admin-page [data-catalog-add-panel] form > label :is(input,select,textarea):focus { outline:3px solid rgba(37,99,235,.13); border-color:#6b9be8; }
 .admin-page [data-catalog-add-panel] form > label small { color:#78879a; font-size:10px; font-weight:500; line-height:1.5; letter-spacing:normal; }
 .admin-page [data-catalog-add-panel] form > fieldset,
-.admin-page [data-catalog-add-panel] form > .md\\:col-span-2 { grid-column:1/-1; }
+.admin-page [data-catalog-add-panel] form > [class~="md:col-span-2"] { grid-column:1/-1; }
 .admin-page [data-catalog-add-panel] form > fieldset { border:1px solid #e0e8f2; border-radius:12px; background:#f8fafd; }
 .admin-page .admin-edit-dialog { width:min(900px,calc(100vw - 28px)); max-height:min(88vh,900px); padding:0; border:1px solid #dce5ef; border-radius:18px; box-shadow:0 24px 80px rgba(15,35,60,.22); }
 .admin-page .admin-edit-dialog::backdrop { background:rgba(15,23,42,.48); backdrop-filter:blur(3px); }
@@ -144,7 +144,7 @@ html[data-theme="dark"] .admin-account-action { color:#b7d7fa; border-color:#465
 @media(max-width:700px) {
  .admin-page [data-catalog-add-panel] form,.admin-page .admin-edit-fields { grid-template-columns:minmax(0,1fr); }
  .admin-page [data-catalog-add-panel] form > fieldset,
- .admin-page [data-catalog-add-panel] form > .md\\:col-span-2,
+ .admin-page [data-catalog-add-panel] form > [class~="md:col-span-2"],
  .admin-page .admin-edit-fields .admin-edit-wide { grid-column:1; }
  .admin-page .admin-edit-dialog-heading,.admin-page .admin-edit-fields { padding-left:16px; padding-right:16px; }
  .admin-page .admin-edit-actions { padding:12px 16px; }
