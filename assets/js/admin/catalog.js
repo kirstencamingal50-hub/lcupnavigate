@@ -83,8 +83,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     dialog.addEventListener('click',manageGalleryAction);
     dialog.querySelector('form').addEventListener('submit',saveEditor);
   };
-  const field=(label,name,value,type='text',required=false,extra='')=>`<label>${label}${required?' <span class="text-red-600" aria-label="required">*</span>':''}<input name="${name}" type="${type}" value="${esc(value)}" ${required?'required':''} ${extra}></label>`;
-  const selectField=(label,name,options,selected,required=true)=>`<label>${label}${required?' <span class="text-red-600" aria-label="required">*</span>':''}<select name="${name}" ${required?'required':''}>${options}</select></label>`;
+  const field=(label,name,value,type='text',required=false,extra='')=>`<label><span class="admin-field-label">${label}${required?' <span class="text-red-600" aria-label="required">*</span>':''}</span><input name="${name}" type="${type}" value="${esc(value)}" ${required?'required':''} ${extra}></label>`;
+  const selectField=(label,name,options,selected,required=true)=>`<label><span class="admin-field-label">${label}${required?' <span class="text-red-600" aria-label="required">*</span>':''}</span><select name="${name}" ${required?'required':''}>${options}</select></label>`;
   const multiSelectField=(label,name,options,selected=[])=>`<div class="admin-edit-wide grid gap-1"><span class="font-semibold text-slate-700">${label} <span class="text-red-600" aria-label="required">*</span></span><select name="${name}" multiple size="${Math.min(6,Math.max(3,categories.length))}" class="catalog-multi-category">${catOptions(selected)}</select><small class="block text-slate-500">Choose one or more categories from the dropdown.</small></div>`;
   const areaField=(label,name,value,max=1000)=>`<label class="admin-edit-wide">${label}<textarea name="${name}" rows="2" maxlength="${max}">${esc(value||'')}</textarea></label>`;
   const accessibilityFeatureOptions=[
