@@ -142,7 +142,8 @@ async function getDirectory() {
     accessibilityFeatures: row.kind === 'building' && Array.isArray(row.accessibility_features)
       ? row.accessibility_features
       : [],
-    photos: locationPhotos.get(String(row.id)) || []
+    photos: locationPhotos.get(String(row.id)) || [],
+    model_3d_url: row.model_3d_path ? mediaUrl(row.model_3d_path) : null
   });
   });
 
@@ -1073,6 +1074,8 @@ async function publicResource(event, resource, method, query) {
         // Keep the storage object path available to signed-in admins so edits
         // can preserve the existing photo without resubmitting its public URL.
         image_object_path: user ? row.image_path : null,
+        model_3d_object_path: user ? row.model_3d_path : null,
+        model_3d_url: row.model_3d_path ? mediaUrl(row.model_3d_path) : null,
         image_path: row.image_path ? mediaUrl(row.image_path) : null
       }))
     );
