@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     .replace(/&/g, ' and ')
     .replace(/[\\/–—_-]+/g, ' ')
     .replace(/[^a-z0-9 ]/g, '')
-    .replace(/\\s+/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
   const categoryAliases = {
     academic: ['academic', 'academic building'],
@@ -86,9 +86,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       const features = item.kind === 'building' && Array.isArray(item.accessibilityFeatures)
         ? item.accessibilityFeatures.filter(feature => featureLabels[feature]).map(feature => `<span class="directory-feature"><span class="material-symbols-rounded" aria-hidden="true">accessible</span>${escapeHtml(featureLabels[feature])}</span>`).join('')
         : '';
-      const coverPhoto = Array.isArray(item.photos) ? (item.photos.find(photo => Number(photo.isCover)) || item.photos[0]) : null;
-      const image = item.image || coverPhoto?.image || '';
-      const modelButton = item.model_3d_url ? `<button type="button" class="directory-card-3d" data-model-url="${escapeHtml(item.model_3d_url)}" data-model-name="${escapeHtml(item.name)}"><span class="material-symbols-rounded" aria-hidden="true">view_in_ar</span>3D View</button>` : '';
       return `<article class="directory-card">
         <a class="directory-card-image" href="${detailUrl}" aria-label="View ${escapeHtml(item.name)}">
           ${image ? `<img src="${escapeHtml(mediaSrc(image))}" alt="${escapeHtml(coverPhoto?.altText || `Photo of ${item.name}`)}" loading="lazy">` : `<span class="material-symbols-rounded" aria-hidden="true">${item.kind === 'room' ? 'meeting_room' : item.kind === 'building' ? 'location_city' : 'storefront'}</span>`}
@@ -100,7 +97,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           ${item.parent_building ? `<p class="directory-parent"><span class="material-symbols-rounded" aria-hidden="true">location_on</span>${escapeHtml(item.parent_building)}${item.room_number ? ` · Room ${escapeHtml(item.room_number)}` : ''}</p>` : ''}
           ${features ? `<div class="directory-features" aria-label="Building accessibility features">${features}</div>` : ''}
         </div>
-        <div class="directory-card-actions"><a href="map.html?search=${encodeURIComponent(item.name)}"><span class="material-symbols-rounded" aria-hidden="true">map</span>Show on map</a><span class="directory-card-action-group">${modelButton}<a href="${detailUrl}" aria-label="View details for ${escapeHtml(item.name)}">Details<span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></a></span></div>
+        <div class="directory-card-actions"><a href="map.html?search=${encodeURIComponent(item.name)}"><span class="material-symbols-rounded" aria-hidden="true">map</span>Show on map</a><a href="${detailUrl}" aria-label="View details for ${escapeHtml(item.name)}">Details<span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></a></div>
       </article>`;
     }).join('');
   }
