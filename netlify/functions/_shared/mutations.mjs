@@ -39,7 +39,7 @@ function storedModelPath(value) {
   if (value === undefined || value === null || value === '') return null;
   const path = storageObjectPath(value);
   if (!path || !path.startsWith('campus-models/')) {
-    throw new HttpError(400, 'Choose a GLB model uploaded through the building form.');
+    throw new HttpError(400, 'Choose a GLB model uploaded through the campus admin form.');
   }
   return path;
 }
@@ -175,7 +175,7 @@ async function locations(event, method, body, query) {
       category_id: categoryId,
       parent_building_id: parentId,
       image_path: storedMediaPath(body.image_path),
-      model_3d_path: kind === 'building' ? storedModelPath(body.model_3d_path) : null,
+      model_3d_path: storedModelPath(body.model_3d_path),
       department_name: optionalText(body.department_name, 'Department', 160),
       contact_email: email,
       contact_phone: optionalText(body.contact_phone, 'Contact phone', 40),
