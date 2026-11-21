@@ -7,6 +7,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!container || !search || !count || !sort || !filterGroup) return;
 
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
+  const mediaSrc = value => {
+    const path = String(value || '');
+    if (!path) return '';
+    if (/^(https?:|data:|blob:)/i.test(path)) return path;
+    return path.startsWith('/') ? path : `../${path.replace(/^\.\//, '')}`;
+  };
   const featureLabels = {
     wheelchair_entrance: 'Wheelchair-accessible entrance',
     elevator: 'Elevator',
@@ -47,7 +53,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const query = search.value.trim().toLocaleLowerCase();
     const filtered = records.filter(item => {
       const text = `${item.name} ${item.category || ''} ${item.description || ''} ${item.parent_building || ''} ${item.room_number || ''} ${item.services || ''}`.toLocaleLowerCase();
-      const itemCategory = normalizeCategory(item.category);
+      const itemCategories = (Array.isArray(item.category_names) && item.category_names.length ? item.category_names : [item.category]).filter(Boolean).map(normalizeCategory);
       const categoryMatch = !category || category === 'all' ||
         (selectedAliases
           ? itemCategories.some(itemCategory => selectedAliases.some(alias => itemCategory.includes(normalizeCategory(alias)) || normalizeCategory(alias).includes(itemCategory)))
@@ -88,7 +94,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           ${item.parent_building ? `<p class="directory-parent"><span class="material-symbols-rounded" aria-hidden="true">location_on</span>${escapeHtml(item.parent_building)}${item.room_number ? ` · Room ${escapeHtml(item.room_number)}` : ''}</p>` : ''}
           ${features ? `<div class="directory-features" aria-label="Building accessibility features">${features}</div>` : ''}
         </div>
-        <div class="directory-card-actions"><a href="map.html?search=${encodeURIComponent(item.name)}"><span class="material-symbols-rounded" aria-hidden="true">map</span>Show on map</a><a href="${detailUrl}" aria-label="View details for ${escapeHtml(item.name)}">Details<span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></a></div>
+        <div class="directory-card-actions"><a href="map.html?search=${encodeURIComponent(item.name)}"><span class="material-symbols-rounded" aria-hidden="true">map</span>Show on map</a><span class="directory-card-action-group">${modelButton}<a href="${detailUrl}" aria-label="View details for ${escapeHtml(item.name)}">Details<span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></a></span></div>
       </article>`;
     }).join('');
   }
@@ -98,7 +104,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     const data = await window.CampusApi.get('directory');
     const locations = data.locations || [];
     const rooms = data.rooms || [];
-    records = [...locations, ...rooms.map(room => ({...room, kind: 'room', parent_building: room.buildingName, room_number: room.roomNumber}))];
+    records = [...locations, ...rooms.map(room => {
+      const parent = locations.find(place => String(place.id) === String(room.buildingId));
+      const roomPhotos = Array.isArray(room.photos) && room.photos.length ? room.photos : (parent?.photos || []);
+      return {
+        ...room,
+        kind: 'room',
+        parent_building: room.buildingName || parent?.name || '',
+        room_number: room.roomNumber,
+        image: room.image || parent?.image || '',
+        photos: roomPhotos,
+        model_3d_url: room.model_3d_url || parent?.model_3d_url || ''
+      };
+    })];
     window.dispatchEvent(new CustomEvent('campusDataReady', {detail: data}));
     render();
     search.addEventListener('input', render);
