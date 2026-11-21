@@ -547,3 +547,14 @@ html[data-theme="dark"] .directory-3d-menu, html[data-theme="dark"] .directory-3
 html[data-theme="dark"] .directory-3d-control > button, html[data-theme="dark"] .directory-3d-dialog-head > button { border-color:#43536a; color:#e6edf7; background:#152033; }
 html[data-theme="dark"] #directory3DOptions > button { color:#e6edf7; background:#152033; }
 @media(max-width:620px){.directory-result-tools{justify-content:space-between}.directory-3d-dialog{padding:.75rem}#directory3DViewer{min-height:240px;height:55vh}}
+
+/* Directory cards combine the landmark photo and name in one image-backed header. */
+.directory-card-name { position:relative; display:flex; min-height:190px; flex-direction:column; justify-content:flex-end; gap:.55rem; padding:1rem; overflow:hidden; color:#fff; background-color:#183657; background-position:center; background-size:cover; text-decoration:none; isolation:isolate; }
+.directory-card-name::before { position:absolute; z-index:-1; inset:0; background:linear-gradient(0deg,rgba(7,20,38,.88),rgba(7,20,38,.12)); content:""; }
+.directory-card-name .directory-card-meta { color:#e5edf7; }
+.directory-card-name .directory-kind { color:#fff; background:rgba(255,255,255,.18); }
+.directory-card-name > strong { color:#fff; font-size:1.2rem; font-weight:900; line-height:1.2; overflow-wrap:anywhere; }
+.directory-card-name-fallback { position:absolute; z-index:-1; inset:0; display:grid; place-items:center; color:rgba(255,255,255,.22); font-size:5rem; }
+.directory-card-body { padding:.85rem .95rem; }
+.directory-card-actions { border-top:1px solid #edf1f5; }
+@media(max-width:620px){.directory-card-name{grid-column:1/-1;min-height:160px}.directory-card-body{grid-column:1/-1}.directory-card-actions{grid-column:1/-1}}
