@@ -95,14 +95,16 @@
     const isPlan = type === 'floorplan';
     const isModel = type === 'model';
     const maxSize = isPlan ? 15 * 1024 * 1024 : isModel ? 100 * 1024 * 1024 : 5 * 1024 * 1024;
-    // Browsers commonly report an empty MIME type for .glb files. Infer the
-    // standard GLB MIME type from the extension instead of rejecting a valid model.
-    const mimeType = file.type || (isModel && /\\.glb$/i.test(file.name) ? 'model/gltf-binary' : '');
+    // Treat the .glb extension as authoritative: browsers and Windows may
+    // report inconsistent MIME types for binary glTF files.
+    const isGlbFile = isModel && /\\.glb$/i.test(file.name.trim());
+    const mimeType = isGlbFile ? 'model/gltf-binary' : file.type;
     const allowed = isPlan
       ? ['application/pdf', 'image/png', 'image/jpeg', 'image/webp']
       : isModel ? ['model/gltf-binary', 'application/octet-stream'] : ['image/png', 'image/jpeg', 'image/webp'];
     if (file.size > maxSize) throw new Error(isPlan ? 'Floor plans must be 15 MB or smaller.' : isModel ? '3D models must be 100 MB or smaller.' : 'Images must be 5 MB or smaller.');
-    if (!allowed.includes(mimeType)) throw new Error(isModel ? 'Unsupported 3D model type. Please select a .glb file.' : 'Unsupported file type.');
+    if (isModel && !isGlbFile) throw new Error('Please select a file with the .glb extension.');
+    if (!allowed.includes(mimeType)) throw new Error('Unsupported file type.');
 
     const session = readSession();
     if (!session?.access_token) throw new Error('Administrator sign-in is required to upload files.');
