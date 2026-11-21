@@ -3,7 +3,7 @@ import { HttpError, jsonResponse, optionalText, positiveId, requiredText, succes
 import { getServiceClient } from './supabase.mjs';
 
 const db = () => getServiceClient();
-const bucketNames = new Set(['campus-photos', 'floor-plans']);
+const bucketNames = new Set(['campus-photos', 'floor-plans', 'campus-models']);
 
 export function mediaUrl(path) {
   const objectPath = storageObjectPath(path);
@@ -38,15 +38,16 @@ async function mediaIsPublic(bucket, name) {
       .maybeSingle());
     return Boolean(plan?.verified && plan.building?.active);
   }
-  const [locations, rooms, photos, announcements] = await Promise.all([
+  const [locations, rooms, photos, announcements, models] = await Promise.all([
     database.from('locations').select('id').eq('image_path', `${bucket}/${name}`).eq('active', true).limit(1),
     database.from('rooms').select('id').eq('image_path', `${bucket}/${name}`).eq('active', true).limit(1),
     database.from('facility_photos').select('location_id,room_id').eq('image_path', `${bucket}/${name}`).limit(10),
     database.from('announcements').select('id').eq('image_path', `${bucket}/${name}`)
-      .eq('status', 'published').or(`publish_at.is.null,publish_at.lte.${new Date().toISOString()}`).limit(1)
+      .eq('status', 'published').or(`publish_at.is.null,publish_at.lte.${new Date().toISOString()}`).limit(1),
+    database.from('locations').select('id').eq('model_3d_path', `${bucket}/${name}`).eq('kind', 'building').eq('active', true).limit(1)
   ]);
-  for (const result of [locations, rooms, photos, announcements]) if (result.error) throw result.error;
-  if (locations.data?.length || rooms.data?.length || announcements.data?.length) return true;
+  for (const result of [locations, rooms, photos, announcements, models]) if (result.error) throw result.error;
+  if (locations.data?.length || rooms.data?.length || announcements.data?.length || models.data?.length) return true;
   for (const photo of photos.data || []) {
     if (photo.location_id) {
       const location = unwrap(await database.from('locations').select('id').eq('id', photo.location_id).eq('active', true).maybeSingle());
@@ -91,9 +92,9 @@ async function objectExists(bucket, name) {
 
 export async function uploadMetadata(event, body) {
   const user = await currentUser(event, true, 'editor');
-  const type = body.type === 'floorplan' ? 'floorplan' : body.type === 'photo' ? 'photo' : null;
+  const type = body.type === 'floorplan' ? 'floorplan' : body.type === 'photo' ? 'photo' : body.type === 'model' ? 'model' : null;
   if (!type) throw new HttpError(400, 'Choose a supported file type.');
-  const bucket = type === 'floorplan' ? 'floor-plans' : 'campus-photos';
+  const bucket = type === 'floorplan' ? 'floor-plans' : type === 'model' ? 'campus-models' : 'campus-photos';
   const name = requiredText(body.object_path, 'Storage object path', 255);
   if (name.includes('/') || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,254}$/.test(name)) {
     throw new HttpError(400, 'The uploaded storage object path is invalid.');
@@ -101,14 +102,14 @@ export async function uploadMetadata(event, body) {
   const mimeType = requiredText(body.mime_type, 'MIME type', 100);
   const allowedTypes = type === 'floorplan'
     ? ['application/pdf', 'image/png', 'image/jpeg', 'image/webp']
-    : ['image/png', 'image/jpeg', 'image/webp'];
+    : type === 'model' ? ['model/gltf-binary', 'application/octet-stream'] : ['image/png', 'image/jpeg', 'image/webp'];
   const size = Number(body.file_size);
-  const maximum = type === 'floorplan' ? 15 * 1024 * 1024 : 5 * 1024 * 1024;
+  const maximum = type === 'floorplan' ? 15 * 1024 * 1024 : type === 'model' ? 100 * 1024 * 1024 : 5 * 1024 * 1024;
   if (!allowedTypes.includes(mimeType) || !Number.isSafeInteger(size) || size < 1 || size > maximum) {
     throw new HttpError(400, 'The uploaded file type or size is not allowed.');
   }
   if (!await objectExists(bucket, name)) throw new HttpError(400, 'The uploaded file was not found in campus storage.');
-  if (type === 'photo') return success({ path: `${bucket}/${name}` }, 201);
+  if (type === 'photo' || type === 'model') return success({ path: `${bucket}/${name}` }, 201);
 
   const buildingId = positiveId(body.building_id, 'Building ID');
   const floorNumber = Number(body.floor_number);
