@@ -49,12 +49,18 @@
     .campus-3d-legend .inaccessible{background:#dc4545}
     #campus3DInfo{border-top:1px solid #e2e8f0;padding-top:7px;color:#334155}
     @media(max-width:640px){.campus-3d-overlay{left:8px;right:8px;bottom:8px;padding:9px 10px;font-size:11px}}
-    .np { position: relative; width: 34px; height: 48px; }
-    .np-dot { width: 34px; height: 34px; border-radius: 50%; background: #d8323c; border: 2.5px solid #fff; color: #fff; font: 700 14px/29px Inter, sans-serif; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,.4); transition: transform .15s; }
-    .np-dot::after { content: ''; display: block; width: 10px; height: 10px; border-radius: 50%; background: #fff; margin: 9px auto 0; }
-    .np-stem { position: absolute; left: 15px; top: 32px; width: 4px; height: 14px; border-radius: 2px; background: #d8323c; }
-    .leaflet-marker-icon:hover .np-dot, .np-on .np-dot { transform: scale(1.2); }
-    .np-on .np-dot { background: #111; border-color: #ffd23f; }
+    .np { position:relative; width:42px; height:46px; display:grid; place-items:start center; }
+    .np-dot { display:grid; width:36px; height:36px; place-items:center; border:2px solid #fff; border-radius:13px 13px 13px 4px; transform:rotate(-45deg); color:#fff; background:linear-gradient(145deg,#2879c8,#15518e); box-shadow:0 5px 13px rgba(15,45,79,.34); transition:transform .18s,background .18s; }
+    .np-dot::after { content:' '; display:block; width:9px; height:9px; border:2px solid rgba(255,255,255,.9); border-radius:50%; background:#fff; transform:rotate(45deg); }
+    .np-stem { display:none; }
+    .leaflet-marker-icon:hover .np-dot,.np-on .np-dot { transform:rotate(-45deg) scale(1.18); background:linear-gradient(145deg,#f3a72d,#d97706); }
+    .np-on .np-dot { border-color:#fff; }
+    #topbar { position:fixed; top:76px; left:12px; z-index:80; width:min(390px,calc(100vw - 24px)); max-height:calc(100dvh - 104px); overflow:auto; border:1px solid rgba(148,163,184,.35); border-radius:18px; box-shadow:0 18px 48px rgba(8,20,40,.28); background:rgba(15,29,51,.96); backdrop-filter:blur(16px); }
+    #topbar.map-controls-hidden { display:none; }
+    #mapControlsToggle { position:fixed; top:78px; left:12px; z-index:79; display:flex; align-items:center; gap:7px; padding:10px 13px; border:1px solid #cbd5e1; border-radius:999px; color:#16375d; background:rgba(255,255,255,.96); box-shadow:0 8px 24px rgba(8,20,40,.18); font-size:12px; font-weight:800; }
+    #mapControlsToggle.controls-open { display:none; }
+    #mapControlsClose { display:flex; align-items:center; justify-content:space-between; width:100%; margin-bottom:4px; color:#dce8f7; font-size:12px; font-weight:800; }
+    @media(max-width:640px){#topbar{top:70px;left:8px;width:calc(100vw - 16px);max-height:calc(100dvh - 88px)}#mapControlsToggle{top:72px;left:8px}}
   </style>
 </head>
 <body class="bg-[#0f172a] text-white font-sans flex flex-col h-screen overflow-hidden">
@@ -62,9 +68,10 @@
   <!-- Header Section -->
   <div data-component="header" class="relative z-40 shrink-0"></div>
 
-  <!-- Top Action & Navigation Bar -->
+  <button id="mapControlsToggle" type="button" aria-expanded="false"><span class="material-symbols-rounded" aria-hidden="true">tune</span> Map controls</button>
+  <!-- Floating side controls panel; can be hidden to give the map the full view. -->
   <div id="topbar" class="bg-slate-900 border-b border-slate-800 px-3 py-2 flex flex-col gap-2 relative z-30 shrink-0">
-    
+    <button id="mapControlsClose" type="button"><span>Map controls</span><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
     <!-- Row 1: Search & Category Filters -->
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div class="relative flex-1 min-w-[140px] max-w-xs">
@@ -77,6 +84,7 @@
         <button class="filter-btn active px-2.5 py-1 rounded-xl bg-blue-600 text-xs font-bold text-white shrink-0" data-cat="all">All</button>
         <button class="filter-btn px-2.5 py-1 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 hover:text-white shrink-0" data-cat="building">Buildings</button>
         <button class="filter-btn px-2.5 py-1 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 hover:text-white shrink-0" data-cat="facility">Facilities</button>
+        <button class="filter-btn px-2.5 py-1 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 hover:text-white shrink-0" data-cat="none">None</button>
         <button id="toggle3DView" type="button" class="px-3 py-1 rounded-xl bg-emerald-600 text-xs font-bold text-white shrink-0" aria-pressed="false">3D View</button>
       </div>
     </div>
@@ -210,6 +218,12 @@
     document.getElementById('zoomOutBtn').addEventListener('click', () => map.zoomOut(0.5));
     document.getElementById('fullMapBtn').addEventListener('click', () => fitFull(true));
 
+    const controlsPanel=document.getElementById('topbar');
+    const controlsToggle=document.getElementById('mapControlsToggle');
+    const setControlsOpen=open=>{controlsPanel.classList.toggle('map-controls-hidden',!open);controlsToggle.classList.toggle('controls-open',open);controlsToggle.setAttribute('aria-expanded',String(open));setTimeout(()=>map.invalidateSize(),80);};
+    controlsToggle.addEventListener('click',()=>setControlsOpen(true));
+    document.getElementById('mapControlsClose').addEventListener('click',()=>setControlsOpen(false));
+
     function toLatLng(px) { return [H - px[1], px[0]]; }
 
     function makeIcon(num) {
@@ -284,7 +298,7 @@
 
         const cat = btn.getAttribute('data-cat');
         markers.forEach(marker => {
-          if (cat === 'all' || marker._cat === cat) {
+          if (cat !== 'none' && (cat === 'all' || marker._cat === cat)) {
             map.addLayer(marker);
           } else {
             map.removeLayer(marker);
