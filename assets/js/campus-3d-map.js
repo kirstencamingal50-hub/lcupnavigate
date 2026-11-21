@@ -238,7 +238,9 @@ import { OrbitControls } from 'https://esm.sh/three@0.164.1/examples/jsm/control
       const showAllButton = document.getElementById('showAllBtn');
       if (showAllButton && !showAllButton.classList.contains('hidden')) showAllButton.dataset.visibleBefore3d = 'true';
       showAllButton?.classList.add('hidden');
-      button.textContent = '2D Map';
+      button.textContent = 'Switch to 2D Map';
+      document.getElementById('map3DDropdown')?.classList.add('hidden');
+      document.getElementById('map3DDropdownToggle')?.setAttribute('aria-expanded','false');
       button.setAttribute('aria-pressed', 'true');
       try {
         await build();
@@ -256,7 +258,7 @@ import { OrbitControls } from 'https://esm.sh/three@0.164.1/examples/jsm/control
         showAllButton.classList.remove('hidden');
         delete showAllButton.dataset.visibleBefore3d;
       }
-      button.textContent = '3D View';
+      button.textContent = 'Open 3D Campus View';
       button.setAttribute('aria-pressed', 'false');
       window.dispatchEvent(new Event('resize'));
     }
