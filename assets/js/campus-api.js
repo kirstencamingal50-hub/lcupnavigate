@@ -91,19 +91,21 @@
   async function uploadToStorage(formData) {
     const file = formData.get('file');
     if (!(file instanceof File)) throw new Error('Choose a file to upload.');
-    const isPlan = formData.get('type') === 'floorplan';
-    const maxSize = isPlan ? 15 * 1024 * 1024 : 5 * 1024 * 1024;
+    const type = formData.get('type');
+    const isPlan = type === 'floorplan';
+    const isModel = type === 'model';
+    const maxSize = isPlan ? 15 * 1024 * 1024 : isModel ? 100 * 1024 * 1024 : 5 * 1024 * 1024;
     const allowed = isPlan
       ? ['application/pdf', 'image/png', 'image/jpeg', 'image/webp']
-      : ['image/png', 'image/jpeg', 'image/webp'];
-    if (file.size > maxSize) throw new Error(isPlan ? 'Floor plans must be 15 MB or smaller.' : 'Images must be 5 MB or smaller.');
+      : isModel ? ['model/gltf-binary', 'application/octet-stream'] : ['image/png', 'image/jpeg', 'image/webp'];
+    if (file.size > maxSize) throw new Error(isPlan ? 'Floor plans must be 15 MB or smaller.' : isModel ? '3D models must be 100 MB or smaller.' : 'Images must be 5 MB or smaller.');
     if (!allowed.includes(file.type)) throw new Error('Unsupported file type.');
 
     const session = readSession();
     if (!session?.access_token) throw new Error('Administrator sign-in is required to upload files.');
     const extension = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin';
     const storagePath = `${crypto.randomUUID()}.${extension}`;
-    const bucket = isPlan ? 'floor-plans' : 'campus-photos';
+    const bucket = isPlan ? 'floor-plans' : isModel ? 'campus-models' : 'campus-photos';
     const uploadUrl = `${supabaseConfig.url}/storage/v1/object/${bucket}/${encodeURIComponent(storagePath)}`;
     let response;
     try {
@@ -112,7 +114,7 @@
         headers: {
           apikey: supabaseConfig.anonKey,
           Authorization: `Bearer ${session.access_token}`,
-          'Content-Type': file.type,
+          'Content-Type': mimeType,
           'x-upsert': 'false'
         },
         body: file
@@ -126,10 +128,10 @@
     }
 
     const metadata = {
-      type: isPlan ? 'floorplan' : 'photo',
+      type: isPlan ? 'floorplan' : isModel ? 'model' : 'photo',
       object_path: storagePath,
       original_name: file.name,
-      mime_type: file.type,
+      mime_type: mimeType,
       file_size: file.size,
       building_id: formData.get('building_id'),
       floor_number: formData.get('floor_number')

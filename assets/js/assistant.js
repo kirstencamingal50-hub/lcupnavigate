@@ -63,7 +63,7 @@
       if (!response.ok || !payload.ok) throw new Error(payload.error?.message || 'The campus assistant is temporarily unavailable.');
       addMessage(payload.data.answer, 'assistant');
       renderResults(payload.data.results);
-      status.textContent = 'Answer generated from verified campus database records using campus search rules. No AI service is used.';
+      status.textContent = '';
       const speech = document.createElement('button');
       speech.type = 'button';
       speech.className = 'assistant-action mt-2';

@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
   <link rel="stylesheet" href="../../assets/css/style.css?v=20261115-symbol-font" />
   <link rel="stylesheet" href="../../assets/css/admin.css?v=20261105-admin-ux" />
-  <link rel="stylesheet" href="../../assets/css/admin-ui-polish.css?v=20261118-catalog-gallery" />
+  <link rel="stylesheet" href="../../assets/css/admin-ui-polish.css?v=20261121-catalog-forms" />
   <script src="../../assets/js/campus-api.js"></script>
   <script src="../../assets/js/admin/admin-auth.js"></script>
 </head>
@@ -49,6 +49,10 @@
           <input name="photo" type="file" accept="image/*" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
           <img data-photo-preview hidden alt="Building photo preview" class="mt-2 max-h-40 rounded-lg object-cover" />
         </label>
+        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">3D Building Model (.glb)
+          <input name="model_3d_file" type="file" accept=".glb,model/gltf-binary,application/octet-stream" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
+          <small class="mt-1 block text-xs text-slate-500">Optional GLB model, maximum 100 MB. It will appear in the building information.</small>
+        </label>
         <fieldset class="md:col-span-2 rounded-xl border border-blue-100 bg-blue-50/60 p-4">
           <legend class="px-1 text-xs font-bold text-slate-800">Building accessibility features</legend>
           <p class="mb-3 text-xs text-slate-500">Select features confirmed for this building. These are building-wide and do not describe individual rooms.</p>
@@ -77,9 +81,6 @@
         
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Service hours
           <select name="service_hours" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"><option value="">Select service hours</option><option value="8:00 AM – 5:00 PM">8:00 AM – 5:00 PM</option><option value="7:00 AM – 4:00 PM">7:00 AM – 4:00 PM</option><option value="8:00 AM – 12:00 PM">8:00 AM – 12:00 PM</option><option value="1:00 PM – 5:00 PM">1:00 PM – 5:00 PM</option><option value="24 hours">24 hours</option><option value="By appointment">By appointment</option><option value="Varies">Varies</option></select>
-        </label>
-        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Access hours
-          <input name="access_hours" maxlength="500" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
         </label>
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Days open
           <select name="days_open" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"><option value="">Select days open</option><option value="Monday – Friday">Monday – Friday</option><option value="Monday – Saturday">Monday – Saturday</option><option value="Monday – Sunday">Monday – Sunday</option><option value="Weekdays only">Weekdays only</option><option value="Weekends only">Weekends only</option><option value="By appointment">By appointment</option><option value="Closed">Closed</option></select>
@@ -113,7 +114,8 @@
     </script>
   </main>
 
-  <script src="../../assets/js/admin/catalog.js?v=20261118-multi-category"></script>
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+  <script src="../../assets/js/admin/catalog.js?v=20261121-facility-glb-admin-ux"></script>
   <script src="../../assets/js/app.js?v=20261118-remove-department-nav"></script>
 </body>
 </html>
