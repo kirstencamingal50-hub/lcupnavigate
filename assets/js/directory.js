@@ -86,9 +86,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       const features = item.kind === 'building' && Array.isArray(item.accessibilityFeatures)
         ? item.accessibilityFeatures.filter(feature => featureLabels[feature]).map(feature => `<span class="directory-feature"><span class="material-symbols-rounded" aria-hidden="true">accessible</span>${escapeHtml(featureLabels[feature])}</span>`).join('')
         : '';
+      const coverPhoto = Array.isArray(item.photos) ? (item.photos.find(photo => Number(photo.isCover)) || item.photos[0]) : null;
+      const image = item.image || coverPhoto?.image || '';
+      const modelButton = item.model_3d_url ? `<button type="button" class="directory-card-3d" data-model-url="${escapeHtml(item.model_3d_url)}" data-model-name="${escapeHtml(item.name)}"><span class="material-symbols-rounded" aria-hidden="true">view_in_ar</span>3D View</button>` : '';
       return `<article class="directory-card">
         <a class="directory-card-image" href="${detailUrl}" aria-label="View ${escapeHtml(item.name)}">
-          ${image ? `<img src="${escapeHtml(photoSrc(image))}" alt="Photo of ${escapeHtml(item.name)}" loading="lazy">` : `<span class="material-symbols-rounded" aria-hidden="true">${item.kind === 'room' ? 'meeting_room' : item.kind === 'building' ? 'location_city' : 'storefront'}</span>`}
+          ${image ? `<img src="${escapeHtml(mediaSrc(image))}" alt="${escapeHtml(coverPhoto?.altText || `Photo of ${item.name}`)}" loading="lazy">` : `<span class="material-symbols-rounded" aria-hidden="true">${item.kind === 'room' ? 'meeting_room' : item.kind === 'building' ? 'location_city' : 'storefront'}</span>`}
         </a>
         <div class="directory-card-body">
           <div class="directory-card-meta"><span class="directory-kind">${kindLabel}</span><span>${escapeHtml((item.category_names?.length ? item.category_names : [item.category]).filter(Boolean).join(' · ') || 'Campus')}</span></div>
