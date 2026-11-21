@@ -114,7 +114,7 @@
         headers: {
           apikey: supabaseConfig.anonKey,
           Authorization: `Bearer ${session.access_token}`,
-          'Content-Type': file.type,
+          'Content-Type': mimeType,
           'x-upsert': 'false'
         },
         body: file
@@ -131,7 +131,7 @@
       type: isPlan ? 'floorplan' : isModel ? 'model' : 'photo',
       object_path: storagePath,
       original_name: file.name,
-      mime_type: file.type,
+      mime_type: mimeType,
       file_size: file.size,
       building_id: formData.get('building_id'),
       floor_number: formData.get('floor_number')
