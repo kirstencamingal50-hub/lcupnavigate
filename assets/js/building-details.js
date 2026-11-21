@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded',async()=>{
   const content=document.getElementById('building-content');if(!content)return;
   const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const mediaSrc=value=>{const path=String(value||'');if(!path)return '';if(/^(https?:|data:|blob:)/i.test(path))return path;return path.startsWith('/')?path:`../${path.replace(/^\.\//,'')}`;};
   try{
     const data=await CampusApi.get('directory'),id=new URLSearchParams(location.search).get('id');
     const place=(data.locations||[]).find(item=>String(item.id)===String(id));
@@ -11,7 +12,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
     const plans=(data.floorPlans||[]).filter(plan=>String(plan.building_id)===String(place.id));
     const descriptions=[place.name,place.category,place.description,place.departmentName,place.serviceHours,place.accessHours,place.daysOpen,place.lunchBreak,place.services,place.nearbyLandmarks,place.accessibilityDetails].filter(Boolean).join('. ');
     const photos=place.photos?.length?place.photos:(place.image?[{image:place.image,altText:`Photo of ${place.name}`,caption:''}]:[]);
-    const photoGallery=photos.length?`<div class="place-profile-gallery">${photos.map(photo=>`<figure><img src="../${esc(photo.image)}" alt="${esc(photo.altText||`Photo of ${place.name}`)}" loading="lazy">${photo.caption?`<figcaption>${esc(photo.caption)}</figcaption>`:''}</figure>`).join('')}</div>`:'';
+    const photoGallery=photos.length?`<div class="place-profile-gallery">${photos.map(photo=>`<figure><img src="${esc(mediaSrc(photo.image))}" alt="${esc(photo.altText||`Photo of ${place.name}`)}" loading="lazy">${photo.caption?`<figcaption>${esc(photo.caption)}</figcaption>`:''}</figure>`).join('')}</div>`:'';
     const featureLabels={wheelchair_entrance:'Wheelchair-accessible entrance',elevator:'Elevator',ramp:'Ramp',accessible_restroom:'Accessible restroom',accessible_parking:'Accessible parking',handrails:'Handrails',tactile_paving:'Tactile paving',braille_signage:'Braille signage',hearing_assistance:'Hearing assistance'};
     const buildingFeatures=place.kind==='building'&&Array.isArray(place.accessibilityFeatures)?place.accessibilityFeatures.filter(feature=>featureLabels[feature]):[];
     const accessibilitySection=place.kind==='building'?`<section class="mt-4 rounded-3xl border border-blue-100 bg-blue-50/70 p-6"><h2 class="flex items-center gap-2 font-bold"><span class="material-symbols-rounded text-blue-700" aria-hidden="true">accessible</span>Building accessibility features</h2>${buildingFeatures.length?`<ul class="mt-4 grid gap-2 sm:grid-cols-2">${buildingFeatures.map(feature=>`<li class="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm text-slate-700"><span class="material-symbols-rounded text-blue-700" aria-hidden="true">check_circle</span>${esc(featureLabels[feature])}</li>`).join('')}</ul>`:'<p class="mt-2 text-sm text-slate-600">No building-wide accessibility features have been recorded yet.</p>'}<p class="mt-3 text-xs text-slate-500">These features apply to the building, not to individual rooms.</p></section>`:'';
