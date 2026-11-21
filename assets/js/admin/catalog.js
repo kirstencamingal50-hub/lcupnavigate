@@ -224,7 +224,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
   const bindPagination=(target,kind,total)=>target.querySelectorAll('[data-page]').forEach(button=>button.addEventListener('click',()=>{pageNumbers[kind]+=button.dataset.page==='next'?1:-1;pageNumbers[kind]=Math.max(0,Math.min(pageNumbers[kind],Math.ceil(total/pageSize)-1));kind==='room'?renderRooms():renderLocations(kind);}));
   const emptyState=(label,filtered)=>`<div class="catalog-directory-empty"><span class="material-symbols-rounded" aria-hidden="true">${filtered?'search_off':'location_city'}</span><h3>${filtered?'No matching records':`No ${label.toLowerCase()} yet`}</h3><p>${filtered?`Try another search to find ${label.toLowerCase()}.`:`Add a ${label.replace(/s$/,'').toLowerCase()} above to see it in this directory.`}</p></div>`;
-  const catalogCards=(rows,kind)=>`<div class="catalog-list-cards ${kind==='building'||kind==='room'?'catalog-list-rows':''}">${rows.map(item=>{
+  const catalogCards=(rows,kind)=>`<div class="catalog-list-cards ${kind==='building'||kind==='room'||kind==='facility'?'catalog-list-rows':''}">${rows.map(item=>{
     const room=kind==='room',building=kind==='building';
     const gallery=(item.photos||[]).filter(entry=>entry.image);
     const parent=room?item.building_name:building?`${item.floor_count||1} floor${Number(item.floor_count)===1?'':'s'}`:locations.find(location=>String(location.id)===String(item.parent_building_id))?.name||'Building not assigned';
