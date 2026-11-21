@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!container || !search || !count || !sort || !filterGroup) return;
 
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
+  const photoSrc = value => /^(https?:|data:|blob:)/i.test(String(value || '')) ? String(value) : `../${String(value || '').replace(/^\\/+/, '')}`;
   const mediaSrc = value => {
     const path = String(value || '');
     if (!path) return '';
@@ -80,12 +81,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     container.innerHTML = filtered.map(item => {
       const kindLabel = item.kind === 'room' ? 'Room' : item.kind === 'building' ? 'Building' : 'Facility';
       const detailUrl = item.kind === 'room' ? `office.html?id=${encodeURIComponent(item.id)}` : `building.html?id=${encodeURIComponent(item.id)}`;
+      const coverPhoto = Array.isArray(item.photos) ? (item.photos.find(photo => Number(photo.isCover)) || item.photos[0]) : null;
+      const image = item.image || coverPhoto?.image || '';
       const features = item.kind === 'building' && Array.isArray(item.accessibilityFeatures)
         ? item.accessibilityFeatures.filter(feature => featureLabels[feature]).map(feature => `<span class="directory-feature"><span class="material-symbols-rounded" aria-hidden="true">accessible</span>${escapeHtml(featureLabels[feature])}</span>`).join('')
         : '';
       return `<article class="directory-card">
         <a class="directory-card-image" href="${detailUrl}" aria-label="View ${escapeHtml(item.name)}">
-          ${item.image ? `<img src="../${escapeHtml(item.image)}" alt="" loading="lazy">` : `<span class="material-symbols-rounded" aria-hidden="true">${item.kind === 'room' ? 'meeting_room' : item.kind === 'building' ? 'location_city' : 'storefront'}</span>`}
+          ${image ? `<img src="${escapeHtml(photoSrc(image))}" alt="Photo of ${escapeHtml(item.name)}" loading="lazy">` : `<span class="material-symbols-rounded" aria-hidden="true">${item.kind === 'room' ? 'meeting_room' : item.kind === 'building' ? 'location_city' : 'storefront'}</span>`}
         </a>
         <div class="directory-card-body">
           <div class="directory-card-meta"><span class="directory-kind">${kindLabel}</span><span>${escapeHtml((item.category_names?.length ? item.category_names : [item.category]).filter(Boolean).join(' · ') || 'Campus')}</span></div>
