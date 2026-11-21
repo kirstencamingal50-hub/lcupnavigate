@@ -114,3 +114,43 @@ html[data-theme="dark"] .admin-account-action { color:#b7d7fa; border-color:#465
 .catalog-photo-strip{display:flex;gap:5px;overflow-x:auto;padding:6px;background:rgba(15,23,42,.78);scrollbar-width:thin}
 .catalog-photo-strip img{width:58px;height:44px;flex:0 0 58px;object-fit:cover;border:1px solid rgba(255,255,255,.65);border-radius:6px}
 [data-catalog-add-panel][hidden]{display:none!important}
+
+
+/* Shared catalog add/edit form system */
+.admin-page [data-catalog-add-panel] { margin-bottom:20px; }
+.admin-page [data-catalog-add-panel] form { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; align-items:start; }
+.admin-page [data-catalog-add-panel] form > label { display:grid; min-width:0; gap:6px; color:#52637a; font-size:11px; font-weight:800; letter-spacing:.015em; }
+.admin-page [data-catalog-add-panel] form > label :is(input:not([type=checkbox]),select,textarea) { width:100%; min-width:0; min-height:42px; margin-top:0; padding:10px 12px; border:1px solid #d5deea; border-radius:9px; color:#24364f; background:#fff; font-size:12px; font-weight:500; letter-spacing:normal; }
+.admin-page [data-catalog-add-panel] form > label input[type=file] { min-height:42px; padding:8px; }
+.admin-page [data-catalog-add-panel] form > label textarea { min-height:92px; resize:vertical; }
+.admin-page [data-catalog-add-panel] form > label :is(input,select,textarea):focus { outline:3px solid rgba(37,99,235,.13); border-color:#6b9be8; }
+.admin-page [data-catalog-add-panel] form > label small { color:#78879a; font-size:10px; font-weight:500; line-height:1.5; letter-spacing:normal; }
+.admin-page [data-catalog-add-panel] form > fieldset,
+.admin-page [data-catalog-add-panel] form > .md\\:col-span-2 { grid-column:1/-1; }
+.admin-page [data-catalog-add-panel] form > fieldset { border:1px solid #e0e8f2; border-radius:12px; background:#f8fafd; }
+.admin-page .admin-edit-dialog { width:min(900px,calc(100vw - 28px)); max-height:min(88vh,900px); padding:0; border:1px solid #dce5ef; border-radius:18px; box-shadow:0 24px 80px rgba(15,35,60,.22); }
+.admin-page .admin-edit-dialog::backdrop { background:rgba(15,23,42,.48); backdrop-filter:blur(3px); }
+.admin-page .admin-edit-dialog-heading { position:sticky; top:0; z-index:2; padding:20px 24px; background:#fff; border-bottom:1px solid #e8edf4; }
+.admin-page .admin-edit-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; padding:22px 24px; }
+.admin-page .admin-edit-fields > label,
+.admin-page .admin-edit-fields > div:not(.admin-edit-wide) { display:grid; min-width:0; gap:6px; color:#52637a; font-size:11px; font-weight:800; }
+.admin-page .admin-edit-fields :is(input:not([type=checkbox]),select,textarea) { width:100%; min-width:0; min-height:40px; padding:9px 11px; border:1px solid #d5deea; border-radius:9px; color:#24364f; background:#fff; font-size:12px; font-weight:500; }
+.admin-page .admin-edit-fields textarea { min-height:84px; resize:vertical; }
+.admin-page .admin-edit-fields :is(input,select,textarea):focus { outline:3px solid rgba(37,99,235,.13); border-color:#6b9be8; }
+.admin-page .admin-edit-fields small { color:#78879a; font-size:10px; font-weight:500; line-height:1.5; }
+.admin-page .admin-edit-fields .admin-edit-wide { grid-column:1/-1; }
+.admin-page .admin-edit-actions { position:sticky; bottom:0; z-index:2; padding:14px 24px; background:#fff; border-top:1px solid #e8edf4; }
+.admin-page .catalog-model-field { padding:14px; border:1px dashed #b9cce2; border-radius:12px; background:#f7faff; }
+@media(max-width:700px) {
+ .admin-page [data-catalog-add-panel] form,.admin-page .admin-edit-fields { grid-template-columns:minmax(0,1fr); }
+ .admin-page [data-catalog-add-panel] form > fieldset,
+ .admin-page [data-catalog-add-panel] form > .md\\:col-span-2,
+ .admin-page .admin-edit-fields .admin-edit-wide { grid-column:1; }
+ .admin-page .admin-edit-dialog-heading,.admin-page .admin-edit-fields { padding-left:16px; padding-right:16px; }
+ .admin-page .admin-edit-actions { padding:12px 16px; }
+}
+html[data-theme="dark"] .admin-page .admin-edit-dialog,
+html[data-theme="dark"] .admin-page .admin-edit-dialog-heading,
+html[data-theme="dark"] .admin-page .admin-edit-actions { color:#e7edf5; border-color:#344256; background:#1c2738; }
+html[data-theme="dark"] .admin-page .admin-edit-fields :is(input,select,textarea) { color:#e7edf5; border-color:#46566d; background:#172235; }
+html[data-theme="dark"] .admin-page .catalog-model-field { border-color:#46566d; background:#243247; }
