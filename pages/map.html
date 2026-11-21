@@ -101,7 +101,6 @@
         <button class="filter-btn active px-2.5 py-1 rounded-xl bg-blue-600 text-xs font-bold text-white shrink-0" data-cat="all">All</button>
         <button class="filter-btn px-2.5 py-1 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 hover:text-white shrink-0" data-cat="building">Buildings</button>
         <button class="filter-btn px-2.5 py-1 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 hover:text-white shrink-0" data-cat="facility">Facilities</button>
-        <button class="filter-btn px-2.5 py-1 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 hover:text-white shrink-0" data-cat="none">None</button>
         <button id="toggle3DView" type="button" class="px-3 py-1 rounded-xl bg-emerald-600 text-xs font-bold text-white shrink-0" aria-pressed="false">3D View</button>
       </div>
     </div>
@@ -303,26 +302,39 @@
     });
 
     const filterBtns = document.querySelectorAll('.filter-btn');
+    const hiddenCategories = new Set();
+    const paintFilter = (btn, selected) => {
+      btn.classList.toggle('active', selected);
+      btn.classList.toggle('bg-blue-600', selected);
+      btn.classList.toggle('text-white', selected);
+      btn.classList.toggle('bg-slate-800', !selected);
+      btn.classList.toggle('text-slate-300', !selected);
+    };
+    const updateVisibleMarkers = () => {
+      markers.forEach(marker => {
+        const visible = hiddenCategories.size === 0 || !hiddenCategories.has(marker._cat);
+        if (visible) map.addLayer(marker);
+        else map.removeLayer(marker);
+      });
+      filterBtns.forEach(btn => {
+        const cat = btn.getAttribute('data-cat');
+        paintFilter(btn, cat === 'all' ? hiddenCategories.size === 0 : !hiddenCategories.has(cat));
+      });
+    };
     filterBtns.forEach(btn => {
       btn.addEventListener('click', () => {
-        filterBtns.forEach(b => {
-          b.classList.remove('active', 'bg-blue-600', 'text-white');
-          b.classList.add('bg-slate-800', 'text-slate-300');
-        });
-
-        btn.classList.add('active', 'bg-blue-600', 'text-white');
-        btn.classList.remove('bg-slate-800', 'text-slate-300');
-
         const cat = btn.getAttribute('data-cat');
-        markers.forEach(marker => {
-          if (cat !== 'none' && (cat === 'all' || marker._cat === cat)) {
-            map.addLayer(marker);
-          } else {
-            map.removeLayer(marker);
-          }
-        });
+        if (cat === 'all') {
+          hiddenCategories.clear();
+        } else if (hiddenCategories.has(cat)) {
+          hiddenCategories.delete(cat);
+        } else {
+          hiddenCategories.add(cat);
+        }
+        updateVisibleMarkers();
       });
     });
+    updateVisibleMarkers();
 
     const graph = {};
     function dist(a, b) { return Math.hypot(a[0] - b[0], a[1] - b[1]); }
