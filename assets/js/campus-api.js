@@ -97,7 +97,7 @@
     const maxSize = isPlan ? 15 * 1024 * 1024 : isModel ? 100 * 1024 * 1024 : 5 * 1024 * 1024;
     // Treat the .glb extension as authoritative: browsers and Windows may
     // report inconsistent MIME types for binary glTF files.
-    const isGlbFile = isModel && /\\.glb$/i.test(file.name.trim());
+    const isGlbFile = isModel && /\.glb$/i.test(file.name.trim());
     const mimeType = isGlbFile ? 'model/gltf-binary' : file.type;
     const allowed = isPlan
       ? ['application/pdf', 'image/png', 'image/jpeg', 'image/webp']
