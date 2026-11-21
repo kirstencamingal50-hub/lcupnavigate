@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!container || !search || !count || !sort || !filterGroup) return;
 
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
-  const photoSrc = value => /^(https?:|data:|blob:)/i.test(String(value || '')) ? String(value) : `../${String(value || '').replace(/^\\/+/, '')}`;
   const mediaSrc = value => {
     const path = String(value || '');
     if (!path) return '';
@@ -83,6 +82,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const detailUrl = item.kind === 'room' ? `office.html?id=${encodeURIComponent(item.id)}` : `building.html?id=${encodeURIComponent(item.id)}`;
       const coverPhoto = Array.isArray(item.photos) ? (item.photos.find(photo => Number(photo.isCover)) || item.photos[0]) : null;
       const image = item.image || coverPhoto?.image || '';
+      const modelButton = item.model_3d_url ? `<button type="button" class="directory-card-3d" data-model-url="${escapeHtml(item.model_3d_url)}" data-model-name="${escapeHtml(item.name)}"><span class="material-symbols-rounded" aria-hidden="true">view_in_ar</span>3D View</button>` : '';
       const features = item.kind === 'building' && Array.isArray(item.accessibilityFeatures)
         ? item.accessibilityFeatures.filter(feature => featureLabels[feature]).map(feature => `<span class="directory-feature"><span class="material-symbols-rounded" aria-hidden="true">accessible</span>${escapeHtml(featureLabels[feature])}</span>`).join('')
         : '';
@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           ${item.parent_building ? `<p class="directory-parent"><span class="material-symbols-rounded" aria-hidden="true">location_on</span>${escapeHtml(item.parent_building)}${item.room_number ? ` · Room ${escapeHtml(item.room_number)}` : ''}</p>` : ''}
           ${features ? `<div class="directory-features" aria-label="Building accessibility features">${features}</div>` : ''}
         </div>
-        <div class="directory-card-actions"><a href="map.html?search=${encodeURIComponent(item.name)}"><span class="material-symbols-rounded" aria-hidden="true">map</span>Show on map</a><a href="${detailUrl}" aria-label="View details for ${escapeHtml(item.name)}">Details<span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></a></div>
+        <div class="directory-card-actions"><a href="map.html?search=${encodeURIComponent(item.name)}"><span class="material-symbols-rounded" aria-hidden="true">map</span>Show on map</a><span class="directory-card-action-group">${modelButton}<a href="${detailUrl}" aria-label="View details for ${escapeHtml(item.name)}">Details<span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></a></span></div>
       </article>`;
     }).join('');
   }
@@ -117,11 +117,52 @@ document.addEventListener('DOMContentLoaded', async () => {
         room_number: room.roomNumber,
         image: room.image || parent?.image || '',
         photos: roomPhotos,
-        model_3d_url: room.model_3d_url || parent?.model_3d_url || ''
+        model_3d_url: room.model_3d_url || ''
       };
     })];
     window.dispatchEvent(new CustomEvent('campusDataReady', {detail: data}));
     render();
+    const modelRecords = records.filter(item => item.model_3d_url);
+    const modelOptions = document.getElementById('directory3DOptions');
+    const modelMenu = document.getElementById('directory3DMenu');
+    const modelToggle = document.getElementById('directory3DToggle');
+    const modelDialog = document.getElementById('directory3DDialog');
+    const modelViewer = document.getElementById('directory3DViewer');
+    const modelTitle = document.getElementById('directory3DTitle');
+    if (modelRecords.length) {
+      modelOptions.innerHTML = modelRecords.map(item => `<button type="button" data-model-url="${escapeHtml(item.model_3d_url)}" data-model-name="${escapeHtml(item.name)}"><span class="material-symbols-rounded" aria-hidden="true">view_in_ar</span><span>${escapeHtml(item.name)}</span></button>`).join('');
+    } else {
+      modelOptions.innerHTML = '<p class="directory-3d-empty">No 3D models have been added to the directory yet.</p>';
+    }
+    const openModel = (url, name) => {
+      if (!url || !modelDialog || !modelViewer) return;
+      modelTitle.textContent = name || '3D View';
+      modelViewer.setAttribute('src', mediaSrc(url));
+      modelViewer.setAttribute('alt', `Interactive 3D model of ${name || 'campus location'}`);
+      modelDialog.showModal();
+      modelMenu.hidden = true;
+      modelToggle.setAttribute('aria-expanded', 'false');
+    };
+    modelToggle?.addEventListener('click', () => {
+      modelMenu.hidden = !modelMenu.hidden;
+      modelToggle.setAttribute('aria-expanded', String(!modelMenu.hidden));
+    });
+    modelOptions?.addEventListener('click', event => {
+      const option = event.target.closest('[data-model-url]');
+      if (option) openModel(option.dataset.modelUrl, option.dataset.modelName);
+    });
+    container.addEventListener('click', event => {
+      const button = event.target.closest('.directory-card-3d');
+      if (button) openModel(button.dataset.modelUrl, button.dataset.modelName);
+    });
+    document.getElementById('directory3DClose')?.addEventListener('click', () => modelDialog.close());
+    modelDialog?.addEventListener('click', event => { if (event.target === modelDialog) modelDialog.close(); });
+    document.addEventListener('click', event => {
+      if (!event.target.closest('#directory3DControl')) {
+        modelMenu.hidden = true;
+        modelToggle?.setAttribute('aria-expanded', 'false');
+      }
+    });
     search.addEventListener('input', render);
     sort.addEventListener('change', render);
     const categoryFilter = document.getElementById('directory-category-filter');
