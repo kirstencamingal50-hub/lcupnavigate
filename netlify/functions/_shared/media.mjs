@@ -44,7 +44,7 @@ async function mediaIsPublic(bucket, name) {
     database.from('facility_photos').select('location_id,room_id').eq('image_path', `${bucket}/${name}`).limit(10),
     database.from('announcements').select('id').eq('image_path', `${bucket}/${name}`)
       .eq('status', 'published').or(`publish_at.is.null,publish_at.lte.${new Date().toISOString()}`).limit(1),
-    bucket === 'campus-models' ? database.from('locations').select('id').eq('model_3d_path', `${bucket}/${name}`).eq('kind', 'building').eq('active', true).limit(1) : Promise.resolve({ data: [], error: null })
+    bucket === 'campus-models' ? database.from('locations').select('id').eq('model_3d_path', `${bucket}/${name}`).eq('active', true).limit(1) : Promise.resolve({ data: [], error: null })
   ]);
   for (const result of [locations, rooms, photos, announcements, models]) if (result.error) throw result.error;
   if (locations.data?.length || rooms.data?.length || announcements.data?.length || models.data?.length) return true;
