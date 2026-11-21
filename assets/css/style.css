@@ -517,3 +517,33 @@ html[data-high-contrast] .directory-card, html[data-high-contrast] .directory-he
 .directory-card:hover { transform:translateY(-5px); box-shadow:0 18px 34px rgba(24,61,102,.13); }
 .directory-card-image { min-height:145px; }
 @media(max-width:620px){.directory-hero{grid-template-columns:1fr}.directory-hero-visual{min-height:150px}.directory-hero-visual img{height:130px}.directory-browser{padding:.5rem 0}}
+
+/* Directory photo and 3D model controls */
+.directory-result-tools { position:relative; flex-wrap:wrap; }
+.directory-3d-control { position:relative; order:0; }
+.directory-3d-control > button { display:inline-flex; min-height:38px; align-items:center; gap:.35rem; padding:.45rem .75rem; border:1px solid #cbd9e8; border-radius:10px; color:#185b9d; background:#fff; font-size:.7rem; font-weight:800; cursor:pointer; }
+.directory-3d-control > button .material-symbols-rounded { font-size:1rem; }
+.directory-3d-menu { position:absolute; z-index:50; top:calc(100% + 7px); right:0; width:min(290px,calc(100vw - 2.5rem)); padding:.7rem; border:1px solid #dbe5f0; border-radius:13px; background:#fff; box-shadow:0 16px 36px rgba(17,40,70,.18); }
+.directory-3d-menu[hidden] { display:none; }
+.directory-3d-menu > p { margin:0 0 .55rem; color:#65758b; font-size:.68rem; line-height:1.45; }
+#directory3DOptions { display:grid; max-height:260px; gap:.3rem; overflow:auto; }
+#directory3DOptions > button { display:flex; align-items:center; gap:.5rem; padding:.6rem .65rem; border:0; border-radius:8px; color:#1d3d61; background:#f2f7fc; font-size:.72rem; font-weight:750; text-align:left; cursor:pointer; }
+#directory3DOptions > button:hover { background:#e4effa; }
+#directory3DOptions > button .material-symbols-rounded { color:#1763ae; font-size:1.1rem; }
+.directory-3d-empty { margin:0; padding:.5rem; color:#64758a; font-size:.7rem; }
+.directory-card-actions { align-items:center; }
+.directory-card-action-group { display:flex; align-items:center; gap:.7rem; }
+.directory-card-3d { display:inline-flex; align-items:center; gap:.2rem; padding:0; border:0; color:#1763ae; background:transparent; font-size:.68rem; font-weight:800; cursor:pointer; }
+.directory-card-3d .material-symbols-rounded { font-size:1rem; }
+.directory-3d-dialog { width:min(calc(100% - 2rem),900px); max-height:min(90dvh,800px); padding:1rem; overflow:hidden; border:1px solid #d5e0ed; border-radius:20px; color:#172b45; background:#fff; box-shadow:0 24px 80px rgba(5,20,40,.35); }
+.directory-3d-dialog::backdrop { background:rgba(8,20,38,.68); backdrop-filter:blur(3px); }
+.directory-3d-dialog-head { display:flex; align-items:center; justify-content:space-between; gap:1rem; }
+.directory-3d-eyebrow { color:#1763ae; font-size:.62rem; font-weight:850; letter-spacing:.1em; text-transform:uppercase; }
+.directory-3d-dialog h2 { margin:.15rem 0 0; font-size:1.1rem; font-weight:850; }
+.directory-3d-dialog-head > button { display:grid; width:36px; height:36px; place-items:center; border:1px solid #dbe5f0; border-radius:10px; color:#304761; background:#fff; cursor:pointer; }
+#directory3DViewer { display:block; width:100%; height:min(65vh,580px); min-height:300px; margin-top:.8rem; border-radius:13px; background:#eef3f8; }
+.directory-3d-help { margin:.55rem 0 0; color:#687a90; font-size:.7rem; }
+html[data-theme="dark"] .directory-3d-menu, html[data-theme="dark"] .directory-3d-dialog { border-color:#43536a; color:#e6edf7; background:#1c2738; }
+html[data-theme="dark"] .directory-3d-control > button, html[data-theme="dark"] .directory-3d-dialog-head > button { border-color:#43536a; color:#e6edf7; background:#152033; }
+html[data-theme="dark"] #directory3DOptions > button { color:#e6edf7; background:#152033; }
+@media(max-width:620px){.directory-result-tools{justify-content:space-between}.directory-3d-dialog{padding:.75rem}#directory3DViewer{min-height:240px;height:55vh}}
