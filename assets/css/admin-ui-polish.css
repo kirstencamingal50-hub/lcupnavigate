@@ -561,3 +561,13 @@ html[data-theme="dark"] .admin-page .admin-create-dialog .admin-edit-actions .ad
   color:#e7edf5;
   background:#243247;
 }
+
+
+/* Single-photo upload used by Add Building, Facility, and Room forms. */
+.admin-page .catalog-add-photo-panel .catalog-add-photo-upload { display:grid; grid-template-columns:minmax(0,1fr); gap:12px; }
+.admin-page .catalog-add-photo-panel .catalog-add-photo-field { display:grid; justify-items:start; gap:9px; min-width:0; color:#52637a; font-size:13px; font-weight:800; text-align:left; }
+.admin-page .catalog-add-photo-panel .catalog-add-photo-field input[type=file] { display:block; width:100%; min-height:44px; padding:6px 8px; border:1px solid #d5deea; border-radius:9px; background:#fff; color:#24364f; font-size:12px; text-align:left; }
+.admin-page .catalog-add-photo-panel .catalog-add-photo-field input[type=file]::file-selector-button { margin:0 10px 0 0; padding:8px 13px; border:0; border-radius:7px; background:#e8f1ff; color:#1d4ed8; font-size:12px; font-weight:800; cursor:pointer; }
+.admin-page .catalog-add-photo-preview { display:block; max-width:min(100%,420px); max-height:220px; border:1px solid #dbe3ed; border-radius:10px; object-fit:contain; object-position:left; background:#fff; }
+.admin-page .catalog-add-photo-preview[hidden] { display:none!important; }
+html[data-theme="dark"] .admin-page .catalog-add-photo-panel .catalog-add-photo-field input[type=file] { border-color:#46566d; background:#172235; color:#e7edf5; }
