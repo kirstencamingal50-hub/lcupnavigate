@@ -24,7 +24,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     form.dataset.editLayoutApplied='true';
     const wrapperFor=name=>name==='accessibility_features'
       ?form.querySelector('fieldset:has([name="accessibility_features"])')
-      :form.querySelector(`[name="${name}"]`)?.closest('label,[data-add-section]')||null;
+      :name==='category_ids'
+        ?form.querySelector('[data-category-dropdown]')
+        :form.querySelector(`[name="${name}"]`)?.closest('label,[data-add-section]')||null;
     const take=name=>wrapperFor(name);
     const ordered=kind==='room'
       ? ['name','room','buildingId','category_ids','floor','capacity','description','accessibility_features','contact_email','contact_phone','service_hours','days_open','lunch_break','accessibility_status']
@@ -99,6 +101,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     select.removeAttribute('required');
     const details=document.createElement('details');
     details.className='catalog-checklist-dropdown admin-edit-wide';
+    details.dataset.categoryDropdown='';
     const summary=document.createElement('summary');
     summary.className='catalog-checklist-summary';
     summary.innerHTML='<span class="catalog-checklist-title">Categories</span><span class="catalog-checklist-count" data-category-selection>Select categories</span>';
@@ -129,9 +132,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       label.textContent=checked.length?checked.length+' selected':'Select categories';
       summary.setAttribute('aria-label',checked.length?'Categories: '+names.join(', '):'Select categories');
     };
-    details.append(summary,list);
-    select.after(details);
+    details.append(summary,list,select);
     select.hidden=true;
+    const originalLabel=select.closest('label');
+    if(originalLabel)originalLabel.replaceWith(details);
+    else select.after(details);
     select.form?.addEventListener('reset',()=>setTimeout(()=>{
       list.querySelectorAll('input[type="checkbox"]').forEach((checkbox,index)=>{
         checkbox.checked=!!select.options[index]?.selected;
