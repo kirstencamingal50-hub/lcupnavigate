@@ -76,6 +76,12 @@ test('mapping mutations generate and preserve node keys and call the route RPC c
   assert.match(mutations, /[\x60]node-\$\{randomUUID\(\)\}[\x60]/);
   assert.match(mutations, /existing\?\.node_key/);
   assert.match(mutations, /deleteCampusRecord\(database, 'map_connection', id\)/);
+  // Deleting a saved route must also remove its own geometry and only orphaned
+  // route-generated map connections, while retaining shared walkway edges.
+  assert.match(mutations, /from\('campus_route_segments'\)\.delete\(\)\.eq\('route_id', id\)/);
+  assert.match(mutations, /from\('campus_route_points'\)\.delete\(\)\.eq\('route_id', id\)/);
+  assert.match(mutations, /startsWith\([\x60]route-\$\{id\}-[\x60]\)/);
+  assert.match(mutations, /shared_walkways_preserved: true/);
   assert.match(mutations, /node_key: [\x60]location-\$\{locationId\}[\x60]/);
   assert.match(mutations, /existingMarker\?\.route_node_id/);
   assert.match(mutations, /route_node_id: nodeId/);
