@@ -7,6 +7,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!container || !search || !count || !sort || !filterGroup) return;
 
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
+  const mediaSrc = value => {
+    const path = String(value || '');
+    if (!path) return '';
+    if (/^(https?:|data:|blob:)/i.test(path)) return path;
+    return path.startsWith('/') ? path : `../${path.replace(/^\.\//, '')}`;
+  };
   const featureLabels = {
     wheelchair_entrance: 'Wheelchair-accessible entrance',
     elevator: 'Elevator',
@@ -27,7 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     .replace(/&/g, ' and ')
     .replace(/[\\/–—_-]+/g, ' ')
     .replace(/[^a-z0-9 ]/g, '')
-    .replace(/\\s+/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
   const categoryAliases = {
     academic: ['academic', 'academic building'],
@@ -44,10 +50,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   )?.[1] || null;
 
   function render() {
+    container.querySelectorAll('.directory-card').forEach(card=>clearInterval(card._photoTimer));
     const query = search.value.trim().toLocaleLowerCase();
     const filtered = records.filter(item => {
       const text = `${item.name} ${item.category || ''} ${item.description || ''} ${item.parent_building || ''} ${item.room_number || ''} ${item.services || ''}`.toLocaleLowerCase();
-      const itemCategory = normalizeCategory(item.category);
+      const itemCategories = (Array.isArray(item.category_names) && item.category_names.length ? item.category_names : [item.category]).filter(Boolean).map(normalizeCategory);
       const categoryMatch = !category || category === 'all' ||
         (selectedAliases
           ? itemCategories.some(itemCategory => selectedAliases.some(alias => itemCategory.includes(normalizeCategory(alias)) || normalizeCategory(alias).includes(itemCategory)))
@@ -74,31 +81,73 @@ document.addEventListener('DOMContentLoaded', async () => {
     container.innerHTML = filtered.map(item => {
       const kindLabel = item.kind === 'room' ? 'Room' : item.kind === 'building' ? 'Building' : 'Facility';
       const detailUrl = item.kind === 'room' ? `office.html?id=${encodeURIComponent(item.id)}` : `building.html?id=${encodeURIComponent(item.id)}`;
+      const photoList = Array.isArray(item.photos) ? item.photos.filter(photo => photo?.image) : [];
+      const coverPhoto = photoList.find(photo => Number(photo.isCover)) || photoList[0] || null;
+      const image = coverPhoto?.image || item.image || '';
+      const slideshowPhotos = coverPhoto ? [coverPhoto,...photoList.filter(photo=>photo!==coverPhoto)] : (photoList.length ? photoList : (image ? [{image,caption:''}] : []));
+      const photoSlides = slideshowPhotos.map((photo,index) => `<img class="directory-card-photo${index===0?' is-active':''}" src="${escapeHtml(mediaSrc(photo.image))}" alt="" loading="${index===0?'eager':'lazy'}" decoding="async" data-directory-slide="${index}" ${index===0?'':'hidden'}>`).join('');
       const features = item.kind === 'building' && Array.isArray(item.accessibilityFeatures)
         ? item.accessibilityFeatures.filter(feature => featureLabels[feature]).map(feature => `<span class="directory-feature"><span class="material-symbols-rounded" aria-hidden="true">accessible</span>${escapeHtml(featureLabels[feature])}</span>`).join('')
         : '';
       return `<article class="directory-card">
-        <a class="directory-card-image" href="${detailUrl}" aria-label="View ${escapeHtml(item.name)}">
-          ${item.image ? `<img src="../${escapeHtml(item.image)}" alt="" loading="lazy">` : `<span class="material-symbols-rounded" aria-hidden="true">${item.kind === 'room' ? 'meeting_room' : item.kind === 'building' ? 'location_city' : 'storefront'}</span>`}
-        </a>
+        <div class="directory-card-name" style="${image && !photoSlides ? `background-image:url('${escapeHtml(mediaSrc(image))}')` : ''}">
+          <a class="directory-card-name-link" href="${detailUrl}" aria-label="View ${escapeHtml(item.name)}">
+            ${photoSlides}
+            <span class="directory-card-meta"><span class="directory-kind">${kindLabel}</span><span>${escapeHtml((item.category_names?.length ? item.category_names : [item.category]).filter(Boolean).join(' · ') || 'Campus')}</span></span>
+            <strong>${escapeHtml(item.name)}</strong>
+          </a>
+          ${slideshowPhotos.length>1 ? `<div class="directory-photo-controls" aria-label="Photo slideshow"><button type="button" data-photo-prev aria-label="Previous photo">‹</button><span data-photo-count>1 / ${slideshowPhotos.length}</span><button type="button" data-photo-next aria-label="Next photo">›</button></div>` : ''}
+        </div>
         <div class="directory-card-body">
-          <div class="directory-card-meta"><span class="directory-kind">${kindLabel}</span><span>${escapeHtml((item.category_names?.length ? item.category_names : [item.category]).filter(Boolean).join(' · ') || 'Campus')}</span></div>
-          <h2><a href="${detailUrl}">${escapeHtml(item.name)}</a></h2>
           <p class="directory-card-description">${escapeHtml(item.description || 'More information is available in this directory profile.')}</p>
           ${item.parent_building ? `<p class="directory-parent"><span class="material-symbols-rounded" aria-hidden="true">location_on</span>${escapeHtml(item.parent_building)}${item.room_number ? ` · Room ${escapeHtml(item.room_number)}` : ''}</p>` : ''}
           ${features ? `<div class="directory-features" aria-label="Building accessibility features">${features}</div>` : ''}
         </div>
-        <div class="directory-card-actions"><a href="map.html?search=${encodeURIComponent(item.name)}"><span class="material-symbols-rounded" aria-hidden="true">map</span>Show on map</a><a href="${detailUrl}" aria-label="View details for ${escapeHtml(item.name)}">Details<span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></a></div>
+        <div class="directory-card-actions"><a href="map.html?search=${encodeURIComponent(item.name)}"><span class="material-symbols-rounded" aria-hidden="true">map</span>Show on map</a><button type="button" class="directory-card-3d" data-open-directory-3d data-place-id="${escapeHtml(item.id)}" ${item.model_3d_url ? "" : "disabled aria-disabled=\"true\" title=\"No 3D model is available\""}><span class="material-symbols-rounded" aria-hidden="true">view_in_ar</span>View 3D</button><a href="${detailUrl}" aria-label="View details for ${escapeHtml(item.name)}">Details<span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></a></div>
       </article>`;
     }).join('');
+    container.querySelectorAll('.directory-card').forEach(card => {
+      const slides=[...card.querySelectorAll('[data-directory-slide]')];
+      if(!slides.length)return;
+      let current=0;
+      const show=index=>{
+        current=(index+slides.length)%slides.length;
+        slides.forEach((slide,i)=>{slide.hidden=i!==current;slide.classList.toggle('is-active',i===current);});
+        const counter=card.querySelector('[data-photo-count]');
+        if(counter)counter.textContent=`${current+1} / ${slides.length}`;
+      };
+      card.querySelector('[data-photo-prev]')?.addEventListener('click',()=>show(current-1));
+      card.querySelector('[data-photo-next]')?.addEventListener('click',()=>show(current+1));
+      if(slides.length>1)card._photoTimer=setInterval(()=>show(current+1),4500);
+      slides.forEach(photo=>photo.addEventListener('error',()=>{photo.hidden=true;}, {once:true}));
+    });
   }
 
+  const modelDialog=document.createElement("dialog");
+  modelDialog.className="directory-3d-dialog";
+  modelDialog.innerHTML='<div class="directory-3d-dialog-head"><strong data-model-title>3D Model View</strong><button type="button" data-model-close aria-label="Close">×</button></div><model-viewer data-model-viewer camera-controls auto-rotate style="display:block;width:100%;height:65vh;min-height:280px;background:#eef3f8;border-radius:12px"></model-viewer><p>Drag to rotate, scroll or pinch to zoom.</p>';
+  document.body.append(modelDialog);
+  container.addEventListener("click",event=>{const button=event.target.closest("[data-open-directory-3d]");if(!button||button.disabled)return;const place=records.find(item=>String(item.id)===button.dataset.placeId);if(!place?.model_3d_url)return;modelDialog.querySelector("[data-model-title]").textContent=place.name;modelDialog.querySelector("[data-model-viewer]").src=mediaSrc(place.model_3d_url);modelDialog.showModal();});
+  modelDialog.querySelector("[data-model-close]").addEventListener("click",()=>modelDialog.close());
+  modelDialog.addEventListener("close",()=>modelDialog.querySelector("[data-model-viewer]").removeAttribute("src"));
   container.innerHTML = '<p class="directory-loading" role="status">Loading campus directory…</p>';
   try {
     const data = await window.CampusApi.get('directory');
     const locations = data.locations || [];
     const rooms = data.rooms || [];
-    records = [...locations, ...rooms.map(room => ({...room, kind: 'room', parent_building: room.buildingName, room_number: room.roomNumber}))];
+    records = [...locations, ...rooms.map(room => {
+      const parent = locations.find(place => String(place.id) === String(room.buildingId));
+      const roomPhotos = Array.isArray(room.photos) && room.photos.length ? room.photos : (parent?.photos || []);
+      return {
+        ...room,
+        kind: 'room',
+        parent_building: room.buildingName || parent?.name || '',
+        room_number: room.roomNumber,
+        image: room.image || parent?.image || '',
+        photos: roomPhotos,
+        model_3d_url: room.model_3d_url || ''
+      };
+    })];
     window.dispatchEvent(new CustomEvent('campusDataReady', {detail: data}));
     render();
     search.addEventListener('input', render);

@@ -6,19 +6,10 @@
   <title>Ask NaviGATE - Campus Assistant</title>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
-  <link rel="stylesheet" href="../assets/css/style.css?v=ask-navigate-20261115">
-  <style>
-    .assistant-shell{max-width:980px;margin:0 auto;padding:28px 16px 110px;color:#172033}
-    .assistant-hero{background:linear-gradient(135deg,#101c3a,#173b70);color:white;border-radius:24px;padding:28px;margin-bottom:20px}
-    .assistant-panel{background:white;border:1px solid #e5eaf2;border-radius:20px;padding:20px;box-shadow:0 8px 30px #0f172a0b}
-    .assistant-message{padding:14px 16px;border-radius:16px;max-width:90%;white-space:pre-wrap;line-height:1.55}
-    .assistant-bot{background:#f1f5fb;color:#172033;border-top-left-radius:5px}
-    .assistant-user{background:#173b70;color:white;margin-left:auto;border-top-right-radius:5px}
-    .assistant-chip{border:1px solid #dbe3ef;border-radius:999px;padding:8px 12px;font-size:13px;background:white}
-    .assistant-result{border:1px solid #e4eaf2;border-radius:14px;padding:14px;display:flex;justify-content:space-between;gap:12px;align-items:center}
-    .assistant-action{color:#174a91;font-weight:700;font-size:13px;white-space:nowrap}
-    .assistant-muted{color:#64748b;font-size:13px}
-  </style>
+  <link rel="canonical" href="https://lcupnavigate.netlify.app/pages/assistant.html">
+  <meta property="og:url" content="https://lcupnavigate.netlify.app/pages/assistant.html">
+  <link rel="stylesheet" href="../assets/css/style.css?v=20261123-ui-consistency-assistant-motion">
+
 </head>
 <body class="min-h-screen bg-slate-50 font-sans">
   <div data-component="header"></div>
@@ -37,13 +28,11 @@
         <div class="assistant-message assistant-bot">Hello! I’m Ask NaviGATE. What would you like to find on campus?</div>
       </div>
       <div class="flex flex-wrap gap-2 mb-4" id="suggestions">
+        <button class="assistant-chip" data-question="Where can I eat?">Food and dining</button>
         <button class="assistant-chip" data-question="Where is the Registrar's Office?">Registrar's Office</button>
         <button class="assistant-chip" data-question="Which building is used by the CITE Department?">CITE Department</button>
-        <button class="assistant-chip" data-question="Where can I find a computer laboratory?">Computer laboratory</button>
-        <button class="assistant-chip" data-question="What accessible facilities are available?">Accessible facilities</button>
-        <button class="assistant-chip" data-question="What are the upcoming campus events?">Upcoming events</button>
       </div>
-      <form id="ask-form" class="flex gap-2">
+      <form id="ask-form" class="flex gap-2 items-center">
         <label class="sr-only" for="question">Ask a campus question</label>
         <input id="question" class="min-w-0 flex-1 rounded-xl border-slate-300 focus:border-blue-600 focus:ring-blue-600" maxlength="500" placeholder="Ask about a campus place or service…" autocomplete="off" required>
         <button id="ask-button" class="rounded-xl bg-blue-700 px-5 py-2 font-bold text-white hover:bg-blue-800" type="submit">Ask</button>
@@ -61,10 +50,9 @@
         <div id="recents" class="space-y-2 assistant-muted">Your recent questions will appear here.</div>
       </div>
     </section>
-    <p class="assistant-muted mt-5">For accessibility and route availability, the assistant can only confirm details that have been entered and verified in the campus database. It does not provide student schedules or academic records.</p>
   </main>
   <div data-component="bottom-nav"></div>
   <script src="../assets/js/app.js?v=20261118-admin-navigation"></script>
-  <script src="../assets/js/assistant.js?v=ask-navigate-20261115"></script>
+  <script src="../assets/js/assistant.js?v=ask-navigate-20261123-intents"></script>
 </body>
 </html>

@@ -35,6 +35,15 @@ function legacyId(user) {
   return Number.isSafeInteger(Number(user.id)) ? Number(user.id) : null;
 }
 
+function storedModelPath(value) {
+  if (value === undefined || value === null || value === '') return null;
+  const path = storageObjectPath(value);
+  if (!path || !path.startsWith('campus-models/')) {
+    throw new HttpError(400, 'Choose a GLB model uploaded through the campus admin form.');
+  }
+  return path;
+}
+
 function storedMediaPath(value) {
   if (value === undefined || value === null || value === '') return null;
   const path = storageObjectPath(value);
@@ -164,8 +173,10 @@ async function locations(event, method, body, query) {
         : Math.max(0, Number(body.capacity)),
       floor_count: Math.max(1, Math.min(100, Number(body.floor_count) || 1)),
       category_id: categoryId,
+      category_ids: categoryIds,
       parent_building_id: parentId,
       image_path: storedMediaPath(body.image_path),
+      model_3d_path: storedModelPath(body.model_3d_path),
       department_name: optionalText(body.department_name, 'Department', 160),
       contact_email: email,
       contact_phone: optionalText(body.contact_phone, 'Contact phone', 40),
@@ -206,6 +217,17 @@ async function locations(event, method, body, query) {
 
   if (method === 'PATCH') {
     const id = positiveId(body.id ?? query.id);
+    if (Object.prototype.hasOwnProperty.call(body, 'model_3d_path')) {
+      const modelPath = storedModelPath(body.model_3d_path);
+      const record = unwrap(await database.from('locations')
+        .select('id,name')
+        .eq('id', id)
+        .maybeSingle());
+      if (!record) throw new HttpError(404, 'Location not found.');
+      await updateById('locations', id, { model_3d_path: modelPath }, 'Location not found.');
+      await audit(user, 'update', 'location', id, { name: record.name, model_3d_path: modelPath });
+      return success({ id, model_3d_path: modelPath });
+    }
     const active = booleanValue(body.active, 'Archive status');
     if (active === null) throw new HttpError(400, 'Choose whether the location is active or archived.');
     const record = unwrap(await database.from('locations')
@@ -920,7 +942,7 @@ async function routes(event, method, body, query) {
     };
   });
 
-  const saved = unwrap(await database.rpc('save_campus_route', {
+  const routeResult = await database.rpc('save_campus_route', {
     p_route_id: id,
     p_name: requiredText(body.name, 'Route name', 120),
     p_start_marker_id: positiveId(body.start_marker_id, 'Start marker ID'),
@@ -930,8 +952,20 @@ async function routes(event, method, body, query) {
     p_notes: optionalText(body.notes, 'Notes', 1000),
     p_waypoints: normalizedWaypoints,
     p_created_by_legacy_admin_id: legacyId(user)
-  }));
+  });
 
+  if (routeResult.error) {
+    const message = String(routeResult.error.message || '');
+    if (message.includes('Accessible routes require verified active paths')) {
+      throw new HttpError(
+        409,
+        'This route cannot be published as Accessible yet. Verify that both endpoint markers are marked Accessible and that every walkway connection is verified and marked Accessible. You can save it as a private draft while these details are checked.'
+      );
+    }
+    throw routeResult.error;
+  }
+
+  const saved = unwrap(routeResult);
   return success(saved, id ? 200 : 201);
 }
 
