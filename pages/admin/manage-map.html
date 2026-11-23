@@ -76,11 +76,14 @@
       <h2 id="add-landmark-title" class="text-sm font-bold">Add Campus Location Marker</h2>
       <p class="mt-1 text-xs text-slate-500">Choose an existing campus location, then click its position on the map. Existing location markers are shown to help you place it.</p>
       <form id="add-landmark-form" class="mt-4 grid max-w-2xl gap-3">
-        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Campus record
-          <select name="location_id" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></select>
-        </label>
+        <div class="relative">
+          <label for="landmark-location-search" class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Search buildings and facilities</label>
+          <input id="landmark-location-search" type="search" autocomplete="off" placeholder="Type a building or facility name..." role="combobox" aria-autocomplete="list" aria-controls="landmark-location-results" aria-expanded="false" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm normal-case" />
+          <div id="landmark-location-results" role="listbox" class="hidden absolute left-0 right-0 top-full z-30 mt-1 max-h-64 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-xl"></div>
+          <select name="location_id" required class="hidden" aria-hidden="true" tabindex="-1"></select>
+          <p class="mt-1 text-[10px] text-slate-500">Search results appear below as you type. Select a result to view its saved campus information.</p>
+        </div>
         <section id="landmark-record-preview" hidden class="rounded-xl border border-slate-200 bg-slate-50 p-3" aria-live="polite"></section>
-        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Entrance accessibility information<select name="accessibility_status" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm normal-case"><option value="">Unspecified</option><option value="1">Accessible</option><option value="0">Not accessible</option></select></label>
         <div id="landmark-map-picker" role="button" tabindex="0" aria-label="Click the map to choose the landmark location" class="relative w-full max-w-[520px] overflow-hidden rounded-xl border-2 border-slate-300 bg-slate-100 shadow-sm" style="aspect-ratio: 1330 / 1620; cursor: crosshair; touch-action: manipulation;">
           <img id="landmark-map-image" alt="Map for selecting a landmark location" class="absolute inset-0 h-full w-full select-none" draggable="false" style="object-fit: fill;" />
           <div id="landmark-map-pins" class="pointer-events-none absolute inset-0"></div>
@@ -100,7 +103,7 @@
     </section>
     <div id="landmarks-list" class="admin-data-panel p-2 sm:p-4"></div>
   </main>
-  <script src="../../assets/js/admin/manage-map.js?v=20261124-building-facility-records"></script>
+  <script src="../../assets/js/admin/manage-map.js?v=20261124-search-campus-records"></script>
   <script src="../../assets/js/admin/route-builder.js?v=20261024-complete-details"></script>
   <script src="../../assets/js/app.js?v=20261118-remove-department-nav"></script>
 </body>
