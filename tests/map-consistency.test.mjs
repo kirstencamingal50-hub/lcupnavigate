@@ -25,6 +25,15 @@ test('map frontend keeps database nodes, legacy junctions, and API loading align
   assert.match(mapPage, /route\.accessible_confirmed/);
 });
 
+test('public map cleanup removes deleted-location nodes and every dependent route edge', () => {
+  assert.match(api, /from\('locations'\)[\s\S]*?\.eq\('active', true\)/);
+  assert.match(api, /like\('node_key', 'location-%'\)/);
+  assert.match(api, /match\(\/\^location-\(/);
+  assert.match(api, /incidentConnectionIds\.has\(Number\(row\.connection_id\)\)/);
+  assert.match(api, /from\('map_connections'\)\.delete\(\)\.in\('id', connectionIds\)/);
+  assert.match(api, /from\('map_nodes'\)\.delete\(\)\.in\('id', staleLocationNodeIds\)/);
+});
+
 test('public map cleanup removes orphaned route geometry before loading graph data', () => {
   assert.match(api, /await cleanupOrphanedRouteGeometry\(db\)/);
   assert.match(api, /from\('campus_route_segments'\)/);
