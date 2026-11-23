@@ -14,7 +14,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   const fill = (select, rows, value, label) => {
     select.innerHTML = '<option value="">Choose a campus location</option>' + rows.map(row => `<option value="${esc(row[value])}">${esc(label(row))}</option>`).join('');
   };
-  const fillSelects = () => fill(form.elements.location_id, locations, 'id', item => item.name);
+  const fillSelects = () => {
+    const seenIds = new Set(), seenNames = new Set();
+    const buildings = locations
+      .filter(item => item.kind === 'building' && item.active !== false)
+      .sort((a, b) => Number(a.id) - Number(b.id))
+      .filter(item => {
+        const id = String(item.id ?? '');
+        const name = String(item.name ?? '').trim().replace(/\\s+/g, ' ').toLocaleLowerCase();
+        if (!id || !name || seenIds.has(id) || seenNames.has(name)) return false;
+        seenIds.add(id);
+        seenNames.add(name);
+        return true;
+      });
+    fill(form.elements.location_id, buildings, 'id', item => item.name);
+  };
   const position = (x, y) => {
     selected.style.left = `${Number(x) / W * 100}%`;
     selected.style.top = `${Number(y) / H * 100}%`;
