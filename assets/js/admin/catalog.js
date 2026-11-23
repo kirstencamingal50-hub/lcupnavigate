@@ -205,7 +205,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     ['tactile_paving','Tactile paving'],['braille_signage','Braille signage'],['hearing_assistance','Hearing assistance']
   ];
   const accessibilityFeatureFields=selected=>`<fieldset class="admin-edit-wide rounded-xl border border-blue-100 bg-blue-50/60 p-4"><legend class="px-1 font-bold">Accessibility features</legend><p class="mb-3 text-xs text-slate-500">Select the accessibility features confirmed for this location.</p><div class="grid gap-2 sm:grid-cols-2">${accessibilityFeatureOptions.map(([value,label])=>`<label class="flex items-center gap-2 text-xs"><input type="checkbox" name="accessibility_features" value="${value}" ${selected.includes(value)?'checked':''}>${label}</label>`).join('')}</div></fieldset>`;
-  const serviceHourOptions=['Select service hours','8:00 AM – 5:00 PM','8:00 AM – 12:00 PM','1:00 PM – 5:00 PM','7:00 AM – 4:00 PM','24 hours','By appointment','Varies'];
+  const serviceHoursField=value=>{
+    const raw=String(value||'').trim();
+    const range=raw.match(/(\\d{1,2}:\\d{2})\\s*(AM|PM)\\s*[–—-]\\s*(\\d{1,2}:\\d{2})\\s*(AM|PM)/i);
+    const to24=(time,ampm)=>{if(!time)return '';let [hour,minute]=time.split(':').map(Number);if(ampm.toUpperCase()==='PM'&&hour!==12)hour+=12;if(ampm.toUpperCase()==='AM'&&hour===12)hour=0;return String(hour).padStart(2,'0')+':'+String(minute).padStart(2,'0');};
+    const open=range?to24(range[1],range[2]):'',close=range?to24(range[3],range[4]):'';
+    const mode=range?'custom':['24 hours','By appointment','Varies','Closed'].includes(raw)?raw:'custom';
+    const options=[['custom','Set opening and closing time'],['24 hours','24 Hours'],['By appointment','By Appointment'],['Varies','Varies'],['Closed','Closed']];
+    return `<div class="admin-edit-wide catalog-service-hours" data-add-section data-service-hours-control>
+      <span class="admin-field-label">Service hours</span>
+      <select data-service-mode class="admin-edit-control" aria-label="Service hours schedule type">${options.map(([v,label])=>`<option value="${esc(v)}" ${mode===v?'selected':''}>${label}</option>`).join('')}</select>
+      <div class="catalog-service-time-fields" data-service-time-fields ${mode==='custom'?'':'hidden'}>
+        <label><span class="admin-field-label">Opening time</span><input type="time" data-service-open value="${open}" class="admin-edit-control"></label>
+        <label><span class="admin-field-label">Closing time</span><input type="time" data-service-close value="${close}" class="admin-edit-control"></label>
+      </div>
+      <small data-service-hours-hint>${mode==='custom'?(raw&&!range?'Current saved value: '+esc(raw)+' — select both times to update.':'Choose the opening and closing times.'):'The selected schedule will be saved as the service hours.'}</small>
+      <input type="hidden" name="service_hours" value="${esc(raw)}">
+    </div>`;
+  };
+  const syncServiceHours=control=>{
+    const mode=control.querySelector('[data-service-mode]')?.value||'custom';
+    const open=control.querySelector('[data-service-open]')?.value||'';
+    const close=control.querySelector('[data-service-close]')?.value||'';
+    const fields=control.querySelector('[data-service-time-fields]');
+    const hidden=control.querySelector('[name="service_hours"]');
+    const hint=control.querySelector('[data-service-hours-hint]');
+    if(fields)fields.hidden=mode!=='custom';
+    if(hidden)hidden.value=mode==='custom'?(open&&close?`${formatServiceTime(open)} – ${formatServiceTime(close)}`:'') : mode;
+    if(hint)hint.textContent=mode==='custom'?'Choose the opening and closing times.':'The selected schedule will be saved as the service hours.';
+  };
+  const formatServiceTime=value=>{
+    if(!value)return '';
+    const [hourText,minute]=value.split(':');let hour=Number(hourText);const suffix=hour>=12?'PM':'AM';hour=hour%12||12;
+    return `${hour}:${minute} ${suffix}`;
+  };
+  const enhanceServiceHoursFields=root=>{
+    root.querySelectorAll('select[name="service_hours"]').forEach(select=>{
+      const wrapper=select.closest('label');
+      if(wrapper)wrapper.outerHTML=serviceHoursField(select.value);
+    });
+    root.querySelectorAll('[data-service-hours-control]').forEach(syncServiceHours);
+  };
+  document.addEventListener('input',event=>{const control=event.target.closest?.('[data-service-hours-control]');if(control)syncServiceHours(control);});
+  document.addEventListener('change',event=>{const control=event.target.closest?.('[data-service-hours-control]');if(control)syncServiceHours(control);});
   const dayOptions=['Select days open','Monday – Friday','Monday – Saturday','Monday – Sunday','Weekdays only','Weekends only','By appointment','Closed'];
   const lunchOptions=['Select lunch hours','12:00 PM – 1:00 PM','12:00 PM – 12:30 PM','12:00 PM – 1:30 PM','No lunch break','Varies'];
   const floorOptions=['Ground Level','2nd Floor','3rd Floor','4th Floor','5th Floor','6th Floor','7th Floor','8th Floor','9th Floor','10th Floor','Basement'];
@@ -218,7 +260,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
   const extraLocationFields=item=>field('Contact email','contact_email',item.contact_email||'','email',false,'maxlength="254"')+
     field('Contact phone','contact_phone',item.contact_phone||'','tel',false,'maxlength="40"')+
-    presetField('Service hours','service_hours',serviceHourOptions,item.service_hours)+
+    serviceHoursField(item.service_hours)+
     presetField('Days open','days_open',dayOptions,item.days_open)+
     presetField('Lunch hours','lunch_break',lunchOptions,item.lunch_break)+
     accessibilityStatusField(item);
@@ -450,7 +492,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         progress.innerHTML='<div><span data-add-photo-label>Uploading photo</span><strong data-add-photo-value>0%</strong></div><progress max="100" value="0" data-add-photo-bar></progress>';
         preview.after(progress);
       }
-      enhanceDropdownFields(form);
+      enhanceServiceHoursFields(form);\n      enhanceDropdownFields(form);
       const kind=form===buildingForm?'building':form===facilityForm?'facility':'room';
       arrangeAddForm(form,kind);
       const actionRow=form.querySelector('button[type="submit"]')?.parentElement;
