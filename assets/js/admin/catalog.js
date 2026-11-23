@@ -604,14 +604,12 @@ document.addEventListener('DOMContentLoaded', async () => {
           addForm.classList.add('admin-edit-fields');
           addForm.classList.remove('catalog-add-fields');
           addForm.querySelectorAll('.admin-edit-actions').forEach(actions=>actions.classList.add('catalog-add-edit-actions'));
-          const statusRow=addForm.querySelector('[id$="-form-status"]')?.parentElement;
           const actions=addForm.querySelector('.catalog-add-edit-actions');
-          const fields=[...addForm.children].filter(node=>node!==statusRow&&node!==actions);
+          const fields=[...addForm.children].filter(node=>node!==actions);
           const fieldsWrap=document.createElement('div');
           fieldsWrap.className='admin-edit-fields catalog-add-edit-fields';
           fieldsWrap.append(...fields);
-          if(statusRow)statusRow.classList.add('admin-edit-status');
-          addForm.replaceChildren(fieldsWrap,...(statusRow?[statusRow]:[]),...(actions?[actions]:[]));
+          addForm.replaceChildren(fieldsWrap,...(actions?[actions]:[]));
         }
       }
       form.addEventListener('submit',async event=>{event.preventDefault();if(!selectedCategoryIds(form).length){status('Select at least one category.');return;}const button=form.querySelector('[type="submit"]');button.disabled=true;status('Saving to the campus database…');
