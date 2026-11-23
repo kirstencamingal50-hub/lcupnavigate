@@ -479,7 +479,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         progress.innerHTML='<div><span data-add-photo-label>Uploading photo</span><strong data-add-photo-value>0%</strong></div><progress max="100" value="0" data-add-photo-bar></progress>';
         preview.after(progress);
       }
-      enhanceServiceHoursFields(form);\n      enhanceDropdownFields(form);
+      enhanceServiceHoursFields(form);
+      enhanceDropdownFields(form);
       const kind=form===buildingForm?'building':form===facilityForm?'facility':'room';
       arrangeAddForm(form,kind);
       const actionRow=form.querySelector('button[type="submit"]')?.parentElement;
