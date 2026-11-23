@@ -556,7 +556,7 @@
       savedRouteList.innerHTML = matches.length ? matches.map((route,index) => {
         const start = mapPins.find(pin => String(pin.markerId) === String(route.start_marker_id));
         const end = mapPins.find(pin => String(pin.markerId) === String(route.destination_marker_id));
-        const endpoints = `${start?.name || route.start_name || 'Start unavailable'} → ${end?.name || route.destination_name || 'Destination unavailable'}`;
+        const endpoints = `${start?.name || route.start_name || 'Start unavailable'} ↔ ${end?.name || route.destination_name || 'Destination unavailable'}`;
         return `<button type="button" class="saved-route-browser-item" data-saved-route-id="${escapeHtml(route.id)}" title="Show ${escapeHtml(endpoints)} on the map"><span class="saved-route-endpoints">Path ${index+1} · ${escapeHtml(endpoints)}</span><span class="saved-route-action">View route</span></button>`;
       }).join('') : `<p class="px-2 py-3 text-center text-[11px] text-slate-400">${published.length ? 'No saved routes match your search.' : 'No published routes are available.'}</p>`;
     }
