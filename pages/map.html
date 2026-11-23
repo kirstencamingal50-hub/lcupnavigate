@@ -127,9 +127,6 @@
         <div id="routeInfo" class="text-slate-300">Select locations to calculate routes</div>
         <div class="flex items-center gap-2 shrink-0">
           <label class="flex items-center gap-1 text-slate-400 cursor-pointer">
-            <input type="checkbox" id="accessibleRouteOnly" class="rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-0 w-3 h-3"> Accessible only
-          </label>
-          <label class="flex items-center gap-1 text-slate-400 cursor-pointer">
             <input type="checkbox" id="netToggleBox" checked class="rounded bg-slate-900 border-slate-700 text-blue-600 focus:ring-0 w-3 h-3"> Walkways
           </label>
         </div>
@@ -398,11 +395,6 @@
     }
     rebuildRouteGraph();
 
-    let mapPreferences = {};
-    try { mapPreferences = JSON.parse(localStorage.getItem('navigatorate.visitor.preferences') || '{}') || {}; } catch {}
-    let accessibleOnly = mapPreferences.routeType === 'accessible';
-    document.getElementById('accessibleRouteOnly').checked = accessibleOnly;
-
     function routeId(loc) { return `loc:${loc.id}:${loc.floor}`; }
 
     function edgeKey(a, b) { return [a, b].sort().join('||'); }
@@ -421,7 +413,6 @@
 
         Object.entries(graph[u].neighbors).forEach(([v, w]) => {
           if (blockedEdges.has(edgeKey(u, v))) return;
-          if (accessibleOnly && !graph[u].accessibleNeighbors[v]) return;
           const alt = dists[u] + w;
           if (alt < dists[v]) { dists[v] = alt; prev[v] = u; }
         });
@@ -703,7 +694,6 @@
         .filter(route => route.status === 'active')
         .sort((a,b)=>Number(a.id)-Number(b.id))
         .flatMap(route => {
-          if (accessibleOnly && !isConfirmedAccessible(route.accessibility_status)) return [];
           const direction = getSavedRouteDirection(route, startLocation, endLocation);
           if (!direction) return [];
           let points = (route.points || [])
@@ -756,7 +746,7 @@
       }
 
       if (!Object.keys(available).length) {
-        setNotice(accessibleOnly ? 'No route can be confirmed accessible from the recorded data. Unknown or unverified accessibility is excluded; try standard routing or ask campus staff for assistance.' : 'No route is available between these locations. Check that the locations are connected in the route builder.', 'error');
+        setNotice('No route is available between these locations. Check that the locations are connected in the route builder.', 'error');
         routeInfo.textContent = 'No path found';
         return;
       }
@@ -769,11 +759,6 @@
 
     findRouteBtn.addEventListener('click', calculateRoutes);
     clearRouteBtn.addEventListener('click', clearRoute);
-
-    document.getElementById('accessibleRouteOnly').addEventListener('change', event => {
-      accessibleOnly = event.currentTarget.checked;
-      if (fromSelect.value && toSelect.value) calculateRoutes();
-    });
 
     const netToggleBox = document.getElementById('netToggleBox');
     // All walkways are shown faintly (transparent blue) so people can see where routes can go.
