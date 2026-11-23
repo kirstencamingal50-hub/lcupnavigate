@@ -371,11 +371,12 @@ html[data-high-contrast] .directory-card, html[data-high-contrast] .directory-he
 .map-place-contact { display:grid; gap:.45rem; }
 .map-place-contact a { display:flex; min-width:0; align-items:center; gap:.4rem; overflow-wrap:anywhere; color:#b6d6fa; font-size:11px; text-decoration:none; }
 .map-place-contact a .material-symbols-rounded { flex:0 0 auto; font-size:16px; }
-.map-place-accessibility { padding:.7rem; border:1px solid #2d6445; border-radius:11px; background:#123323; }
-.map-place-accessibility h3 { margin:0 0 .5rem; color:#d2f4dc; font-size:11px; font-weight:800; }
-.map-place-accessibility ul { display:grid; gap:.35rem; margin:0; padding:0; list-style:none; }
-.map-place-accessibility li { display:flex; align-items:flex-start; gap:.35rem; color:#c2e6cd; font-size:10px; overflow-wrap:anywhere; }
-.map-place-accessibility li .material-symbols-rounded { color:#80d49a; font-size:15px; }
+.map-place-accessibility { padding:1rem; border:2px solid #2d8a57; border-radius:14px; background:#123b29; box-shadow:0 0 0 2px rgba(45,138,87,.12); }
+.map-place-accessibility h3 { margin:0 0 .6rem; color:#d2f4dc; font-size:12px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
+.map-place-accessibility-status { display:inline-flex; align-items:center; gap:.45rem; margin:0; padding:.5rem .8rem; border-radius:999px; background:#176b3c; color:#fff; font-size:15px; font-weight:900; letter-spacing:.01em; }
+.map-place-accessibility ul { display:grid; gap:.4rem; margin:.7rem 0 0; padding:0; list-style:none; }
+.map-place-accessibility li { display:flex; align-items:flex-start; gap:.4rem; color:#d6f5df; font-size:12px; overflow-wrap:anywhere; }
+.map-place-accessibility li .material-symbols-rounded { color:#80d49a; font-size:17px; }
 .map-place-info { display:grid; gap:.45rem; margin:0; }
 .map-place-info > div { display:grid; grid-template-columns:minmax(80px,.7fr) minmax(0,1.3fr); gap:.5rem; padding-bottom:.4rem; border-bottom:1px solid #29394f; }
 .map-place-info dt { color:#9dafc5; font-size:10px; font-weight:700; }
