@@ -251,18 +251,71 @@ html[data-theme="dark"] .admin-page .catalog-media-fields :is(input[type=file]) 
   justify-self:stretch;
   white-space:nowrap;
 }
-.admin-page .catalog-model-content { display:grid; grid-template-columns:minmax(0,1fr) minmax(260px,1fr); align-items:center; gap:18px; }
-.admin-page .catalog-model-status { display:flex; align-items:center; gap:13px; min-width:0; padding:14px; border:1px solid #dbe3ed; border-radius:10px; background:#fff; }
-.admin-page .catalog-model-status > .material-symbols-rounded { color:#64748b; font-size:28px; }
+.admin-page .catalog-model-content { display:grid; grid-template-columns:minmax(0,1fr); gap:14px; }
+.admin-page .catalog-model-status {
+  display:flex;
+  align-items:center;
+  gap:13px;
+  min-width:0;
+  padding:14px;
+  border:1px solid #dbe3ed;
+  border-radius:10px;
+  background:#fff;
+}
+.admin-page .catalog-model-status > .material-symbols-rounded { color:#64748b; font-size:28px; flex:none; }
 .admin-page .catalog-model-status strong { color:#24364f; font-size:12px; }
 .admin-page .catalog-model-status a { display:inline-block; margin-top:6px; color:#2563eb; font-size:11px; font-weight:700; }
-.admin-page .catalog-model-upload small { color:#718096; font-size:10px; font-weight:500; line-height:1.5; }
+.admin-page .catalog-model-upload {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(180px,.8fr);
+  align-items:end;
+  gap:8px 16px;
+  min-width:0;
+  padding-top:14px;
+  border-top:1px solid #dbe3ed;
+  color:#52637a;
+  font-size:11px;
+  font-weight:800;
+}
+.admin-page .catalog-model-upload input[type=file] {
+  display:block;
+  width:100%;
+  min-width:0;
+  min-height:42px;
+  margin-top:7px;
+  padding:5px 7px;
+  border:1px solid #d5deea;
+  border-radius:8px;
+  background:#fff;
+  color:#24364f;
+  font-size:11px;
+}
+.admin-page .catalog-model-upload input[type=file]::file-selector-button {
+  margin:0 9px 0 0;
+  padding:7px 11px;
+  border:0;
+  border-radius:6px;
+  background:#e8f1ff;
+  color:#1d4ed8;
+  font-size:11px;
+  font-weight:800;
+  cursor:pointer;
+}
+.admin-page .catalog-model-upload small {
+  align-self:center;
+  color:#718096;
+  font-size:10px;
+  font-weight:500;
+  line-height:1.5;
+}
 @media(max-width:760px) {
   .admin-page .catalog-gallery-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
    .admin-page .catalog-gallery-upload { grid-template-columns:minmax(0,1fr); gap:12px; }
   .admin-page .catalog-gallery-upload > div { grid-column:auto; }
   .admin-page .catalog-gallery-upload > button { width:100%; }
-  .admin-page .catalog-model-content { grid-template-columns:1fr; }
+   .admin-page .catalog-model-content { grid-template-columns:minmax(0,1fr); }
+  .admin-page .catalog-model-upload { grid-template-columns:minmax(0,1fr); gap:8px; }
+  .admin-page .catalog-model-upload small { align-self:start; }
 }
 @media(max-width:480px) { .admin-page .catalog-gallery-grid { grid-template-columns:1fr; } }
 html[data-theme="dark"] .admin-page :is(.catalog-gallery-panel,.catalog-model-panel) { border-color:#334155; background:#111c2d; }
