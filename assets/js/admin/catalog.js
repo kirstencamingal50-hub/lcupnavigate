@@ -89,8 +89,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     return(await CampusApi.request('uploads',{method:'POST',body:data,onUploadProgress:onProgress})).path;
   };
   const optionalText=(form,name)=>form.elements[name]?.value.trim()||null;
-  const supportedAccessibilityFeatures=new Set(['wheelchair_accessibility','elevator','accessible_restroom','accessible_parking','handrails','braille_signage']);
-  const selectedAccessibilityFeatures=form=>[...form.querySelectorAll('[name="accessibility_features"]:checked')].map(control=>control.value).filter(value=>supportedAccessibilityFeatures.has(value));
+  const supportedAccessibilityFeatures=new Set(['wheelchair_entrance','elevator','ramp','accessible_restroom','accessible_parking','handrails','tactile_paving','braille_signage','hearing_assistance']);
+  const accessibilityFeatureApiValue=value=>value==='wheelchair_accessibility'?'wheelchair_entrance':value;
+  const selectedAccessibilityFeatures=form=>[...form.querySelectorAll('[name="accessibility_features"]:checked')].map(control=>accessibilityFeatureApiValue(control.value)).filter(value=>supportedAccessibilityFeatures.has(value));
   const detailPayload=form=>({
     contact_email:optionalText(form,'contact_email'),
     contact_phone:optionalText(form,'contact_phone'),
