@@ -375,3 +375,38 @@ html[data-theme="dark"] .admin-page .catalog-photo-details input:not([type=check
 @media(max-width:760px) {
   .admin-page .catalog-gallery-upload { grid-template-columns:minmax(0,1fr); }
 }
+
+
+/* Standalone 3D model upload action, matching the photo gallery workflow. */
+.admin-page .catalog-model-upload {
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:end;
+  gap:12px 16px;
+}
+.admin-page .catalog-model-upload > label {
+  display:grid;
+  min-width:0;
+  gap:7px;
+  color:#52637a;
+  font-size:13px;
+  font-weight:800;
+}
+.admin-page .catalog-model-upload input[type=file] {
+  margin-top:0;
+  font-size:12px;
+  text-align:left;
+}
+.admin-page .catalog-model-upload input[type=file]::file-selector-button {
+  font-size:12px;
+  padding:8px 13px;
+}
+.admin-page .catalog-model-upload small { font-size:11px; }
+.admin-page .catalog-model-upload > button {
+  min-width:160px;
+  min-height:42px;
+  white-space:nowrap;
+}
+@media(max-width:760px) {
+  .admin-page .catalog-model-upload { grid-template-columns:minmax(0,1fr); }
+  .admin-page .catalog-model-upload > button { width:100%; }
+}
