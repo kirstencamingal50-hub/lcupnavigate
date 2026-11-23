@@ -472,6 +472,7 @@ html[data-theme="dark"] .admin-page .catalog-photo-details input:not([type=check
 
 /* Photo upload preview and live upload progress. */
 .admin-page .catalog-photo-progress{grid-column:1/-1;display:grid;gap:7px;padding:10px 12px;border:1px solid #cfe0f2;border-radius:9px;background:#f4f8fd}
+.admin-page .catalog-photo-progress[hidden]{display:none!important}
 .admin-page .catalog-photo-progress>div{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#34506d;font-size:11px;font-weight:700}
 .admin-page .catalog-photo-progress strong{font-variant-numeric:tabular-nums;color:#1d4ed8}
 .admin-page .catalog-photo-progress progress{display:block;width:100%;height:10px;overflow:hidden;border:0;border-radius:999px;background:#e2e8f0;accent-color:#2563eb}
