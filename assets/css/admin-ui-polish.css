@@ -500,3 +500,15 @@ html[data-theme="dark"] .admin-page .catalog-photo-details input:not([type=check
 .admin-page .catalog-checklist-option input[type=checkbox]{order:0;flex:0 0 16px;width:16px!important;height:16px!important;min-width:16px!important;min-height:16px!important;margin:0!important;accent-color:#2563eb}
 .admin-page .catalog-checklist-option>span{min-width:0;text-align:left}
 @media(max-width:640px){.admin-page .catalog-checklist-options{grid-template-columns:1fr}}
+
+
+/* Admin-configurable opening and closing times */
+.admin-page .catalog-service-hours{display:grid;gap:9px;min-width:0;width:100%;font-family:inherit}
+.admin-page .catalog-service-hours>.admin-field-label{color:#334155;font-size:12px;font-weight:700;line-height:1.4}
+.admin-page .catalog-service-hours>select{width:100%;min-height:42px;padding:9px 12px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;color:#1e293b;font:inherit;font-size:13px}
+.admin-page .catalog-service-time-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;width:100%}
+.admin-page .catalog-service-time-fields[hidden]{display:none!important}
+.admin-page .catalog-service-time-fields label{display:grid;gap:6px;min-width:0;color:#475569;font-size:12px;font-weight:600}
+.admin-page .catalog-service-time-fields input{box-sizing:border-box;width:100%;min-height:42px;padding:9px 12px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;color:#1e293b;font:inherit;font-size:13px}
+.admin-page .catalog-service-hours small{color:#64748b;font-size:11px;line-height:1.45}
+@media(max-width:640px){.admin-page .catalog-service-time-fields{grid-template-columns:1fr}}
