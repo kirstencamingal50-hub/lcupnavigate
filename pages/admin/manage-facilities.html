@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
   <link rel="stylesheet" href="../../assets/css/style.css?v=20261115-symbol-font" />
   <link rel="stylesheet" href="../../assets/css/admin.css?v=20261105-admin-ux" />
-  <link rel="stylesheet" href="../../assets/css/admin-ui-polish.css?v=20261121-catalog-forms" />
+  <link rel="stylesheet" href="../../assets/css/admin-ui-polish.css?v=20261123-catalog-consistency" />
   <script src="../../assets/js/campus-api.js?v=20261122-glb-500mb"></script>
   <script src="../../assets/js/admin/admin-auth.js"></script>
 </head>
@@ -29,25 +29,22 @@
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Facility Name
           <input name="name" required maxlength="150" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
         </label>
-        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Building
-          <select name="buildingId" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"></select>
-        </label>
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Category
           <select name="category_ids" multiple required size="5" aria-describedby="category-help" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"></select><small id="category-help" class="mt-1 block text-xs text-slate-500">Select one or more categories. Hold Ctrl (Windows) or Command (Mac) to choose multiple.</small>
-        </label>
-        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Floor Level<select name="floor" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"><option value="Ground Level">Ground Level</option><option value="2nd Floor">2nd Floor</option><option value="3rd Floor">3rd Floor</option><option value="4th Floor">4th Floor</option><option value="5th Floor">5th Floor</option><option value="6th Floor">6th Floor</option><option value="7th Floor">7th Floor</option><option value="8th Floor">8th Floor</option><option value="9th Floor">9th Floor</option><option value="10th Floor">10th Floor</option><option value="Basement">Basement</option></select>
         </label>
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Maximum capacity
           <input name="capacity" type="number" min="0" value="0" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
         </label>
-        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Facility Photo
-          <input name="photo" type="file" accept="image/*" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
-          <img data-photo-preview hidden alt="Facility photo preview" class="mt-2 max-h-40 rounded-lg object-cover" />
-        </label>
-        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">3D Facility Model (.glb)
-          <input name="model_3d_file" type="file" accept=".glb,model/gltf-binary,application/octet-stream" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
-          <small class="mt-1 block text-xs text-slate-500">Optional GLB model, maximum 500 MB. It will appear in the facility information.</small>
-        </label>
+        <div class="catalog-media-fields md:col-span-2">
+          <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Facility Photo
+            <input name="photo" type="file" accept="image/*" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
+            <img data-photo-preview hidden alt="Facility photo preview" class="mt-2 max-h-40 rounded-lg object-cover" />
+          </label>
+          <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">3D Facility Model (.glb)
+            <input name="model_3d_file" type="file" accept=".glb,model/gltf-binary,application/octet-stream" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800" />
+            <small class="mt-1 block text-xs text-slate-500">Optional GLB model, maximum 500 MB. It will appear in the facility information.</small>
+          </label>
+        </div>
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500 md:col-span-2">Full description
           <textarea name="description" rows="4" maxlength="4000" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"></textarea>
         </label>
@@ -95,7 +92,7 @@
   </main>
 
   <script src="../../assets/js/admin/admin-photos.js"></script>
-  <script src="../../assets/js/admin/catalog.js?v=20261122-glb-500mb"></script>
+  <script src="../../assets/js/admin/catalog.js?v=20261123-facility-form"></script>
   <script src="../../assets/js/app.js?v=20261118-remove-department-nav"></script>
 </body>
 </html>
