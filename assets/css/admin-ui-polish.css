@@ -842,7 +842,10 @@ html[data-theme="dark"] .admin-page .catalog-add-edit-dialog .catalog-add-fields
   border-radius:7px;
   background:#e8f1ff;
   color:#1d4ed8;
-  font:700 12px/1.2 inherit;
+  font-family:inherit;
+  font-size:12px;
+  font-weight:700;
+  line-height:1.2;
   cursor:pointer;
 }
 .admin-page .catalog-add-edit-dialog input[type=file]::-webkit-file-upload-button {
