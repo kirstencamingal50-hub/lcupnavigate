@@ -157,8 +157,7 @@ begin
   delete from public.map_nodes where id in (select id from _delete_nodes);
   update public.locations
   set canonical_location_id = null
-  where canonical_location_id in (select id from _delete_locations)
-    and id not in (select id from _delete_locations);
+  where canonical_location_id in (select id from _delete_locations);
 
   delete from public.locations
   where id in (select id from _delete_locations);
