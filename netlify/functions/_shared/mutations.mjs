@@ -7,6 +7,26 @@ import { HttpError, optionalText, positiveId, requiredText, success, unwrap } fr
 
 const db = () => getServiceClient();
 
+async function deleteCampusRecord(database, recordType, recordId) {
+  const result = unwrap(await database.rpc('delete_campus_record', {
+    p_record_type: recordType,
+    p_record_id: recordId
+  }));
+  const mediaByBucket = new Map();
+  for (const item of result?.media || []) {
+    if (!item?.bucket || !item?.name) continue;
+    if (!mediaByBucket.has(item.bucket)) mediaByBucket.set(item.bucket, new Set());
+    mediaByBucket.get(item.bucket).add(item.name);
+  }
+  for (const [bucket, names] of mediaByBucket) {
+    const removed = await database.storage.from(bucket).remove([...names]);
+    if (removed.error) {
+      throw new HttpError(503, 'The campus record was deleted, but one or more linked media files could not be removed from storage. Contact the administrator.');
+    }
+  }
+  return { ...result, media_deleted: [...mediaByBucket.values()].reduce((total, names) => total + names.size, 0) };
+}
+
 async function editor(event, minimum = 'editor') {
   return currentUser(event, true, minimum);
 }
@@ -230,10 +250,7 @@ async function locations(event, method, body, query) {
 
   if (method === 'DELETE') {
     const id = positiveId(body.id ?? query.id);
-    const result = unwrap(await database.rpc('delete_campus_record', {
-      p_record_type: 'location',
-      p_record_id: id
-    }));
+    const result = await deleteCampusRecord(database, 'location', id);
     await audit(user, 'delete', 'location', id);
     return success(result);
   }
@@ -320,10 +337,7 @@ async function rooms(event, method, body, query) {
 
   if (method === 'DELETE') {
     const id = positiveId(body.id ?? query.id);
-    const result = unwrap(await database.rpc('delete_campus_record', {
-      p_record_type: 'room',
-      p_record_id: id
-    }));
+    const result = await deleteCampusRecord(database, 'room', id);
     await audit(user, 'delete', 'room', id);
     return success(result);
   }
@@ -472,10 +486,7 @@ async function mapNodes(event, method, body, query) {
   if (method === 'DELETE') {
     const id = positiveId(body.id ?? query.id);
 
-    const result = unwrap(await database.rpc('delete_campus_record', {
-      p_record_type: 'map_node',
-      p_record_id: id
-    }));
+    const result = await deleteCampusRecord(database, 'map_node', id);
     await audit(user, 'delete', 'map_node', id);
     return success(result);
   }
@@ -550,10 +561,7 @@ async function mapMarkers(event, method, body, query) {
   if (method === 'DELETE') {
     const id = positiveId(body.id ?? query.id);
 
-    const result = unwrap(await database.rpc('delete_campus_record', {
-      p_record_type: 'map_marker',
-      p_record_id: id
-    }));
+    const result = await deleteCampusRecord(database, 'map_marker', id);
     await audit(user, 'delete', 'map_marker', id);
     return success(result);
   }
@@ -672,10 +680,7 @@ async function mapConnections(event, method, body, query) {
     : null;
 
   if (method === 'DELETE') {
-    const result = unwrap(await database.rpc('delete_campus_record', {
-      p_record_type: 'map_connection',
-      p_record_id: id
-    }));
+    const result = await deleteCampusRecord(database, 'map_connection', id);
     await audit(user, 'delete', 'map_connection', id);
     return success(result);
   }
