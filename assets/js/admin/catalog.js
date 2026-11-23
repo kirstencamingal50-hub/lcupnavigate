@@ -197,7 +197,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const multiSelectField=(label,name,options,selected=[])=>`<div class="admin-edit-wide grid gap-1"><span class="font-semibold text-slate-700">${label} <span class="text-red-600" aria-label="required">*</span></span><select name="${name}" multiple size="${Math.min(6,Math.max(3,categories.length))}" class="catalog-multi-category">${catOptions(selected)}</select><small class="block text-slate-500">Choose one or more categories from the dropdown.</small></div>`;
   const areaField=(label,name,value,max=1000)=>`<label class="admin-edit-wide">${label}<textarea name="${name}" rows="2" maxlength="${max}">${esc(value||'')}</textarea></label>`;
   const accessibilityFeatureOptions=[
-    ['wheelchair_accessibility','Wheelchair accessibility (entrance, ramp, and pathways)'],
+    ['wheelchair_accessibility','Wheelchair accessibility'],
     ['elevator','Elevator'],
     ['accessible_restroom','Accessible restroom'],
     ['accessible_parking','Accessible parking'],
