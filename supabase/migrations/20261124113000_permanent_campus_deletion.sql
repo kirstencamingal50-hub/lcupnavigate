@@ -14,6 +14,7 @@ set search_path = public
 as $$
 declare
   deleted_routes integer := 0;
+  deleted_media jsonb := '[]'::jsonb;
 begin
   if p_record_id is null or p_record_id <= 0 then
     raise exception 'A valid record ID is required.';
@@ -29,6 +30,7 @@ begin
   create temporary table _delete_nodes(id bigint primary key) on commit drop;
   create temporary table _delete_connections(id bigint primary key) on commit drop;
   create temporary table _delete_routes(id bigint primary key) on commit drop;
+  create temporary table _delete_media(bucket_id text, object_name text) on commit drop;
 
   if p_record_type = 'location' then
     insert into _delete_locations
@@ -91,6 +93,28 @@ begin
        or to_node_id in (select id from _delete_nodes);
   end if;
 
+  -- Collect every managed storage object linked to the records being deleted.
+  insert into _delete_media(bucket_id, object_name)
+  select split_part(path, '/', 1), substring(path from position('/' in path) + 1)
+  from (
+    select image_path as path from public.locations where id in (select id from _delete_locations)
+    union all
+    select model_3d_path from public.locations where id in (select id from _delete_locations)
+    union all
+    select image_path from public.rooms where id in (select id from _delete_rooms)
+    union all
+    select image_path from public.facility_photos
+      where location_id in (select id from _delete_locations)
+         or room_id in (select id from _delete_rooms)
+    union all
+    select 'floor-plans/' || stored_name from public.floor_plans
+      where building_id in (select id from _delete_locations)
+    union all
+    select image_path from public.announcements
+      where location_id in (select id from _delete_locations)
+  ) media
+  where path is not null and position('/' in path) > 0;
+
   -- Remove malformed routes globally as requested: a route must have two
   -- distinct endpoint markers to remain in the system.
   insert into _delete_routes
@@ -142,11 +166,16 @@ begin
     delete from public.map_connections where id = p_record_id;
   end if;
 
+  select coalesce(jsonb_agg(jsonb_build_object('bucket', bucket_id, 'name', object_name)), '[]'::jsonb)
+  into deleted_media
+  from (select distinct bucket_id, object_name from _delete_media) media;
+
   return jsonb_build_object(
     'deleted', true,
     'record_type', p_record_type,
     'record_id', p_record_id,
-    'deleted_routes', deleted_routes
+    'deleted_routes', deleted_routes,
+    'media', deleted_media
   );
 end;
 $$;
