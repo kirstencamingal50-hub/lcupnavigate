@@ -942,7 +942,7 @@ async function routes(event, method, body, query) {
     };
   });
 
-  const saved = unwrap(await database.rpc('save_campus_route', {
+  const routeResult = await database.rpc('save_campus_route', {
     p_route_id: id,
     p_name: requiredText(body.name, 'Route name', 120),
     p_start_marker_id: positiveId(body.start_marker_id, 'Start marker ID'),
@@ -952,8 +952,20 @@ async function routes(event, method, body, query) {
     p_notes: optionalText(body.notes, 'Notes', 1000),
     p_waypoints: normalizedWaypoints,
     p_created_by_legacy_admin_id: legacyId(user)
-  }));
+  });
 
+  if (routeResult.error) {
+    const message = String(routeResult.error.message || '');
+    if (message.includes('Accessible routes require verified active paths')) {
+      throw new HttpError(
+        409,
+        'This route cannot be published as Accessible yet. Verify that both endpoint markers are marked Accessible and that every walkway connection is verified and marked Accessible. You can save it as a private draft while these details are checked.'
+      );
+    }
+    throw routeResult.error;
+  }
+
+  const saved = unwrap(routeResult);
   return success(saved, id ? 200 : 201);
 }
 
