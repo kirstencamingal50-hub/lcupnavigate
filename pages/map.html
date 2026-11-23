@@ -809,7 +809,7 @@
     const suggestions = document.getElementById('suggestions');
     searchBox.addEventListener('input', () => {
       const q = searchBox.value.trim().toLowerCase();
-      const hits = q ? locations.filter(l => `${l.name} ${l.category || ''} ${l.buildingName || ''} ${l.building_number || ''} ${l.roomNumber || ''} ${l.floorLabel || ''} ${l.departmentName || ''} ${l.departmentHead || ''} ${l.contactEmail || ''} ${l.contactPhone || ''} ${l.services || ''} ${l.nearbyLandmarks || ''} ${l.description || ''} ${l.functionDescription || ''}`.toLocaleLowerCase().includes(q)).slice(0, 8) : [];
+      const hits = q ? locations.filter(l => `${l.name} ${l.category || ''} ${l.buildingName || ''} ${l.roomNumber || ''} ${l.floorLabel || ''} ${l.departmentName || ''} ${l.departmentHead || ''} ${l.contactEmail || ''} ${l.contactPhone || ''} ${l.services || ''} ${l.nearbyLandmarks || ''} ${l.description || ''} ${l.functionDescription || ''}`.toLocaleLowerCase().includes(q)).slice(0, 8) : [];
       suggestions.innerHTML = hits.map(l => `<button type="button" data-id="${l.id}" class="block w-full text-left px-3 py-2 hover:bg-slate-100">${escapeHtml(l.name)}</button>`).join('');
       suggestions.classList.toggle('hidden', !hits.length);
     });
