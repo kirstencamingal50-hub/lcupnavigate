@@ -104,7 +104,7 @@ export async function uploadMetadata(event, body) {
     ? ['application/pdf', 'image/png', 'image/jpeg', 'image/webp']
     : type === 'model' ? ['model/gltf-binary', 'application/octet-stream'] : ['image/png', 'image/jpeg', 'image/webp'];
   const size = Number(body.file_size);
-  const maximum = type === 'floorplan' ? 15 * 1024 * 1024 : type === 'model' ? 500 * 1024 * 1024 : 5 * 1024 * 1024;
+  const maximum = type === 'floorplan' ? 15 * 1024 * 1024 : type === 'model' ? 50 * 1024 * 1024 : 5 * 1024 * 1024;
   if (!allowedTypes.includes(mimeType) || !Number.isSafeInteger(size) || size < 1 || size > maximum) {
     throw new HttpError(400, 'The uploaded file type or size is not allowed.');
   }
