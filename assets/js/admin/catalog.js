@@ -132,11 +132,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       label.textContent=checked.length?checked.length+' selected':'Select categories';
       summary.setAttribute('aria-label',checked.length?'Categories: '+names.join(', '):'Select categories');
     };
-    details.append(summary,list,select);
-    select.hidden=true;
+    // Move the original label before placing the select inside the new
+    // details element. Otherwise select.after(details) tries to insert an
+    // ancestor after its own descendant and throws a HierarchyRequestError.
     const originalLabel=select.closest('label');
     if(originalLabel)originalLabel.replaceWith(details);
-    else select.after(details);
+    else select.before(details);
+    details.append(summary,list,select);
+    select.hidden=true;
     select.form?.addEventListener('reset',()=>setTimeout(()=>{
       list.querySelectorAll('input[type="checkbox"]').forEach((checkbox,index)=>{
         checkbox.checked=!!select.options[index]?.selected;
