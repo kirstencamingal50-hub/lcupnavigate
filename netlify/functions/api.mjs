@@ -153,7 +153,7 @@ async function getDirectory() {
       kind: parentBuilding.kind,
       active: parentBuilding.active
     } : null,
-    accessibilityFeatures: row.kind === 'building' && Array.isArray(row.accessibility_features)
+    accessibilityFeatures: Array.isArray(row.accessibility_features)
       ? row.accessibility_features
       : [],
     photos: locationPhotos.get(String(row.id)) || [],
