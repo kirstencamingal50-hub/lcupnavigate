@@ -173,18 +173,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const form=dialog.querySelector('form');
     const requestClose=async()=>{if(form.dataset.dirty==='true'&&!await window.AdminUI.confirm({title:'Discard unsaved changes?',message:'Your edits will be lost if you close this form.',confirmLabel:'Discard changes',danger:true}))return;form.dataset.dirty='false';dialog.close();};
     form.addEventListener('input',event=>{if(!event.target.matches('[data-model-file]'))form.dataset.dirty='true';});form.addEventListener('change',event=>{if(!event.target.matches('[data-model-file]'))form.dataset.dirty='true';});
-    dialog.querySelectorAll('[data-gallery-owner]').forEach(section=>{
-      const source=section.dataset.galleryOwner==='room'?rooms:locations;
-      const item=source.find(row=>String(row.id)===section.dataset.galleryId);
-      section._galleryPhotos=[...new Map((item?.photos||[]).filter(photo=>photo?.image).map(photo=>[imageSrc(photo.image),photo])).values()];
-    });
     dialog.addEventListener('change',event=>{
-      if(event.target.matches('[data-gallery-photo-select]')){
-        const section=event.target.closest('[data-gallery-owner]'),index=Number(event.target.value);
-        const current=section?._galleryPhotos?.[index];
-        const grid=section?.querySelector('[data-gallery-single-preview]');
-        if(current&&grid)grid.innerHTML=galleryPhotoCard(current,section.dataset.galleryId,index===0);
-      }
       if(!event.target.matches('[data-photo-cover]')||!event.target.checked)return;
       const section=event.target.closest('[data-gallery-owner]');
       section?.querySelectorAll('[data-photo-cover]').forEach(input=>{if(input!==event.target)input.checked=false;});
@@ -276,12 +265,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   function galleryMarkup(type,item){
     const ownerType=type==='location'?'location':'room';
     const photos=[...new Map((item.photos||[]).filter(photo=>photo?.image).map(photo=>[imageSrc(photo.image),photo])).values()];
-    const defaultIndex=Math.max(0,photos.findIndex(photo=>Number(photo.isCover)===1||photo.isCover===true));
-    const selectedPhoto=photos[defaultIndex];
+    const coverIndex=photos.findIndex(photo=>Number(photo.isCover)===1||photo.isCover===true);
     return `<section class="admin-edit-wide catalog-gallery-panel" data-gallery-owner="${ownerType}" data-gallery-id="${esc(item.id)}">
       <div class="catalog-section-heading"><div><h3>Photo Gallery</h3><p>Upload and manage photos for this location.</p></div><span class="catalog-count">${photos.length} ${photos.length===1?'photo':'photos'}</span></div>
-      ${photos.length>1?`<label class="catalog-gallery-select-label">Preview photo<select data-gallery-photo-select>${photos.map((photo,index)=>`<option value="${index}" ${index===defaultIndex?'selected':''}>${esc(photo.caption||'Photo '+(index+1))}</option>`).join('')}</select></label>`:''}
-      <div class="catalog-gallery-grid" data-gallery-single-preview>${selectedPhoto?galleryPhotoCard(selectedPhoto,item.id,defaultIndex===0):'<p class="catalog-gallery-empty">No photos have been added yet.</p>'}</div>
+      <div class="catalog-gallery-grid">${photos.length?photos.map((photo,index)=>galleryPhotoCard(photo,item.id,index===coverIndex)).join(''):'<p class="catalog-gallery-empty">No photos have been added yet.</p>'}</div>
       <div class="catalog-gallery-upload"><div><strong>Add photos</strong><p>Select one image and optionally add a caption.</p></div><label>Choose photo<input type="file" data-gallery-file accept="image/png,image/jpeg,image/webp"></label><label>Caption (optional)<input data-gallery-caption maxlength="255" placeholder="Describe this photo"></label><div class="catalog-photo-progress" data-photo-progress hidden><div><span data-photo-progress-label>Uploading photo</span><strong data-photo-progress-value>0%</strong></div><progress max="100" value="0" data-photo-progress-bar></progress></div><button type="button" data-photo-add class="admin-button-primary">Upload photo</button></div>
     </section>`;
   }
