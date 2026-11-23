@@ -146,6 +146,7 @@ WHERE location_id = @duplicate_location_id
 
 DELETE FROM favorites
 WHERE location_id = @duplicate_location_id
+  AND @canonical_location_id IS NOT NULL
   AND @duplicate_location_id IS NOT NULL;
 
 -- Preserve route endpoints by redirecting them to an existing canonical
