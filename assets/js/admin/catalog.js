@@ -147,13 +147,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const summary=document.createElement('summary');summary.className='catalog-checklist-summary';
     summary.innerHTML='<span class="catalog-checklist-title">Accessibility features</span><span data-accessibility-selection class="catalog-checklist-count">Select features</span>';
     const content=document.createElement('div');content.className='catalog-category-checklist-options catalog-checklist-options';
-    [...fieldset.children].forEach(child=>{
-      if(child.tagName==='LEGEND')return;
-      const checkbox=child.matches('input[name="accessibility_features"]')?child:child.querySelector?.('[name="accessibility_features"]');
-      const label=child.tagName==='LABEL'?child:checkbox?.closest('label');
-      if(label)label.classList.add('catalog-category-checklist-option','catalog-checklist-option');
-      if(checkbox)checkbox.classList.add('catalog-category-checkbox');
-      content.append(child);
+    // Use the same flat checkbox-row structure as Categories; do not retain the
+    // original nested grid wrapper, which was squeezing the checklist to one side.
+    fieldset.querySelectorAll('input[name="accessibility_features"]').forEach(checkbox=>{
+      const label=checkbox.closest('label');
+      if(!label)return;
+      checkbox.classList.add('catalog-category-checkbox');
+      label.classList.add('catalog-category-checklist-option','catalog-checklist-option');
+      content.append(label);
     });
     const updateLabel=()=>{const selected=[...details.querySelectorAll('[name="accessibility_features"]:checked')];summary.querySelector('[data-accessibility-selection]').textContent=selected.length?selected.length+' selected':'Select features';summary.setAttribute('aria-label',selected.length?'Accessibility features: '+selected.map(input=>input.closest('label')?.textContent.trim()).filter(Boolean).join(', '):'Select accessibility features');};
     details.append(summary,content);fieldset.replaceWith(details);details.addEventListener('change',updateLabel);updateLabel();
