@@ -410,3 +410,48 @@ html[data-theme="dark"] .admin-page .catalog-photo-details input:not([type=check
   .admin-page .catalog-model-upload { grid-template-columns:minmax(0,1fr); }
   .admin-page .catalog-model-upload > button { width:100%; }
 }
+
+
+/* Final alignment for catalog create actions and 3D model upload. */
+.admin-page .catalog-add-fields .admin-edit-actions {
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.admin-page .catalog-add-fields .admin-edit-actions > p {
+  flex:1 1 auto;
+  min-width:160px;
+  margin:0 auto 0 0;
+}
+.admin-page .catalog-add-fields .admin-edit-actions > button {
+  min-width:124px;
+  min-height:40px;
+  margin:0;
+}
+.admin-page .catalog-model-upload {
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:end;
+}
+.admin-page .catalog-model-upload > label {
+  align-self:end;
+}
+.admin-page .catalog-model-upload > button {
+  align-self:end;
+  margin:0 0 0;
+}
+.admin-page .catalog-model-upload > small {
+  grid-column:1/-1;
+  align-self:start;
+  margin:0;
+}
+@media(max-width:760px) {
+  .admin-page .catalog-add-fields .admin-edit-actions > p {
+    flex-basis:100%;
+    margin:0;
+  }
+  .admin-page .catalog-add-fields .admin-edit-actions > button {
+    flex:1 1 0;
+  }
+}
