@@ -30,8 +30,20 @@ function clean(value) {
   return String(value ?? '').replace(/\s+/g, ' ').trim();
 }
 
+function normalizeWord(word) {
+  const aliases = {
+    registar: 'registrar',
+    registrars: 'registrar',
+    registrar: 'registrar',
+    'registrars': 'registrar',
+    cr: 'comfort',
+    restroom: 'comfort'
+  };
+  return aliases[word] || word;
+}
+
 function words(value) {
-  return clean(value).toLowerCase().match(/[a-z0-9]+/g) || [];
+  return (clean(value).toLowerCase().match(/[a-z0-9]+/g) || []).map(normalizeWord);
 }
 
 function score(question, record) {
@@ -42,8 +54,8 @@ function score(question, record) {
   const haystackWords = new Set(words([
     record.name, record.kind, record.description, record.category, record.category_name, record.category_slug,
     record.building_name, record.parent_building_name, record.department_name,
-    record.room_number, record.floor_number, record.services,
-    record.contact_email, record.service_hours
+    record.room_number, record.floor_number, record.services, record.function_description,
+    record.contact_info, record.contact_email, record.service_hours
   ].join(' ')));
 
   return terms.reduce((total, word) => {
@@ -86,8 +98,18 @@ async function campusContext(question) {
     })
   ];
 
+  const normalizedQuestion = words(question).join(' ');
+  const asksRegistrar = /\bregistrar\b/.test(normalizedQuestion);
   const ranked = records
-    .map(record => ({ ...record, relevance: score(question, record) }))
+    .map(record => {
+      const searchable = words([
+        record.name, record.kind, record.description, record.function_description,
+        record.category, record.category_name, record.category_slug,
+        record.building_name, record.parent_building_name, record.department_name
+      ].join(' ')).join(' ');
+      const registrarMatch = asksRegistrar && /\bregistrar\b/.test(searchable);
+      return { ...record, relevance: Math.max(score(question, record), registrarMatch ? 14 : 0) };
+    })
     .filter(record => record.relevance > 0)
     .sort((a, b) => b.relevance - a.relevance);
 
@@ -158,6 +180,15 @@ function publicAnswer(question, matches) {
   // A direct office/room question should receive one direct answer, not a
   // generic list of loosely related buildings and facilities.
   const best = placeRecords[0];
+  if (/\bregistrar\b/i.test(words(question).join(' '))) {
+    const registrar = placeRecords.find(item => /\bregistrar\b/i.test(words([
+      item.name, item.department_name, item.description, item.function_description
+    ].join(' ')).join(' ')));
+    if (registrar) {
+      const where = locationDescription(registrar);
+      return `The Registrar's Office is located in ${where || registrar.building_name || 'the campus directory'}.`;
+    }
+  }
   if (best && best.record_type === 'room' && best.building_name) {
     const where = locationDescription(best);
     const label = displayName(best, question);
