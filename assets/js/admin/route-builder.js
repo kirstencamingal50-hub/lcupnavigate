@@ -151,15 +151,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Keep only routes with two distinct endpoint markers that still exist on the campus map.
     const invalidRoutes = routes.filter(route => !hasTwoValidEndpoints(route));
     if (invalidRoutes.length) {
-      const results = await Promise.allSettled(invalidRoutes.map(route => CampusApi.remove('routes', route.id)));
-      const failed = results.filter(result => result.status === 'rejected');
-      routes = routes.filter(hasTwoValidEndpoints);
-      if (failed.length) {
-        status(`Removed ${invalidRoutes.length - failed.length} incomplete route(s). ${failed.length} route(s) could not be deleted; they are hidden from this list.`);
-        window.AdminUI?.toast(`${failed.length} incomplete route(s) could not be deleted.`, 'error');
+      const confirmed = await window.AdminUI.confirm({
+        title: 'Delete incomplete routes?',
+        message: `${invalidRoutes.length} saved route(s) are missing a valid start or final destination, or use the same location for both ends. Permanently delete these route records? Routes with two different, valid mapped endpoints will be kept.`,
+        confirmLabel: `Delete ${invalidRoutes.length} route(s)`,
+        danger: true
+      });
+      if (confirmed) {
+        const results = await Promise.allSettled(invalidRoutes.map(route => CampusApi.remove('routes', route.id)));
+        const failed = results.filter(result => result.status === 'rejected');
+        if (failed.length) {
+          const failedIds = new Set(results.map((result,index) => result.status === 'rejected' ? String(invalidRoutes[index].id) : null).filter(Boolean));
+          routes = routes.filter(route => !invalidRoutes.some(invalid => String(invalid.id) === String(route.id)) || failedIds.has(String(route.id)));
+          status(`Deleted ${invalidRoutes.length - failed.length} incomplete route(s). ${failed.length} could not be deleted.`);
+          window.AdminUI?.toast(`${failed.length} incomplete route(s) could not be deleted.`, 'error');
+        } else {
+          routes = routes.filter(hasTwoValidEndpoints);
+          status(`Permanently deleted ${invalidRoutes.length} route(s) missing a valid start and final destination.`);
+          window.AdminUI?.toast(`Deleted ${invalidRoutes.length} incomplete route(s).`);
+        }
       } else {
-        status(`Permanently deleted ${invalidRoutes.length} route(s) missing a valid start and final destination.`);
-        window.AdminUI?.toast(`Deleted ${invalidRoutes.length} incomplete route(s).`);
+        routes = routes.filter(hasTwoValidEndpoints);
+        status(`${invalidRoutes.length} incomplete route(s) were left unchanged and hidden from the saved-routes list.`);
       }
     }
 
