@@ -215,33 +215,17 @@ async function locations(event, method, body, query) {
     return success({ id: savedId, name }, id ? 200 : 201);
   }
 
-  if (method === 'PATCH') {
+  if (method === 'PATCH' && Object.prototype.hasOwnProperty.call(body, 'model_3d_path')) {
     const id = positiveId(body.id ?? query.id);
-    if (Object.prototype.hasOwnProperty.call(body, 'model_3d_path')) {
-      const modelPath = storedModelPath(body.model_3d_path);
-      const record = unwrap(await database.from('locations')
-        .select('id,name')
-        .eq('id', id)
-        .maybeSingle());
-      if (!record) throw new HttpError(404, 'Location not found.');
-      await updateById('locations', id, { model_3d_path: modelPath }, 'Location not found.');
-      await audit(user, 'update', 'location', id, { name: record.name, model_3d_path: modelPath });
-      return success({ id, model_3d_path: modelPath });
-    }
-    const active = booleanValue(body.active, 'Archive status');
-    if (active === null) throw new HttpError(400, 'Choose whether the location is active or archived.');
+    const modelPath = storedModelPath(body.model_3d_path);
     const record = unwrap(await database.from('locations')
-      .select('id,kind,parent_building_id')
+      .select('id,name')
       .eq('id', id)
       .maybeSingle());
     if (!record) throw new HttpError(404, 'Location not found.');
-    if (active && record.kind === 'facility' && record.parent_building_id) {
-      const parent = unwrap(await database.from('locations').select('active').eq('id', record.parent_building_id).maybeSingle());
-      if (!parent?.active) throw new HttpError(409, 'Restore the parent building before restoring this facility.');
-    }
-    await updateById('locations', id, { active }, 'Location not found.');
-    await audit(user, active ? 'restore' : 'archive', 'location', id);
-    return success({ id, active });
+    await updateById('locations', id, { model_3d_path: modelPath }, 'Location not found.');
+    await audit(user, 'update', 'location', id, { name: record.name, model_3d_path: modelPath });
+    return success({ id, model_3d_path: modelPath });
   }
 
   if (method === 'DELETE') {
@@ -251,7 +235,6 @@ async function locations(event, method, body, query) {
       .eq('id', id)
       .maybeSingle());
     if (!record) throw new HttpError(404, 'Location not found.');
-    if (record.active) throw new HttpError(409, 'Archive this record before permanently deleting it.');
 
     const checks = await Promise.all([
       database.from('rooms').select('id', { count: 'exact', head: true }).eq('building_id', id),
@@ -263,7 +246,7 @@ async function locations(event, method, body, query) {
     ]);
     for (const result of checks) if (result.error) throw result.error;
     if (checks.some(result => (result.count || 0) > 0)) {
-      throw new HttpError(409, 'This archived record still has rooms, map markers, photos, or floor plans linked to it. Remove those linked records first.');
+      throw new HttpError(409, 'This record still has rooms, map markers, photos, floor plans, or announcements linked to it. Remove those linked records first.');
     }
 
     unwrap(await database.from('locations').delete().eq('id', id).select('id').single());
@@ -353,28 +336,14 @@ async function rooms(event, method, body, query) {
 
   if (method === 'PATCH') {
     const id = positiveId(body.id ?? query.id);
-    const active = booleanValue(body.active, 'Archive status');
-    if (active === null) throw new HttpError(400, 'Choose whether the room is active or archived.');
-    const record = unwrap(await database.from('rooms').select('id,building_id').eq('id', id).maybeSingle());
-    if (!record) throw new HttpError(404, 'Room not found.');
-    if (active) {
-      const building = unwrap(await database.from('locations').select('active,kind').eq('id', record.building_id).maybeSingle());
-      if (!building?.active || building.kind !== 'building') throw new HttpError(409, 'Restore the parent building before restoring this room.');
-    }
-    await updateById('rooms', id, { active }, 'Room not found.');
-    await audit(user, active ? 'restore' : 'archive', 'room', id);
-    return success({ id, active });
-  }
-
   if (method === 'DELETE') {
     const id = positiveId(body.id ?? query.id);
     const record = unwrap(await database.from('rooms').select('id,active,route_node_id').eq('id', id).maybeSingle());
     if (!record) throw new HttpError(404, 'Room not found.');
-    if (record.active) throw new HttpError(409, 'Archive this room before permanently deleting it.');
-    if (record.route_node_id) throw new HttpError(409, 'This room is linked to a campus route node. Remove or reassign that map connection before permanently deleting the room.');
+    if (record.route_node_id) throw new HttpError(409, 'This room is linked to a campus route node. Remove or reassign that map connection before deleting the room.');
     const photos = await database.from('facility_photos').select('id', { count: 'exact', head: true }).eq('room_id', id);
     if (photos.error) throw photos.error;
-    if (photos.count) throw new HttpError(409, 'Remove this room’s gallery photos before permanently deleting it.');
+    if (photos.count) throw new HttpError(409, 'Remove this room’s gallery photos before deleting it.');
     unwrap(await database.from('rooms').delete().eq('id', id).select('id').single());
     await audit(user, 'delete', 'room', id);
     return success({ id, deleted: true });
