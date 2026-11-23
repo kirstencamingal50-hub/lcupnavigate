@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
       ['Department',place.departmentName],['Contact email',place.contactEmail],['Contact phone',place.contactPhone],
       ['Service hours',place.serviceHours],['Days open',place.daysOpen],['Lunch break',place.lunchBreak],
       ['Services',place.services],['Nearby landmarks',place.nearbyLandmarks],
-      ['Accessibility',place.accessibilityStatus===null||place.accessibilityStatus===undefined||place.accessibilityStatus===''?'N/A':([true,1,'1','true','t','yes'].includes(typeof place.accessibilityStatus==='string'?place.accessibilityStatus.trim().toLowerCase():place.accessibilityStatus)?'Accessible':'Not accessible')],
+      ['Accessibility',place.accessibilityStatus===null||place.accessibilityStatus===undefined||place.accessibilityStatus===''?'':([true,1,'1','true','t','yes'].includes(typeof place.accessibilityStatus==='string'?place.accessibilityStatus.trim().toLowerCase():place.accessibilityStatus)?'Accessible':'Not accessible')],
     ].filter(([,value])=>value!==null&&value!==undefined&&String(value).trim()!=='');
     content.innerHTML=`<section class="location-name-card relative isolate overflow-hidden rounded-[28px] bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 p-6 shadow-xl md:p-8" ${nameCardPhoto?'data-has-photos="true"':''}>
       ${photos.length?'<div class="location-photo-slides" aria-label="Location photos">'+photos.map((photo,index)=>`<img src="${esc(mediaSrc(photo.image))}" alt="${esc(photo.caption||photo.altText||place.name)}" class="location-photo-slide" ${index===0?'':'hidden'}>`).join('')+'</div>':''}
