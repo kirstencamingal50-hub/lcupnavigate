@@ -166,7 +166,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const requestClose=async()=>{if(form.dataset.dirty==='true'&&!await window.AdminUI.confirm({title:'Discard unsaved changes?',message:'Your edits will be lost if you close this form.',confirmLabel:'Discard changes',danger:true}))return;form.dataset.dirty='false';dialog.close();};
     form.addEventListener('input',event=>{if(!event.target.matches('[data-model-file]'))form.dataset.dirty='true';});form.addEventListener('change',event=>{if(!event.target.matches('[data-model-file]'))form.dataset.dirty='true';});
     dialog.querySelectorAll('[data-gallery-owner]').forEach(section=>{
-      const item=locations.find(row=>String(row.id)===section.dataset.galleryId)||rooms.find(row=>String(row.id)===section.dataset.galleryId);
+      const source=section.dataset.galleryOwner==='room'?rooms:locations;
+      const item=source.find(row=>String(row.id)===section.dataset.galleryId);
       section._galleryPhotos=[...new Map((item?.photos||[]).filter(photo=>photo?.image).map(photo=>[imageSrc(photo.image),photo])).values()];
     });
     dialog.addEventListener('change',event=>{
