@@ -19,6 +19,37 @@ document.addEventListener('DOMContentLoaded', async () => {
   const normalizeKind=value=>String(value??'').trim().toLowerCase().replace(/[ _-]+/g,' ');
   const isLocationKind=(item,kind)=>normalizeKind(item?.kind)===normalizeKind(kind);
   const refresh=async()=>{const [locationResult,roomResult,categoryResult,directoryResult]=await Promise.allSettled([CampusApi.get('locations'),CampusApi.get('rooms'),CampusApi.get('categories'),CampusApi.get('directory')]);locationLoadError=locationResult.status==='rejected'?locationResult.reason:null;roomLoadError=roomResult.status==='rejected'?roomResult.reason:null;const locationRows=locationResult.status==='fulfilled'&&Array.isArray(locationResult.value)?locationResult.value:[];const roomRows=roomResult.status==='fulfilled'&&Array.isArray(roomResult.value)?roomResult.value:[];categories=categoryResult.status==='fulfilled'&&Array.isArray(categoryResult.value)?categoryResult.value:[];const directory=directoryResult.status==='fulfilled'&&directoryResult.value?directoryResult.value:{locations:[],rooms:[]};locations=locationRows.map(item=>{const publicRecord=(directory.locations||[]).find(record=>String(record.id)===String(item.id));return {...item,image:publicRecord?.image||null,photos:publicRecord?.photos||[]};});rooms=roomRows.map(item=>{const publicRecord=(directory.rooms||[]).find(record=>String(record.id)===String(item.id));return {...item,image:publicRecord?.image||null,photos:publicRecord?.photos||[]};});if(locationLoadError)console.error('NaviGATE locations request failed:',locationLoadError);if(roomLoadError)console.error('NaviGATE rooms request failed:',roomLoadError);if(categoryResult.status==='rejected')console.warn('NaviGATE categories could not be loaded.',categoryResult.reason);if(directoryResult.status==='rejected')console.warn('NaviGATE photo directory could not be loaded.',directoryResult.reason);};
+  const arrangeAddForm=(form,kind)=>{
+    if(!form||form.dataset.editLayoutApplied)return;
+    form.dataset.editLayoutApplied='true';
+    const wrapperFor=name=>form.querySelector(`[name="${name}"]`)?.closest('label,[data-add-section]')||null;
+    const take=name=>wrapperFor(name);
+    const ordered=kind==='room'
+      ? ['name','room','buildingId','category_ids','floor','capacity','description','accessibility_features','contact_email','contact_phone','service_hours','days_open','lunch_break','accessibility_status']
+      : ['name','category_ids',...(kind==='building'?['building_number','floors']:[]),'capacity','description','accessibility_features','contact_email','contact_phone','service_hours','days_open','lunch_break','accessibility_status'];
+    const nodes=[],used=new Set();
+    for(const name of ordered){const node=take(name);if(node&&!used.has(node)){nodes.push(node);used.add(node);}}
+    if(kind!=='room'){
+      const photo=take('photo'),model=take('model_3d_file');
+      if(photo){photo.classList.add('admin-edit-wide');nodes.push(photo);used.add(photo);}
+      if(model){model.classList.add('admin-edit-wide');nodes.push(model);used.add(model);}
+    }
+    const statusRow=form.querySelector('[id$="-form-status"]')?.parentElement;
+    for(const node of [...form.children])if(!used.has(node)&&node!==statusRow){
+      if(node.matches('label,fieldset,[data-add-section]')&&node.querySelector('[name="accessibility_details"]')){node.remove();continue;}
+      if(node.querySelector('[name="accessibility_features"]')){node.classList.add('admin-edit-wide');nodes.splice(Math.max(0,nodes.findIndex(item=>item.querySelector('[name="contact_email"]'))),0,node);used.add(node);}
+    }
+    form.replaceChildren(...nodes,...(statusRow?[statusRow]:[]));
+    const nameLabel=take('name')?.querySelector('span,.admin-field-label');
+    if(nameLabel)nameLabel.textContent=kind==='room'?'Room name':kind==='building'?'Name':'Name';
+    const numberLabel=take('room')?.querySelector('span,.admin-field-label');if(numberLabel)numberLabel.textContent='Room number';
+    const buildingLabel=take('buildingId')?.querySelector('span,.admin-field-label');if(buildingLabel)buildingLabel.textContent='Building';
+    const floorLabel=take('floor')?.querySelector('span,.admin-field-label');if(floorLabel)floorLabel.textContent='Floor level';
+    const descriptionLabel=take('description')?.querySelector('span,.admin-field-label');if(descriptionLabel)descriptionLabel.textContent='Description';
+    const capacityLabel=take('capacity')?.querySelector('span,.admin-field-label');if(capacityLabel)capacityLabel.textContent=kind==='room'?'Maximum capacity':'Capacity';
+    form.classList.add('admin-edit-fields','catalog-add-fields');
+    form.querySelectorAll('input,select,textarea').forEach(control=>{if(control.type!=='checkbox'&&control.type!=='file')control.classList.add('admin-edit-control');});
+  };
   const statusNode=()=>document.querySelector('#building-form-status,#facility-form-status,#classroom-form-status,#category-status');
   const status=message=>{const node=statusNode();if(node)node.textContent=message;};
   const notify=(message,tone='success')=>window.AdminUI?.toast(message,tone);
@@ -326,7 +357,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const preview=form.querySelector('[data-photo-preview]');if(form.elements.photo&&preview)window.CampusPhotoTools?.bindPreview(form.elements.photo,preview);
       enhanceDropdownFields(form);
       const kind=form===buildingForm?'building':form===facilityForm?'facility':'room';
-      form.classList.add('admin-edit-fields','catalog-add-fields');
+      arrangeAddForm(form,kind);
       const actionRow=form.querySelector('button[type="submit"]')?.parentElement;
       if(actionRow){actionRow.classList.add('admin-edit-actions','admin-edit-wide');}
       const submitButton=form.querySelector('button[type="submit"]');
