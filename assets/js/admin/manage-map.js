@@ -100,6 +100,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (button.dataset.action === 'edit-marker') {
         const marker = map.markers.find(item => Number(item.id) === id); if (!marker) return;
         editing = id; form.elements.location_id.value = String(marker.location_id);
+        form.elements.location_id.dispatchEvent(new Event('change'));
         form.elements.accessibility_status.value = marker.accessibility_value === null ? '' : String(marker.accessibility_value);
         form.elements.x.value = marker.x; form.elements.y.value = marker.y; position(marker.x, marker.y);
         $('save-landmark').textContent = 'Save Changes'; $('cancel-landmark-edit').hidden = false;
