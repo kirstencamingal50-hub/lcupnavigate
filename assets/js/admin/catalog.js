@@ -56,11 +56,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   const multiSelectField=(label,name,options,selected=[])=>`<label class="admin-edit-wide">${label} <span class="text-red-600" aria-label="required">*</span><select name="${name}" multiple size="${Math.min(6,Math.max(3,categories.length))}" required class="catalog-multi-category">${catOptions(selected)}</select><small class="block text-slate-500">Select one or more categories. Use Ctrl (Windows) or Command (Mac) to select multiple.</small></label>`;
   const areaField=(label,name,value,max=1000)=>`<label class="admin-edit-wide">${label}<textarea name="${name}" rows="2" maxlength="${max}">${esc(value||'')}</textarea></label>`;
   const accessibilityFeatureOptions=[
-    ['wheelchair_entrance','Wheelchair-accessible entrance'],['elevator','Elevator'],['ramp','Ramp'],
-    ['accessible_restroom','Accessible restroom'],['accessible_parking','Accessible parking'],['handrails','Handrails'],
-    ['tactile_paving','Tactile paving'],['braille_signage','Braille signage'],['hearing_assistance','Hearing assistance']
+    ['wheelchair_accessibility','Wheelchair accessibility'],
+    ['elevator','Elevator'],
+    ['accessible_restroom','Accessible restroom'],
+    ['accessible_parking','Accessible parking'],
+    ['handrails','Handrails'],
+    ['braille_signage','Braille signage']
   ];
-  const accessibilityFeatureFields=selected=>`<fieldset class="admin-edit-wide rounded-xl border border-blue-100 bg-blue-50/60 p-4"><legend class="px-1 font-bold">Accessibility features</legend><p class="mb-3 text-xs text-slate-500">Select the accessibility features confirmed for this location.</p><div class="grid gap-2 sm:grid-cols-2">${accessibilityFeatureOptions.map(([value,label])=>`<label class="flex items-center gap-2 text-xs"><input type="checkbox" name="accessibility_features" value="${value}" ${selected.includes(value)?'checked':''}>${label}</label>`).join('')}</div></fieldset>`;
+  const accessibilityFeatureFields=selected=>{
+    const legacyWheelchairOptions=['wheelchair_entrance','ramp','tactile_paving'];
+    const normalized=selected.includes('wheelchair_accessibility')||legacyWheelchairOptions.some(value=>selected.includes(value))
+      ? [...selected.filter(value=>!legacyWheelchairOptions.includes(value)),'wheelchair_accessibility']
+      : selected;
+    return `<fieldset class="admin-edit-wide rounded-xl border border-blue-100 bg-blue-50/60 p-4"><legend class="px-1 font-bold">Accessibility features</legend><p class="mb-3 text-xs text-slate-500">Select the accessibility features confirmed for this location.</p><div class="grid gap-2 sm:grid-cols-2">${accessibilityFeatureOptions.map(([value,label])=>`<label class="flex items-center gap-2 text-xs"><input type="checkbox" name="accessibility_features" value="${value}" ${normalized.includes(value)?'checked':''}>${label}</label>`).join('')}</div></fieldset>`;
+  };
   const serviceHourOptions=['Select service hours','8:00 AM – 5:00 PM','8:00 AM – 12:00 PM','1:00 PM – 5:00 PM','7:00 AM – 4:00 PM','24 hours','By appointment','Varies'];
   const dayOptions=['Select days open','Monday – Friday','Monday – Saturday','Monday – Sunday','Weekdays only','Weekends only','By appointment','Closed'];
   const lunchOptions=['Select lunch hours','12:00 PM – 1:00 PM','12:00 PM – 12:30 PM','12:00 PM – 1:30 PM','No lunch break','Varies'];
