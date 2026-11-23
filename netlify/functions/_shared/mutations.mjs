@@ -334,8 +334,6 @@ async function rooms(event, method, body, query) {
     return success({ id: savedId }, id ? 200 : 201);
   }
 
-  if (method === 'PATCH') {
-    const id = positiveId(body.id ?? query.id);
   if (method === 'DELETE') {
     const id = positiveId(body.id ?? query.id);
     const record = unwrap(await database.from('rooms').select('id,active,route_node_id').eq('id', id).maybeSingle());
