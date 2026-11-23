@@ -136,8 +136,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('saved-routes-list').innerHTML = rows.length ? `<div class="overflow-x-auto"><table class="w-full min-w-[760px] text-left text-xs"><thead><tr><th class="p-3">Route</th><th class="p-3">Start → destination</th><th class="p-3">Distance</th><th class="p-3">Accessibility</th><th class="p-3">Status</th><th class="p-3 text-right">Actions</th></tr></thead><tbody>${rows.map(route => {const label=({active:'Completed',inactive:'Inactive',draft:'Draft',incomplete:'Incomplete'})[route.status]||route.status;const badge=route.status==='active'?'bg-emerald-50 text-emerald-800':route.status==='incomplete'?'bg-amber-50 text-amber-800':'bg-slate-100 text-slate-700';return `<tr class="border-t border-slate-100"><td class="p-3"><strong>${esc(route.name)}</strong>${route.notes?`<small class="mt-1 block whitespace-normal break-words text-slate-600">${esc(route.notes)}</small>`:''}<small class="mt-1 block text-slate-500">Updated ${esc(new Date(route.updated_at).toLocaleString())}</small></td><td class="p-3">${esc(route.start_name)} → ${esc(route.destination_name)}${route.landmark_marker_id?`<small class="mt-1 block text-blue-700">Landmark draft · ${esc(route.start_x)}, ${esc(route.start_y)}</small>`:''}</td><td class="p-3">${route.distance_map_units === null ? 'Unavailable' : `${Number(route.distance_map_units).toFixed(1)} map units`}</td><td class="p-3">${route.accessibility_status === null ? 'Unspecified' : Number(route.accessibility_status) ? 'Accessible' : 'Not accessible'}</td><td class="p-3"><span class="rounded-full px-2 py-1 ${badge}">${esc(label)}</span></td><td class="p-3 text-right"><div class="flex justify-end gap-2"><button type="button" data-route-action="edit" data-id="${route.id}" class="font-bold text-blue-700">Edit</button>${route.status==='active'||route.status==='inactive'?`<button type="button" data-route-action="toggle" data-id="${route.id}" class="font-bold text-amber-700">${route.status==='active'?'Deactivate':'Reactivate'}</button>`:''}<button type="button" data-route-action="delete" data-id="${route.id}" class="font-bold text-red-700">Delete</button></div></td></tr>`}).join('')}</tbody></table></div>` : '<p class="p-5 text-center text-xs text-slate-500">No saved routes match this filter.</p>';
   }
 
+  function hasTwoValidEndpoints(route) {
+    const startId = route.start_marker_id;
+    const destinationId = route.destination_marker_id;
+    if (startId === null || startId === undefined || String(startId).trim() === '' ||
+        destinationId === null || destinationId === undefined || String(destinationId).trim() === '' ||
+        String(startId) === String(destinationId)) return false;
+    return Boolean(byId(startId) && byId(destinationId));
+  }
+
   async function refresh() {
     [mapData,routes] = await Promise.all([CampusApi.get('map/admin'),CampusApi.get('routes')]);
+
+    // Keep only routes with two distinct endpoint markers that still exist on the campus map.
+    const invalidRoutes = routes.filter(route => !hasTwoValidEndpoints(route));
+    if (invalidRoutes.length) {
+      const results = await Promise.allSettled(invalidRoutes.map(route => CampusApi.remove('routes', route.id)));
+      const failed = results.filter(result => result.status === 'rejected');
+      routes = routes.filter(hasTwoValidEndpoints);
+      if (failed.length) {
+        status(`Removed ${invalidRoutes.length - failed.length} incomplete route(s). ${failed.length} route(s) could not be deleted; they are hidden from this list.`);
+        window.AdminUI?.toast(`${failed.length} incomplete route(s) could not be deleted.`, 'error');
+      } else {
+        status(`Permanently deleted ${invalidRoutes.length} route(s) missing a valid start and final destination.`);
+        window.AdminUI?.toast(`Deleted ${invalidRoutes.length} incomplete route(s).`);
+      }
+    }
+
     fillEndpointSelect(startSelect,startSearch.value,startSelect.value);
     fillEndpointSelect(endSelect,endSearch.value,endSelect.value);
     draw(); renderRoutes();
