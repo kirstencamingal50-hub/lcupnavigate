@@ -784,18 +784,108 @@ async function routes(event, method, body, query) {
   if (method === 'DELETE') {
     const id = positiveId(body.id ?? query.id);
 
+    const existing = unwrap(await database
+      .from('campus_routes')
+      .select('id')
+      .eq('id', id)
+      .maybeSingle());
+    if (!existing) throw new HttpError(404, 'Saved route not found.');
+
+    // Route geometry is stored separately from the route header. Remove its
+    // ordered points and segment links first so deleted routes cannot leave
+    // stale geometry behind in the public map's walkway layer.
+    const routePoints = unwrap(await database
+      .from('campus_route_points')
+      .select('node_id')
+      .eq('route_id', id)) || [];
+    const routeSegments = unwrap(await database
+      .from('campus_route_segments')
+      .select('connection_id')
+      .eq('route_id', id)) || [];
+
+    const generatedNodeIds = [...new Set(routePoints
+      .map(point => Number(point.node_id))
+      .filter(Number.isSafeInteger)
+      .filter(Boolean))];
+    const segmentConnectionIds = [...new Set(routeSegments
+      .map(segment => Number(segment.connection_id))
+      .filter(Number.isSafeInteger)
+      .filter(Boolean))];
+
+    // Only remove route-generated nodes and their exclusive connections.
+    // Marker-owned nodes and connections shared by another saved route remain.
+    let ownedNodeIds = [];
+    if (generatedNodeIds.length) {
+      const nodes = unwrap(await database
+        .from('map_nodes')
+        .select('id,node_key')
+        .in('id', generatedNodeIds)) || [];
+      ownedNodeIds = nodes
+        .filter(node => String(node.node_key || '').startsWith(`route-${id}-`))
+        .map(node => Number(node.id));
+    }
+
+    unwrap(await database.from('campus_route_segments').delete().eq('route_id', id));
+    unwrap(await database.from('campus_route_points').delete().eq('route_id', id));
+
+    const candidateConnectionIds = new Set(segmentConnectionIds);
+    if (ownedNodeIds.length) {
+      const ownedConnections = unwrap(await database
+        .from('map_connections')
+        .select('id,from_node_id,to_node_id')
+        .or(`from_node_id.in.(${ownedNodeIds.join(',')}),to_node_id.in.(${ownedNodeIds.join(',')})`)) || [];
+      ownedConnections.forEach(connection => candidateConnectionIds.add(Number(connection.id)));
+    }
+
+    const connectionIds = [...candidateConnectionIds].filter(Number.isSafeInteger);
+    if (connectionIds.length) {
+      const remainingReferences = unwrap(await database
+        .from('campus_route_segments')
+        .select('connection_id')
+        .in('connection_id', connectionIds)) || [];
+      const referencedIds = new Set(remainingReferences.map(row => Number(row.connection_id)));
+      const orphanConnectionIds = connectionIds.filter(connectionId => !referencedIds.has(connectionId));
+      if (orphanConnectionIds.length) {
+        unwrap(await database.from('map_connections').delete().in('id', orphanConnectionIds));
+      }
+    }
+
     const removed = unwrap(await database
       .from('campus_routes')
       .delete()
       .eq('id', id)
       .select('id')
       .maybeSingle());
-
     if (!removed) throw new HttpError(404, 'Saved route not found.');
+
+    if (ownedNodeIds.length) {
+      const markerReferences = unwrap(await database
+        .from('map_markers')
+        .select('route_node_id')
+        .in('route_node_id', ownedNodeIds)) || [];
+      const pointReferences = unwrap(await database
+        .from('campus_route_points')
+        .select('node_id')
+        .in('node_id', ownedNodeIds)) || [];
+      const connectionReferences = unwrap(await database
+        .from('map_connections')
+        .select('id')
+        .or(`from_node_id.in.(${ownedNodeIds.join(',')}),to_node_id.in.(${ownedNodeIds.join(',')})`)) || [];
+      const stillUsed = new Set([
+        ...markerReferences.map(row => Number(row.route_node_id)),
+        ...pointReferences.map(row => Number(row.node_id))
+      ]);
+      if (!connectionReferences.length) {
+        const unusedNodeIds = ownedNodeIds.filter(nodeId => !stillUsed.has(nodeId));
+        if (unusedNodeIds.length) {
+          unwrap(await database.from('map_nodes').delete().in('id', unusedNodeIds));
+        }
+      }
+    }
 
     await audit(user, 'delete', 'campus_route', id);
 
-    return success({ id, walkways_preserved: true });
+    return success({ id, route_geometry_deleted: true, shared_walkways_preserved: true });
   }
 
   if (method !== 'POST' && method !== 'PUT') {
