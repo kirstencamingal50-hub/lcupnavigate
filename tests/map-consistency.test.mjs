@@ -55,7 +55,11 @@ test('Netlify map queries use schema foreign keys and frontend-compatible direct
   assert.ok(mapPage.includes(".sort((a,b)=>Number(a.sequence_no)-Number(b.sequence_no))"));
   // The selected visitor path must use the same saved waypoint sequence as the graph.
   assert.match(mapPage, /let points = \(route\.points \|\| \[\]\)\s*\.filter\(point => point\.node_id && graph\[`n:\$\{point\.node_id\}`\]\)\s*\.sort\(\(a,b\)=>Number\(a\.sequence_no\)-Number\(b\.sequence_no\)\);/);
-  // Keep the faint blue walkway network above the opaque campus map image.
+  // The public map shows the selected route by default; the general walkway
+  // network is optional so old/shared connections do not look like saved routes.
+  assert.match(mapPage, /id="netToggleBox" class=/);
+  assert.doesNotMatch(mapPage, /id="netToggleBox" checked/);
+  // Keep the faint blue walkway network available when visitors enable it.
   assert.ok(mapPage.includes("opacity: 0.28, lineCap: 'round', lineJoin: 'round', interactive: false"));
   assert.ok(!mapPage.includes('networkLayer.eachLayer(l => l.bringToBack())'));
   assert.ok(mapPage.includes('If an administrator published this exact origin/destination pair'));
