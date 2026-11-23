@@ -22,7 +22,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const arrangeAddForm=(form,kind)=>{
     if(!form||form.dataset.editLayoutApplied)return;
     form.dataset.editLayoutApplied='true';
-    const wrapperFor=name=>name==='accessibility_features'
+    const wrapperFor=name=>name==='photo'&&form.querySelector('.catalog-add-photo-panel')
+      ?form.querySelector('.catalog-add-photo-panel')
+      :name==='accessibility_features'
       ?form.querySelector('.catalog-checklist-dropdown')||form.querySelector('fieldset:has([name="accessibility_features"])')
       :name==='category_ids'
         ?form.querySelector('[data-category-dropdown]')
@@ -33,9 +35,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       : ['name','category_ids',...(kind==='building'?['floors']:[]),'capacity','description','accessibility_features','contact_email','contact_phone','service_hours','days_open','lunch_break','accessibility_status'];
     const nodes=[],used=new Set();
     for(const name of ordered){const node=take(name);if(node&&!used.has(node)){nodes.push(node);used.add(node);}}
+    const photo=take('photo');
+    if(photo){photo.classList.add('admin-edit-wide');nodes.push(photo);used.add(photo);}
     if(kind!=='room'){
-      const photo=take('photo'),model=take('model_3d_file');
-      if(photo){photo.classList.add('admin-edit-wide');nodes.push(photo);used.add(photo);}
+      const model=take('model_3d_file');
       if(model){model.classList.add('admin-edit-wide');nodes.push(model);used.add(model);}
     }
     const statusRow=form.querySelector('[id$="-form-status"]')?.parentElement;
@@ -253,7 +256,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const fields=control.querySelector('[data-service-time-fields]');
     const hidden=control.querySelector('[name="service_hours"]');
     const hint=control.querySelector('[data-service-hours-hint]');
-    if(fields)fields.hidden=mode!=='custom';
+    if(fields){
+      const showTimes=mode==='custom';
+      fields.hidden=!showTimes;
+      fields.style.display=showTimes?'grid':'none';
+      fields.setAttribute('aria-hidden',String(!showTimes));
+    }
     if(hidden)hidden.value=mode==='custom'?(open&&close?`${formatServiceTime(open)} – ${formatServiceTime(close)}`:'') : mode;
     if(hint)hint.textContent=mode==='custom'?'Choose the opening and closing times.':'The selected schedule will be saved as the service hours.';
   };
@@ -271,6 +279,57 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
   document.addEventListener('input',event=>{const control=event.target.closest?.('[data-service-hours-control]');if(control)syncServiceHours(control);});
   document.addEventListener('change',event=>{const control=event.target.closest?.('[data-service-hours-control]');if(control)syncServiceHours(control);});
+  const ensureAddModelField=form=>{
+    if(!form||form===roomForm||form.querySelector('[name="model_3d_file"]'))return;
+    const section=document.createElement('section');
+    section.className='admin-edit-wide catalog-model-panel';
+    section.dataset.addSection='';
+    section.innerHTML=`<div class="catalog-section-heading"><div><h3>3D Model</h3><p>Optionally upload a GLB model and preview it before adding this campus location.</p></div><span class="catalog-count">Optional</span></div>
+      <div class="catalog-model-upload"><span class="admin-field-label">Choose 3D model (.glb)</span><input name="model_3d_file" type="file" accept=".glb,model/gltf-binary,application/octet-stream"></div>
+      <p data-add-model-name class="text-xs text-slate-500 mt-2">No 3D model selected.</p>
+      <model-viewer data-add-model-preview class="w-full mt-3 rounded-xl" style="height:260px;background:#eef3f8;display:none" camera-controls auto-rotate shadow-intensity="1" exposure="1" environment-image="neutral" alt="3D preview of the selected campus model"></model-viewer>
+      <button type="button" data-add-model-clear class="admin-button-secondary mt-2" hidden>Remove selected model</button>`;
+    form.append(section);
+    if(!document.querySelector('script[data-model-viewer-loader]')){
+      const script=document.createElement('script');
+      script.type='module';
+      script.src='https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
+      script.dataset.modelViewerLoader='';
+      document.head.append(script);
+    }
+    const input=section.querySelector('[name="model_3d_file"]');
+    const viewer=section.querySelector('[data-add-model-preview]');
+    const name=section.querySelector('[data-add-model-name]');
+    const clear=section.querySelector('[data-add-model-clear]');
+    let previewUrl=null;
+    const clearPreview=()=>{
+      if(previewUrl)URL.revokeObjectURL(previewUrl);
+      previewUrl=null;
+      viewer.removeAttribute('src');
+      viewer.style.display='none';
+      name.textContent='No 3D model selected.';
+      clear.hidden=true;
+      input.value='';
+    };
+    input.addEventListener('change',()=>{
+      const file=input.files?.[0];
+      if(previewUrl)URL.revokeObjectURL(previewUrl);
+      previewUrl=null;
+      if(!file){clearPreview();return;}
+      if(!/\.glb$/i.test(file.name)||file.size>50*1024*1024){
+        window.AdminUI?.toast(file.size>50*1024*1024?'The 3D model must be 50 MB or smaller.':'Choose a .glb 3D model file.','error');
+        clearPreview();
+        return;
+      }
+      previewUrl=URL.createObjectURL(file);
+      viewer.src=previewUrl;
+      viewer.style.display='block';
+      name.textContent=file.name;
+      clear.hidden=false;
+    });
+    clear.addEventListener('click',clearPreview);
+    form.addEventListener('reset',()=>setTimeout(clearPreview,0));
+  };
   const dayOptions=['Select days open','Monday – Friday','Monday – Saturday','Monday – Sunday','Weekdays only','Weekends only','By appointment','Closed'];
   const lunchOptions=['Select lunch hours','12:00 PM – 1:00 PM','12:00 PM – 12:30 PM','12:00 PM – 1:30 PM','No lunch break','Varies'];
   const floorOptions=['Ground Level','2nd Floor','3rd Floor','4th Floor','5th Floor','6th Floor','7th Floor','8th Floor','9th Floor','10th Floor','Basement'];
@@ -507,13 +566,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     for(const form of [buildingForm,facilityForm,roomForm].filter(Boolean)){
       if(form.elements.category_ids)form.elements.category_ids.innerHTML=catOptions([]);
       if(form.elements.buildingId)form.elements.buildingId.innerHTML=buildingOptions();
-      const preview=form.querySelector('[data-photo-preview]');if(form.elements.photo&&preview){
+      const preview=form.querySelector('[data-photo-preview]');
+      if(form.elements.photo&&preview){
+        const photoLabel=form.elements.photo.closest('label');
+        if(photoLabel&&!photoLabel.closest('.catalog-add-photo-panel')){
+          const photoPanel=document.createElement('section');
+          photoPanel.className='admin-edit-wide catalog-gallery-panel catalog-add-photo-panel';
+          const photoTitle=form===roomForm?'Room or Office Photo':form===facilityForm?'Facility Photo':'Building Photo';
+          photoPanel.innerHTML=`<div class="catalog-section-heading"><div><h3>${photoTitle}</h3><p>Upload the main photo visitors will see in the campus directory.</p></div><span class="catalog-count">Optional</span></div><div class="catalog-gallery-upload catalog-add-photo-upload"></div>`;
+          photoLabel.before(photoPanel);
+          photoPanel.querySelector('.catalog-add-photo-upload').append(photoLabel);
+          photoLabel.classList.add('catalog-add-photo-field');
+        }
         window.CampusPhotoTools?.bindPreview(form.elements.photo,preview);
+        preview.classList.add('catalog-add-photo-preview');
         const progress=document.createElement('div');progress.className='catalog-photo-progress';progress.dataset.addPhotoProgress='';progress.hidden=true;
         progress.innerHTML='<div><span data-add-photo-label>Uploading photo</span><strong data-add-photo-value>0%</strong></div><progress max="100" value="0" data-add-photo-bar></progress>';
         preview.after(progress);
       }
       enhanceServiceHoursFields(form);
+      ensureAddModelField(form);
       enhanceDropdownFields(form);
       const kind=form===buildingForm?'building':form===facilityForm?'facility':'room';
       arrangeAddForm(form,kind);
@@ -527,11 +599,11 @@ document.addEventListener('DOMContentLoaded', async () => {
           const photoProgress=form.querySelector('[data-add-photo-progress]'),photoBar=photoProgress?.querySelector('[data-add-photo-bar]'),photoValue=photoProgress?.querySelector('[data-add-photo-value]'),photoLabel=photoProgress?.querySelector('[data-add-photo-label]');
           const setAddPhotoProgress=percent=>{if(photoProgress)photoProgress.hidden=false;if(photoBar)photoBar.value=percent;if(photoValue)photoValue.textContent=percent+'%';if(photoLabel)photoLabel.textContent=percent>=100?'Saving photo details…':'Uploading photo';};
           if(form.elements.photo?.files?.length&&photoProgress)photoProgress.hidden=false;
-          const image_path=form===roomForm?null:await upload(form.elements.photo,'photo',setAddPhotoProgress);let payload,resource;
+          const image_path=await upload(form.elements.photo,'photo',setAddPhotoProgress);let payload,resource;
           if(form===buildingForm){resource='locations';const model_3d_path=await upload(form.elements.model_3d_file,'model');payload={model_3d_path,name:form.elements.name.value.trim(),kind:'building',category_ids:selectedCategoryIds(form),description:optionalText(form,'description'),floor_count:Number(form.elements.floors.value),capacity:form.elements.capacity.value===''?null:Number(form.elements.capacity.value),image_path,...detailPayload(form),accessibility_features:[...form.querySelectorAll('[name="accessibility_features"]:checked')].map(control=>control.value)};}
           else if(form===facilityForm){resource='locations';const model_3d_path=await upload(form.elements.model_3d_file,'model');payload={model_3d_path,name:form.elements.name.value.trim(),kind:'facility',category_ids:selectedCategoryIds(form),parent_building_id:null,floor_label:null,description:optionalText(form,'description'),floor_count:1,capacity:form.elements.capacity.value===''?null:Number(form.elements.capacity.value),image_path,...detailPayload(form)};}
-          else{resource='rooms';payload={name:form.elements.name.value.trim(),building_id:Number(form.elements.buildingId.value),category_ids:selectedCategoryIds(form),room_number:form.elements.room.value.trim(),floor_label:form.elements.floor.value.trim(),floor_number:Number((form.elements.floor.value.match(/\d+/)||[])[0]||0),capacity:form.elements.capacity.value===''?null:Number(form.elements.capacity.value),department_head:optionalText(form,'head'),description:optionalText(form,'description'),function_description:optionalText(form,'function_description'),...detailPayload(form)};}
-          await CampusApi.save(resource,payload);await refresh();renderAll();form.reset();if(form.elements.floors)form.elements.floors.value='1';if(form.elements.floor)form.elements.floor.value='Ground Level';if(form.elements.capacity)form.elements.capacity.value='0';formDialog?.close();if(photoProgress)photoProgress.hidden=true;status('Saved to the campus database.');notify(`${kind[0].toUpperCase()+kind.slice(1)} added successfully.`);
+          else{resource='rooms';payload={name:form.elements.name.value.trim(),building_id:Number(form.elements.buildingId.value),category_ids:selectedCategoryIds(form),room_number:form.elements.room.value.trim(),floor_label:form.elements.floor.value.trim(),floor_number:Number((form.elements.floor.value.match(/\d+/)||[])[0]||0),capacity:form.elements.capacity.value===''?null:Number(form.elements.capacity.value),department_head:optionalText(form,'head'),description:optionalText(form,'description'),function_description:optionalText(form,'function_description'),image_path,...detailPayload(form)};}
+          await CampusApi.save(resource,payload);await refresh();renderAll();form.reset();form.querySelectorAll('[data-photo-preview]').forEach(preview=>{preview.removeAttribute('src');preview.hidden=true;});if(form.elements.floors)form.elements.floors.value='1';if(form.elements.floor)form.elements.floor.value='Ground Level';if(form.elements.capacity)form.elements.capacity.value='0';formDialog?.close();if(photoProgress)photoProgress.hidden=true;status('Saved to the campus database.');notify(`${kind[0].toUpperCase()+kind.slice(1)} added successfully.`);
         }catch(error){status(error.message);notify(error.message,'error');}finally{button.disabled=false;}
       });
     }

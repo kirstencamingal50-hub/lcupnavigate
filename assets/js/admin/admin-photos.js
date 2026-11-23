@@ -41,19 +41,24 @@
     if (!input || !preview) return;
     let previewUrl = null;
 
-    input.addEventListener("change", () => {
+    const clearPreview = () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       previewUrl = null;
+      preview.removeAttribute("src");
+      preview.hidden = true;
+    };
+
+    input.addEventListener("change", () => {
+      clearPreview();
       const file = input.files?.[0];
-      if (!file || !file.type.startsWith("image/")) {
-        preview.removeAttribute("src");
-        preview.hidden = true;
-        return;
-      }
+      if (!file || !file.type.startsWith("image/")) return;
       previewUrl = URL.createObjectURL(file);
       preview.src = previewUrl;
       preview.hidden = false;
     });
+
+    // Clear the last selected image when the Add form is reset.
+    input.form?.addEventListener("reset", () => setTimeout(clearPreview, 0));
   };
 
   window.CampusPhotoTools = { toDataUrl, bindPreview };
