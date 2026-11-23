@@ -80,18 +80,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     container.innerHTML = filtered.map(item => {
       const kindLabel = item.kind === 'room' ? 'Room' : item.kind === 'building' ? 'Building' : 'Facility';
       const detailUrl = item.kind === 'room' ? `office.html?id=${encodeURIComponent(item.id)}` : `building.html?id=${encodeURIComponent(item.id)}`;
-      const coverPhoto = Array.isArray(item.photos) ? (item.photos.find(photo => Number(photo.isCover)) || item.photos[0]) : null;
-      const image = item.image || coverPhoto?.image || '';
+      const photoList = Array.isArray(item.photos) ? item.photos.filter(photo => photo?.image) : [];
+      const coverPhoto = photoList.find(photo => Number(photo.isCover)) || photoList[0] || null;
+      const image = coverPhoto?.image || item.image || '';
+      const slideshowPhotos = photoList.length ? photoList : (image ? [{image,caption:''}] : []);
+      const photoSlides = slideshowPhotos.map((photo,index) => `<img class="directory-card-photo${index===0?' is-active':''}" src="${escapeHtml(mediaSrc(photo.image))}" alt="" loading="${index===0?'eager':'lazy'}" decoding="async" data-directory-slide="${index}" ${index===0?'':'hidden'}>`).join('');
       const features = item.kind === 'building' && Array.isArray(item.accessibilityFeatures)
         ? item.accessibilityFeatures.filter(feature => featureLabels[feature]).map(feature => `<span class="directory-feature"><span class="material-symbols-rounded" aria-hidden="true">accessible</span>${escapeHtml(featureLabels[feature])}</span>`).join('')
         : '';
       return `<article class="directory-card">
-        <a class="directory-card-name" href="${detailUrl}" aria-label="View ${escapeHtml(item.name)}">
-          <span class="directory-card-name-fallback material-symbols-rounded" aria-hidden="true">${item.kind === 'room' ? 'meeting_room' : item.kind === 'building' ? 'location_city' : 'storefront'}</span>
-          ${image ? `<img class="directory-card-photo" src="${escapeHtml(mediaSrc(image))}" alt="" loading="lazy" decoding="async">` : ''}
-          <span class="directory-card-meta"><span class="directory-kind">${kindLabel}</span><span>${escapeHtml((item.category_names?.length ? item.category_names : [item.category]).filter(Boolean).join(' · ') || 'Campus')}</span></span>
-          <strong>${escapeHtml(item.name)}</strong>
-        </a>
+        <div class="directory-card-name" style="${image && !photoSlides ? `background-image:url('${escapeHtml(mediaSrc(image))}')` : ''}">
+          <a class="directory-card-name-link" href="${detailUrl}" aria-label="View ${escapeHtml(item.name)}">
+            <span class="directory-card-name-fallback material-symbols-rounded" aria-hidden="true">${item.kind === 'room' ? 'meeting_room' : item.kind === 'building' ? 'location_city' : 'storefront'}</span>
+            ${photoSlides}
+            <span class="directory-card-meta"><span class="directory-kind">${kindLabel}</span><span>${escapeHtml((item.category_names?.length ? item.category_names : [item.category]).filter(Boolean).join(' · ') || 'Campus')}</span></span>
+            <strong>${escapeHtml(item.name)}</strong>
+          </a>
+          ${slideshowPhotos.length>1 ? `<div class="directory-photo-controls" aria-label="Photo slideshow"><button type="button" data-photo-prev aria-label="Previous photo">‹</button><span data-photo-count>1 / ${slideshowPhotos.length}</span><button type="button" data-photo-next aria-label="Next photo">›</button></div>` : ''}
+        </div>
         <div class="directory-card-body">
           <p class="directory-card-description">${escapeHtml(item.description || 'More information is available in this directory profile.')}</p>
           ${item.parent_building ? `<p class="directory-parent"><span class="material-symbols-rounded" aria-hidden="true">location_on</span>${escapeHtml(item.parent_building)}${item.room_number ? ` · Room ${escapeHtml(item.room_number)}` : ''}</p>` : ''}
@@ -100,8 +106,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div class="directory-card-actions"><a href="map.html?search=${encodeURIComponent(item.name)}"><span class="material-symbols-rounded" aria-hidden="true">map</span>Show on map</a><a href="${detailUrl}" aria-label="View details for ${escapeHtml(item.name)}">Details<span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></a></div>
       </article>`;
     }).join('');
-    container.querySelectorAll('.directory-card-photo').forEach(photo => {
-      photo.addEventListener('error', () => photo.remove(), { once: true });
+    container.querySelectorAll('.directory-card').forEach(card => {
+      const slides=[...card.querySelectorAll('[data-directory-slide]')];
+      if(!slides.length)return;
+      let current=0;
+      const show=index=>{
+        current=(index+slides.length)%slides.length;
+        slides.forEach((slide,i)=>{slide.hidden=i!==current;slide.classList.toggle('is-active',i===current);});
+        const counter=card.querySelector('[data-photo-count]');
+        if(counter)counter.textContent=`${current+1} / ${slides.length}`;
+      };
+      card.querySelector('[data-photo-prev]')?.addEventListener('click',()=>show(current-1));
+      card.querySelector('[data-photo-next]')?.addEventListener('click',()=>show(current+1));
+      if(slides.length>1)card._photoTimer=setInterval(()=>show(current+1),4500);
+      slides.forEach(photo=>photo.addEventListener('error',()=>{photo.hidden=true;}, {once:true}));
     });
   }
 
