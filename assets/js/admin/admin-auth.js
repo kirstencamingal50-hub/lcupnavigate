@@ -432,51 +432,8 @@
     }
 
 
-    try {
-      const config = await window.CampusApi.get('auth/google-config');
-      if (!config.client_id) {
-        googleUnavailable.hidden = false;
-        googleUnavailable.dataset.configured = 'false';
-        return;
-      }
-      googleArea.dataset.configured = 'true';
-      googleArea.hidden = false;
-      googleUnavailable.dataset.configured = 'true';
-      googleUnavailable.hidden = true;
-      const script = document.createElement('script');
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.async = true;
-      script.defer = true;
-      script.onload = () => {
-        window.google.accounts.id.initialize({
-          client_id: config.client_id,
-          nonce: config.nonce,
-          callback: async response => {
-            const googleStatus = statusFor('google-status');
-            googleStatus.textContent = 'Verifying your Google account…';
-            try {
-              const result = await window.CampusApi.request('auth/google', { method: 'POST', body: { credential: response.credential } });
-              if (result.user) location.replace('dashboard.html');
-              else if (result.pending_approval) googleStatus.textContent = 'Your email is verified. Your account is pending administrator approval before access is enabled.';
-            } catch (error) {
-              googleStatus.textContent = error.message;
-            }
-          },
-          auto_select: false
-        });
-        window.google.accounts.id.renderButton(statusFor('google-button'), {
-          type: 'standard', theme: 'outline', size: 'large', text: 'continue_with', shape: 'rectangular', logo_alignment: 'left', width: Math.min(360, googleArea.clientWidth || 320)
-        });
-      };
-      script.onerror = () => {
-        statusFor('google-status').textContent = 'Google sign-in could not be loaded. Use email and password instead.';
-      };
-      document.head.appendChild(script);
-    } catch (error) {
-      googleUnavailable.hidden = false;
-      googleUnavailable.dataset.configured = 'false';
-      googleUnavailable.textContent = `Google sign-in could not be configured: ${error.message}`;
-    }
+    // Google sign-in is intentionally disabled until OAuth is configured.
+
   });
 
   document.addEventListener('click', async event => {
