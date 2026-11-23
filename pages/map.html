@@ -11,7 +11,7 @@
 
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" />
-  <link rel="stylesheet" href="../assets/css/style.css?v=20261123-map-admin-feedback-refresh" />
+  <link rel="stylesheet" href="../assets/css/style.css?v=20261123-map-accessibility-emphasis20261123-map-admin-feedback-refresh" />
 
   <style>
     html, body {
@@ -260,7 +260,7 @@
       sidebarTitle.textContent = loc.name;
       const description=[loc.name,loc.category,loc.buildingName,loc.building_number,loc.floorLabel||loc.floor,loc.roomNumber,loc.description,loc.functionDescription,loc.departmentName,loc.departmentHead,loc.contactInfo,loc.contactEmail,loc.contactPhone,loc.websiteUrl,loc.serviceHours,loc.accessHours,loc.daysOpen,loc.lunchBreak,loc.services,loc.nearbyLandmarks,loc.accessibilityDetails].filter(Boolean).join('. ');
       const photos=loc.photos?.length?loc.photos:(loc.image?[{image:loc.image,altText:`Photo of ${loc.name}`,caption:''}]:[]);
-      const accessibility=loc.accessibilityStatus===null||loc.accessibilityStatus===undefined?'Accessibility information not recorded.':Number(loc.accessibilityStatus)===1?'Marked accessible in the campus directory.':'Marked not accessible in the campus directory.';
+      const accessibility=loc.accessibilityStatus===null||loc.accessibilityStatus===undefined||loc.accessibilityStatus===''?'N/A':([true,1,'1','true','t','yes'].includes(typeof loc.accessibilityStatus==='string'?loc.accessibilityStatus.trim().toLowerCase():loc.accessibilityStatus)?'Accessible':'Not accessible');
       const featureLabels={wheelchair_entrance:'Wheelchair-accessible entrance',elevator:'Elevator',ramp:'Ramp',accessible_restroom:'Accessible restroom',accessible_parking:'Accessible parking',handrails:'Handrails',tactile_paving:'Tactile paving',braille_signage:'Braille signage',hearing_assistance:'Hearing assistance'};
       const features=loc.kind==='building'&&Array.isArray(loc.accessibilityFeatures)?loc.accessibilityFeatures.filter(feature=>featureLabels[feature]):[];
       const info=[['Building',loc.buildingName],['Building number',loc.building_number],['Room number',loc.roomNumber],['Room function',loc.functionDescription],['Floors',loc.floor_count],['Capacity',loc.capacity],['Department',loc.departmentName],['Department head',loc.departmentHead],['Contact information',loc.contactInfo],['Floor',loc.floorLabel||loc.floor],['Service hours',loc.serviceHours],['Access hours',loc.accessHours],['Days open',loc.daysOpen],['Lunch break',loc.lunchBreak],['Services',loc.services],['Nearby landmarks',loc.nearbyLandmarks],['Website',loc.websiteUrl],['Accessibility',accessibility],['Accessibility details',loc.accessibilityDetails]].filter(([,value])=>value!==null&&value!==undefined&&value!=='');
