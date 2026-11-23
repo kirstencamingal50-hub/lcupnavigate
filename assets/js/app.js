@@ -79,7 +79,7 @@ function renderSharedUI() {
 
   if (isAdminPage && header && !document.querySelector('[data-admin-sidebar]')) {
     const items = [
-      { group: 'Overview', links: [['dashboard.html','Dashboard','space_dashboard'],['archive.html','Archived Records','inventory_2']] },
+      { group: 'Overview', links: [['dashboard.html','Dashboard','space_dashboard']] },
       { group: 'Campus information', links: [['manage-buildings.html','Buildings','domain'],['manage-facilities.html','Facilities','storefront'],['manage-rooms.html','Rooms and Offices','meeting_room'],['manage-categories.html','Categories','category'],['manage-map.html','Campus Map','map'],['manage-map.html#add-landmark-title','Campus Location Marker','location_on'] ] },
       { group: 'Communication', links: [['manage-announcements.html','Announcements','campaign']] },
       { group: 'Account management', links: [['admin-accounts.html','Admin Accounts','manage_accounts']] },
