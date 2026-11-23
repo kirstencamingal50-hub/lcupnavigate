@@ -10,6 +10,22 @@
   const read = key => { try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; } };
   const write = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} };
   let latestResults = [];
+  let typingNode = null;
+
+  function showTyping() {
+    typingNode = document.createElement('div');
+    typingNode.className = 'assistant-message assistant-bot';
+    typingNode.setAttribute('role', 'status');
+    typingNode.setAttribute('aria-label', 'NaviGATE is preparing an answer');
+    typingNode.innerHTML = '<span class="assistant-typing" aria-hidden="true"><span></span><span></span><span></span></span>';
+    conversation.append(typingNode);
+    typingNode.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  function hideTyping() {
+    if (typingNode) typingNode.remove();
+    typingNode = null;
+  }
 
   function renderSaved() {
     const favorites = read('navigatorate.public.favorites');
@@ -53,6 +69,7 @@
     button.textContent = 'Searching…';
     status.textContent = 'Searching verified campus information…';
     results.innerHTML = '';
+    showTyping();
     try {
       const response = await fetch('/.netlify/functions/assistant', {
         method: 'POST',
@@ -61,6 +78,7 @@
       });
       const payload = await response.json();
       if (!response.ok || !payload.ok) throw new Error(payload.error?.message || 'The campus assistant is temporarily unavailable.');
+      hideTyping();
       addMessage(payload.data.answer, 'assistant');
       renderResults(payload.data.results);
       status.textContent = '';
@@ -71,9 +89,11 @@
       speech.addEventListener('click', () => speak(payload.data.answer));
       conversation.append(speech);
     } catch (error) {
+      hideTyping();
       addMessage(error.message, 'assistant');
       status.textContent = 'Please try again in a moment.';
     } finally {
+      hideTyping();
       button.disabled = false;
       button.textContent = 'Ask';
     }
