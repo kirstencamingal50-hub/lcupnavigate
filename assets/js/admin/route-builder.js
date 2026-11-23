@@ -141,13 +141,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     const destinationMarker = route.destination_marker || null;
     const startId = route.start_marker_id ?? startMarker?.id;
     const destinationId = route.destination_marker_id ?? destinationMarker?.id;
+    const linkedLocation = marker => {
+      const value = marker?.location;
+      return Array.isArray(value) ? value[0] || null : value || null;
+    };
+    const startLocation = linkedLocation(startMarker);
+    const destinationLocation = linkedLocation(destinationMarker);
 
-    // Archived locations can still have active map_marker rows. The route API
-    // includes the related location.active flag, so explicitly reject those
-    // endpoints instead of relying only on the active map pin list.
+    // A route is invalid when either endpoint points to an archived location,
+    // has no linked location, or its marker is no longer in the active map.
+    // Check both the nested relation and the active marker catalog because
+    // archived marker rows may remain in the database until cleanup is applied.
     const referencesArchivedLocation =
-      startMarker?.location?.active === false ||
-      destinationMarker?.location?.active === false;
+      (startMarker && (!startLocation || startLocation.active === false)) ||
+      (destinationMarker && (!destinationLocation || destinationLocation.active === false));
 
     if (referencesArchivedLocation ||
         startId === null || startId === undefined || String(startId).trim() === '' ||
@@ -165,7 +172,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (invalidRoutes.length) {
       const confirmed = await window.AdminUI.confirm({
         title: 'Delete incomplete routes?',
-        message: `${invalidRoutes.length} saved route(s) are missing a valid start or final destination, or use the same location for both ends. Permanently delete these route records? Routes with two different, valid mapped endpoints will be kept.`,
+        message: `${invalidRoutes.length} saved route(s) have an archived/missing campus location, a missing map marker, or identical start and destination endpoints. Permanently delete these route records? Routes with two active, different mapped endpoints will be kept.`,
         confirmLabel: `Delete ${invalidRoutes.length} route(s)`,
         danger: true
       });
