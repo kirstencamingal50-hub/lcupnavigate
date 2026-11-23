@@ -1,10 +1,3 @@
-// Refresh public directory data when a visitor returns after an admin edit.
-let directoryWasHidden = false;
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden') directoryWasHidden = true;
-  else if (directoryWasHidden) location.reload();
-});
-
 document.addEventListener('DOMContentLoaded', async () => {
   const container = document.getElementById('directory-list');
   const search = document.getElementById('directory-search');
