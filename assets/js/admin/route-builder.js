@@ -137,11 +137,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function hasTwoValidEndpoints(route) {
-    const startId = route.start_marker_id;
-    const destinationId = route.destination_marker_id;
-    if (startId === null || startId === undefined || String(startId).trim() === '' ||
+    const startMarker = route.start_marker || null;
+    const destinationMarker = route.destination_marker || null;
+    const startId = route.start_marker_id ?? startMarker?.id;
+    const destinationId = route.destination_marker_id ?? destinationMarker?.id;
+
+    // Archived locations can still have active map_marker rows. The route API
+    // includes the related location.active flag, so explicitly reject those
+    // endpoints instead of relying only on the active map pin list.
+    const referencesArchivedLocation =
+      startMarker?.location?.active === false ||
+      destinationMarker?.location?.active === false;
+
+    if (referencesArchivedLocation ||
+        startId === null || startId === undefined || String(startId).trim() === '' ||
         destinationId === null || destinationId === undefined || String(destinationId).trim() === '' ||
         String(startId) === String(destinationId)) return false;
+
     return Boolean(byId(startId) && byId(destinationId));
   }
 
