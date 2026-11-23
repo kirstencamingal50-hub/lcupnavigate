@@ -11,7 +11,7 @@ const extractArray = (name) => {
 };
 const legacyBuildings = extractArray('CAMPUS_BUILDINGS');
 const legacyRooms = extractArray('CAMPUS_ROOMS');
-const normalize = (name) => name.toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+const normalize = (name) => name.normalize('NFD').replace(/[\\p{M}]+/gu, '').toLocaleLowerCase().replace(/[^\\p{L}\\p{N}]+/gu, ' ').trim();
 const categoryFor = (name, hint = '') => {
   const text = `${name} ${hint}`.toLowerCase();
   if (/clinic|medical|health/.test(text)) return 'Medical';
