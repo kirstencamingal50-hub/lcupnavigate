@@ -171,9 +171,27 @@ begin
     delete from public.map_connections where id = p_record_id;
   end if;
 
-  select coalesce(jsonb_agg(jsonb_build_object('bucket', bucket_id, 'name', object_name)), '[]'::jsonb)
+  select coalesce(jsonb_agg(jsonb_build_object('bucket', media.bucket_id, 'name', media.object_name)), '[]'::jsonb)
   into deleted_media
-  from (select distinct bucket_id, object_name from _delete_media) media;
+  from (select distinct bucket_id, object_name from _delete_media) media
+  where not exists (
+    select 1 from public.locations
+    where image_path = media.bucket_id || '/' || media.object_name
+       or model_3d_path = media.bucket_id || '/' || media.object_name
+    union all
+    select 1 from public.rooms
+    where image_path = media.bucket_id || '/' || media.object_name
+    union all
+    select 1 from public.facility_photos
+    where image_path = media.bucket_id || '/' || media.object_name
+    union all
+    select 1 from public.announcements
+    where image_path = media.bucket_id || '/' || media.object_name
+    union all
+    select 1 from public.floor_plans
+    where media.bucket_id = 'floor-plans'
+      and stored_name = media.object_name
+  );
 
   return jsonb_build_object(
     'deleted', true,
