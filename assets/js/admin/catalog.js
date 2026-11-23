@@ -77,6 +77,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const form=dialog.querySelector('form');
     const requestClose=async()=>{if(form.dataset.dirty==='true'&&!await window.AdminUI.confirm({title:'Discard unsaved changes?',message:'Your edits will be lost if you close this form.',confirmLabel:'Discard changes',danger:true}))return;form.dataset.dirty='false';dialog.close();};
     form.addEventListener('input',()=>{form.dataset.dirty='true';});form.addEventListener('change',()=>{form.dataset.dirty='true';});
+    dialog.addEventListener('change',event=>{
+      if(!event.target.matches('[data-photo-cover]')||!event.target.checked)return;
+      const section=event.target.closest('[data-gallery-owner]');
+      section?.querySelectorAll('[data-photo-cover]').forEach(input=>{if(input!==event.target)input.checked=false;});
+    });
     dialog.querySelectorAll('[data-editor-close]').forEach(button=>button.addEventListener('click',requestClose));
     dialog.addEventListener('cancel',event=>{event.preventDefault();requestClose();});
     dialog.addEventListener('click',event=>{if(event.target===dialog)requestClose();});
@@ -141,8 +146,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         status.textContent='Photo added to the gallery.';
       }else if(button.hasAttribute('data-photo-save')){
         const caption=card.querySelector('[data-photo-caption]').value.trim()||null;
-        await CampusApi.request('facility-photos',{method:'PUT',body:{id:Number(card.dataset.photoId),caption, is_cover:card.querySelector('[data-photo-cover]').checked,sort_order:0}});
-        status.textContent='Photo details saved.';
+        const cards=[...section.querySelectorAll('[data-photo-id]')];
+        await Promise.all(cards.map(photoCard=>{
+          const photoCaption=photoCard.querySelector('[data-photo-caption]').value.trim()||null;
+          return CampusApi.request('facility-photos',{method:'PUT',body:{id:Number(photoCard.dataset.photoId),caption:photoCaption,is_cover:photoCard.querySelector('[data-photo-cover]').checked,sort_order:0}});
+        }));
+        status.textContent='Photo details saved. The selected directory photo has been updated.';
       }else{
         if(!await window.AdminUI.confirm({title:'Remove gallery photo?',message:'This removes the photo from the saved campus gallery. The building or room record will remain.',confirmLabel:'Remove photo',danger:true}))return;
         await CampusApi.remove('facility-photos',Number(card.dataset.photoId));status.textContent='Photo removed from the gallery.';
