@@ -423,7 +423,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     for(const form of [buildingForm,facilityForm,roomForm].filter(Boolean)){
       if(form.elements.category_ids)form.elements.category_ids.innerHTML=catOptions([]);
       if(form.elements.buildingId)form.elements.buildingId.innerHTML=buildingOptions();
-      const preview=form.querySelector('[data-photo-preview]');if(form.elements.photo&&preview)window.CampusPhotoTools?.bindPreview(form.elements.photo,preview);
+      const preview=form.querySelector('[data-photo-preview]');if(form.elements.photo&&preview){
+        window.CampusPhotoTools?.bindPreview(form.elements.photo,preview);
+        const progress=document.createElement('div');progress.className='catalog-photo-progress';progress.dataset.addPhotoProgress='';progress.hidden=true;
+        progress.innerHTML='<div><span data-add-photo-label>Uploading photo</span><strong data-add-photo-value>0%</strong></div><progress max="100" value="0" data-add-photo-bar></progress>';
+        preview.after(progress);
+      }
       enhanceDropdownFields(form);
       const kind=form===buildingForm?'building':form===facilityForm?'facility':'room';
       arrangeAddForm(form,kind);
@@ -433,11 +438,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       if(submitButton){submitButton.className='admin-button-primary';submitButton.textContent=`Add ${kind==='room'?'Room / Office':kind==='building'?'Building':'Facility'}`;}
       const formDialog=window.AdminUI?.mountFormDialog(form,{title:`Add ${kind}`,description:'Enter the campus information below. Required fields are marked in the form.',triggerLabel:`Add ${kind}`});
       form.addEventListener('submit',async event=>{event.preventDefault();if(!selectedCategoryIds(form).length){status('Select at least one category.');return;}const button=form.querySelector('[type="submit"]');button.disabled=true;status('Saving to the campus database…');
-        try{const image_path=form===roomForm?null:await upload(form.elements.photo);let payload,resource;
+        try{
+          const photoProgress=form.querySelector('[data-add-photo-progress]'),photoBar=photoProgress?.querySelector('[data-add-photo-bar]'),photoValue=photoProgress?.querySelector('[data-add-photo-value]'),photoLabel=photoProgress?.querySelector('[data-add-photo-label]');
+          const setAddPhotoProgress=percent=>{if(photoProgress)photoProgress.hidden=false;if(photoBar)photoBar.value=percent;if(photoValue)photoValue.textContent=percent+'%';if(photoLabel)photoLabel.textContent=percent>=100?'Saving photo details…':'Uploading photo';};
+          if(form.elements.photo?.files?.length&&photoProgress)photoProgress.hidden=false;
+          const image_path=form===roomForm?null:await upload(form.elements.photo,'photo',setAddPhotoProgress);let payload,resource;
           if(form===buildingForm){resource='locations';const model_3d_path=await upload(form.elements.model_3d_file,'model');payload={model_3d_path,name:form.elements.name.value.trim(),kind:'building',category_ids:selectedCategoryIds(form),description:optionalText(form,'description'),floor_count:Number(form.elements.floors.value),capacity:form.elements.capacity.value===''?null:Number(form.elements.capacity.value),image_path,...detailPayload(form),accessibility_features:[...form.querySelectorAll('[name="accessibility_features"]:checked')].map(control=>control.value)};}
           else if(form===facilityForm){resource='locations';const model_3d_path=await upload(form.elements.model_3d_file,'model');payload={model_3d_path,name:form.elements.name.value.trim(),kind:'facility',category_ids:selectedCategoryIds(form),parent_building_id:null,floor_label:null,description:optionalText(form,'description'),floor_count:1,capacity:form.elements.capacity.value===''?null:Number(form.elements.capacity.value),image_path,...detailPayload(form)};}
           else{resource='rooms';payload={name:form.elements.name.value.trim(),building_id:Number(form.elements.buildingId.value),category_ids:selectedCategoryIds(form),room_number:form.elements.room.value.trim(),floor_label:form.elements.floor.value.trim(),floor_number:Number((form.elements.floor.value.match(/\d+/)||[])[0]||0),capacity:form.elements.capacity.value===''?null:Number(form.elements.capacity.value),department_head:optionalText(form,'head'),description:optionalText(form,'description'),function_description:optionalText(form,'function_description'),...detailPayload(form)};}
-          await CampusApi.save(resource,payload);await refresh();renderAll();form.reset();if(form.elements.floors)form.elements.floors.value='1';if(form.elements.floor)form.elements.floor.value='Ground Level';if(form.elements.capacity)form.elements.capacity.value='0';formDialog?.close();status('Saved to the campus database.');notify(`${kind[0].toUpperCase()+kind.slice(1)} added successfully.`);
+          await CampusApi.save(resource,payload);await refresh();renderAll();form.reset();if(form.elements.floors)form.elements.floors.value='1';if(form.elements.floor)form.elements.floor.value='Ground Level';if(form.elements.capacity)form.elements.capacity.value='0';formDialog?.close();if(photoProgress)photoProgress.hidden=true;status('Saved to the campus database.');notify(`${kind[0].toUpperCase()+kind.slice(1)} added successfully.`);
         }catch(error){status(error.message);notify(error.message,'error');}finally{button.disabled=false;}
       });
     }
