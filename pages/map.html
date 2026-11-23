@@ -67,10 +67,11 @@
     /* Keep route search usable on mobile without browser focus-zoom. */
     #fromSearch, #toSearch { font-size:16px !important; }
     .map-place-accessibility { margin-top:.65rem; padding:.65rem .75rem; border:1px solid rgba(34,197,94,.35); border-radius:12px; background:rgba(34,197,94,.07); }
-    .map-place-accessibility h3 { margin:0 0 .35rem; font-size:.72rem; font-weight:800; color:#d1fae5; }
+    .map-place-accessibility h3 { display:flex; align-items:center; gap:.35rem; margin:0 0 .35rem; font-size:.72rem; font-weight:800; color:#d1fae5; }
     .map-place-accessibility-status { display:inline-flex; margin:0; padding:.3rem .6rem; border-radius:999px; background:#15803d; color:#fff; font-size:.78rem; font-weight:800; line-height:1.2; }
     .map-place-accessibility ul { margin:.45rem 0 0; padding:0; display:flex; flex-wrap:wrap; gap:.25rem .55rem; list-style:none; font-size:.65rem; }
     .map-place-accessibility ul li { display:flex; align-items:center; gap:.2rem; }
+    .map-place-accessibility-details { margin:.5rem 0 0; font-size:.68rem; line-height:1.45; color:#dbeafe; }
     @media(max-width:640px){#topbar{top:66px;right:8px;bottom:82px;width:calc(100vw - 16px)}#mapControlsToggle{top:66px;right:8px}}
   </style>
 </head>
@@ -260,9 +261,16 @@
     const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     function openPin(loc) {
       sidebarTitle.textContent = loc.name;
-      const description=[loc.name,loc.category,loc.buildingName,loc.floorLabel||loc.floor,loc.roomNumber,loc.description,loc.functionDescription,loc.departmentName,loc.departmentHead,loc.contactInfo,loc.contactEmail,loc.contactPhone,loc.websiteUrl,loc.serviceHours,loc.accessHours,loc.daysOpen,loc.lunchBreak,loc.services,loc.nearbyLandmarks,loc.accessibilityDetails].filter(Boolean).join('. ');
+      const featureLabels={wheelchair_entrance:'Wheelchair-accessible entrance',elevator:'Elevator',ramp:'Ramp',accessible_restroom:'Accessible restroom',accessible_parking:'Accessible parking',handrails:'Handrails',tactile_paving:'Tactile paving',braille_signage:'Braille signage',hearing_assistance:'Hearing assistance'};
+      const accessibilityFeatures=Array.isArray(loc.accessibilityFeatures)?loc.accessibilityFeatures.filter(feature=>featureLabels[feature]):[];
+      const accessibilityValue=loc.accessibilityValue??loc.accessibilityStatus??loc.accessibility_status;
+      const hasAccessibilityStatus=accessibilityValue!==null&&accessibilityValue!==undefined&&accessibilityValue!=='';
+      const isAccessible=hasAccessibilityStatus&&([true,1,'1','true','t','yes'].includes(typeof accessibilityValue==='string'?accessibilityValue.trim().toLowerCase():accessibilityValue));
+      const accessibilityDetails=String(loc.accessibilityDetails||loc.accessibility_details||'').trim();
+      const accessibilitySpeech=[hasAccessibilityStatus?(isAccessible?'Accessible':'Not accessible'):'',...accessibilityFeatures.map(feature=>featureLabels[feature]),accessibilityDetails].filter(Boolean);
+      const description=[loc.name,loc.category,loc.buildingName,loc.floorLabel||loc.floor,loc.roomNumber,loc.description,loc.functionDescription,loc.departmentName,loc.departmentHead,loc.contactInfo,loc.contactEmail,loc.contactPhone,loc.websiteUrl,loc.serviceHours,loc.accessHours,loc.daysOpen,loc.lunchBreak,loc.services,loc.nearbyLandmarks,...accessibilitySpeech].filter(Boolean).join('. ');
       const photos=loc.photos?.length?loc.photos:(loc.image?[{image:loc.image,altText:`Photo of ${loc.name}`,caption:''}]:[]);
-      const accessibility=loc.accessibilityStatus===null||loc.accessibilityStatus===undefined||loc.accessibilityStatus===''?'N/A':([true,1,'1','true','t','yes'].includes(typeof loc.accessibilityStatus==='string'?loc.accessibilityStatus.trim().toLowerCase():loc.accessibilityStatus)?'Accessible':'Not accessible');
+      const accessibilityMarkup=(hasAccessibilityStatus||accessibilityFeatures.length||accessibilityDetails)?`<section class="map-place-accessibility" aria-label="Accessibility information"><h3><span class="material-symbols-rounded" aria-hidden="true">accessible</span> Accessibility</h3>${hasAccessibilityStatus?`<p class="map-place-accessibility-status">${isAccessible?'Accessible':'Not accessible'}</p>`:''}${accessibilityFeatures.length?`<ul>${accessibilityFeatures.map(feature=>`<li><span class="material-symbols-rounded" aria-hidden="true">check_circle</span>${escapeHtml(featureLabels[feature])}</li>`).join('')}</ul>`:''}${accessibilityDetails?`<p class="map-place-accessibility-details">${escapeHtml(accessibilityDetails)}</p>`:''}</section>`:'';
       const info=[['Building',loc.buildingName],['Room number',loc.roomNumber],['Room function',loc.functionDescription],['Floors',loc.floor_count],['Capacity',loc.capacity],['Department',loc.departmentName],['Department head',loc.departmentHead],['Contact information',loc.contactInfo],['Floor',loc.floorLabel||loc.floor],['Service hours',loc.serviceHours],['Access hours',loc.accessHours],['Days open',loc.daysOpen],['Lunch break',loc.lunchBreak],['Services',loc.services],['Nearby landmarks',loc.nearbyLandmarks],['Website',loc.websiteUrl]].filter(([,value])=>value!==null&&value!==undefined&&value!=='');
       sidebarContent.innerHTML = `
         <div class="map-place-panel" data-speech-panel>
@@ -270,7 +278,7 @@
           <div class="map-place-summary"><span>${escapeHtml(loc.kind==='facility'?'Facility':loc.kind==='room'?'Room':'Building')}</span><span>${escapeHtml(loc.category||'Campus')}</span></div>
           <p class="map-place-description">${escapeHtml(loc.description||loc.functionDescription||'Description unavailable.')}</p>
           ${loc.contactEmail||loc.contactPhone?`<div class="map-place-contact">${loc.contactEmail?`<a href="mailto:${escapeHtml(loc.contactEmail)}"><span class="material-symbols-rounded" aria-hidden="true">mail</span>${escapeHtml(loc.contactEmail)}</a>`:''}${loc.contactPhone?`<a href="tel:${escapeHtml(loc.contactPhone)}"><span class="material-symbols-rounded" aria-hidden="true">call</span>${escapeHtml(loc.contactPhone)}</a>`:''}</div>`:''}
-          <div class="map-place-accessibility" aria-label="Accessibility status"><span class="map-place-accessibility-status">${escapeHtml(accessibility)}</span></div>
+          ${accessibilityMarkup}
           ${info.length?`<dl class="map-place-info">${info.map(([label,value])=>`<div><dt>${escapeHtml(label)}</dt><dd>${label==='Website'?`<a href="${escapeHtml(value)}" target="_blank" rel="noopener noreferrer">${escapeHtml(value)}</a>`:escapeHtml(value)}</dd></div>`).join('')}</dl>`:''}
           <div class="map-place-tools"><a href="${loc.kind==='room'?'office.html':'building.html'}?id=${encodeURIComponent(loc.recordId||loc.id)}">Full profile <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></a><div class="flex flex-wrap gap-1"><button type="button" data-speech-action="play" data-speech-text="${escapeHtml(description)}" class="rounded border border-slate-600 px-2 py-1">Play</button><button type="button" data-speech-action="pause" class="rounded border border-slate-600 px-2 py-1">Pause</button><button type="button" data-speech-action="resume" class="rounded border border-slate-600 px-2 py-1">Resume</button><button type="button" data-speech-action="stop" class="rounded border border-slate-600 px-2 py-1">Stop</button></div></div>
           <p data-speech-status role="status" aria-live="polite"></p>
