@@ -6,7 +6,9 @@
   <title>Ask NaviGATE - Campus Assistant</title>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
-  <link rel="stylesheet" href="../assets/css/style.css?v=ask-navigate-20261115">
+  <link rel="canonical" href="https://lcupnavigate.netlify.app/pages/assistant.html">
+  <meta property="og:url" content="https://lcupnavigate.netlify.app/pages/assistant.html">
+  <link rel="stylesheet" href="../assets/css/style.css?v=ask-navigate-20261123-intents">
   <style>
     .assistant-shell{max-width:980px;margin:0 auto;padding:28px 16px 110px;color:#172033}
     .assistant-hero{background:linear-gradient(135deg,#101c3a,#173b70);color:white;border-radius:24px;padding:28px;margin-bottom:20px}
@@ -39,9 +41,14 @@
         <div class="assistant-message assistant-bot">Hello! I’m Ask NaviGATE. What would you like to find on campus?</div>
       </div>
       <div class="flex flex-wrap gap-2 mb-4" id="suggestions">
+        <button class="assistant-chip" data-question="Where can I eat?">Food and dining</button>
         <button class="assistant-chip" data-question="Where is the Registrar's Office?">Registrar's Office</button>
         <button class="assistant-chip" data-question="Which building is used by the CITE Department?">CITE Department</button>
         <button class="assistant-chip" data-question="Where can I find a computer laboratory?">Computer laboratory</button>
+        <button class="assistant-chip" data-question="Where is the clinic?">Clinic</button>
+        <button class="assistant-chip" data-question="Where can I find the library?">Library</button>
+        <button class="assistant-chip" data-question="Where is the nearest comfort room?">Comfort room</button>
+        <button class="assistant-chip" data-question="Where can I pray?">Prayer area</button>
         <button class="assistant-chip" data-question="What accessible facilities are available?">Accessible facilities</button>
         <button class="assistant-chip" data-question="What are the upcoming campus events?">Upcoming events</button>
       </div>
@@ -66,6 +73,6 @@
   </main>
   <div data-component="bottom-nav"></div>
   <script src="../assets/js/app.js?v=20261118-admin-navigation"></script>
-  <script src="../assets/js/assistant.js?v=ask-navigate-20261115"></script>
+  <script src="../assets/js/assistant.js?v=ask-navigate-20261123-intents"></script>
 </body>
 </html>
