@@ -16,18 +16,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
   const fillSelects = () => {
     const seenIds = new Set(), seenNames = new Set();
-    const buildings = locations
-      .filter(item => item.kind === 'building' && item.active !== false)
-      .sort((a, b) => Number(a.id) - Number(b.id))
+    const campusRecords = locations
+      .filter(item => ['building', 'facility'].includes(item.kind) && item.active !== false)
+      .sort((a, b) => String(a.kind).localeCompare(String(b.kind)) || String(a.name).localeCompare(String(b.name)))
       .filter(item => {
         const id = String(item.id ?? '');
-        const name = String(item.name ?? '').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
-        if (!id || !name || seenIds.has(id) || seenNames.has(name)) return false;
+        if (!id || seenIds.has(id)) return false;
         seenIds.add(id);
-        seenNames.add(name);
         return true;
       });
-    fill(form.elements.location_id, buildings, 'id', item => item.name);
+    fill(form.elements.location_id, campusRecords, 'id', item => {
+      const type = item.kind === 'facility' ? 'Facility' : 'Building';
+      const category = item.category ? ' · ' + item.category : '';
+      return type + category + ' — ' + item.name;
+    });
   };
   const position = (x, y) => {
     selected.style.left = `${Number(x) / W * 100}%`;
@@ -50,6 +52,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     editing = null; form.reset(); form.elements.x.value = ''; form.elements.y.value = '';
     selected.classList.add('hidden'); $('save-landmark').textContent = 'Add Location Marker'; $('cancel-landmark-edit').hidden = true;
   };
+  form.elements.location_id.addEventListener('change', () => {
+    const record = locations.find(item => String(item.id) === String(form.elements.location_id.value));
+    const preview = $('landmark-record-preview');
+    if (!preview) return;
+    if (!record) { preview.innerHTML = ''; preview.hidden = true; return; }
+    const labels = {kind:'Record type',category:'Category',description:'Description',functionDescription:'Function',parentBuilding:'Parent building',departmentName:'Department',departmentHead:'Department head',contactInfo:'Contact information',contactEmail:'Email',contactPhone:'Phone',websiteUrl:'Website',serviceHours:'Service hours',accessHours:'Access hours',daysOpen:'Days open',lunchBreak:'Lunch break',services:'Services',nearbyLandmarks:'Nearby landmarks',accessibilityStatus:'Accessibility status',accessibilityDetails:'Accessibility features and notes',floorLabel:'Floor',roomNumber:'Room number'};
+    const excluded = new Set(['id','active','createdAt','updatedAt','created_at','updated_at','image','photos','model_3d_url','model3dUrl','canonicalLocationId','parentBuildingId']);
+    const rows = Object.entries(record).filter(([key,value]) => !excluded.has(key) && value !== null && value !== undefined && String(value).trim() !== '').map(([key,value]) => {
+      const label = labels[key] || key.replace(/([A-Z])/g,' $1').replace(/_/g,' ').replace(/^./,c=>c.toUpperCase());
+      const text = Array.isArray(value) ? value.join(', ') : typeof value === 'object' ? JSON.stringify(value) : String(value);
+      return '<div class="grid grid-cols-[minmax(105px,auto)_1fr] gap-2 border-b border-slate-100 py-1.5 last:border-0"><dt class="font-semibold text-slate-500">' + esc(label) + '</dt><dd class="min-w-0 whitespace-pre-wrap break-words text-slate-800">' + esc(text) + '</dd></div>';
+    }).join('');
+    preview.innerHTML = '<h3 class="mb-2 text-xs font-extrabold text-slate-800">Saved campus record information</h3><dl class="text-xs">' + (rows || '<p class="text-slate-500">No additional information has been saved for this record.</p>') + '</dl>';
+    preview.hidden = false;
+  });
   picker.addEventListener('click', event => {
     const rect = picker.getBoundingClientRect();
     const x = Math.max(0, Math.min(1, (event.clientX - rect.left - picker.clientLeft) / picker.clientWidth));
