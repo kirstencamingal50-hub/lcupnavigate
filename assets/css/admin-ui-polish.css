@@ -810,3 +810,168 @@ html[data-theme="dark"] .admin-page .catalog-add-edit-dialog .admin-edit-dialog-
 html[data-theme="dark"] .admin-page .catalog-add-edit-dialog .catalog-add-fields,
 html[data-theme="dark"] .admin-page .catalog-add-edit-dialog .catalog-add-fields > .admin-edit-actions { color:#e7edf5; border-color:#344256; background:#1c2738; }
 html[data-theme="dark"] .admin-page .catalog-add-edit-dialog .catalog-add-fields :is(input,select,textarea) { color:#e7edf5; border-color:#46566d; background:#172235; }
+
+
+/* Follow-up: make Add media controls explicit and keep all photo details readable. */
+.admin-page .catalog-add-edit-dialog .catalog-add-photo-field input[type=file],
+.admin-page .catalog-add-edit-dialog .catalog-model-panel input[type=file] {
+  display:block;
+  box-sizing:border-box;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  min-height:48px;
+  padding:7px 9px;
+  overflow:hidden;
+  border:1px solid #cbd5e1;
+  border-radius:9px;
+  background:#fff;
+  color:#24364f;
+  font-size:12px;
+  text-align:left;
+}
+.admin-page .catalog-add-edit-dialog input[type=file]::file-selector-button {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:32px;
+  margin:0 12px 0 0;
+  padding:7px 14px;
+  appearance:none;
+  border:1px solid #b8cbea;
+  border-radius:7px;
+  background:#e8f1ff;
+  color:#1d4ed8;
+  font:700 12px/1.2 inherit;
+  cursor:pointer;
+}
+.admin-page .catalog-add-edit-dialog input[type=file]::-webkit-file-upload-button {
+  min-height:32px;
+  margin:0 12px 0 0;
+  padding:7px 14px;
+  border:1px solid #b8cbea;
+  border-radius:7px;
+  background:#e8f1ff;
+  color:#1d4ed8;
+  font-weight:700;
+  cursor:pointer;
+}
+.admin-page .catalog-add-edit-dialog .catalog-add-photo-upload {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:12px;
+  align-items:start;
+}
+.admin-page .catalog-add-edit-dialog .catalog-add-photo-field {
+  display:grid;
+  width:100%;
+  min-width:0;
+  gap:8px;
+}
+.admin-page .catalog-add-edit-dialog .catalog-add-photo-caption {
+  display:grid;
+  width:100%;
+  min-width:0;
+  gap:7px;
+  color:#52637a;
+  font-size:12px;
+  font-weight:800;
+}
+.admin-page .catalog-add-edit-dialog .catalog-add-photo-caption input {
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  min-height:42px;
+  padding:9px 11px;
+  border:1px solid #d5deea;
+  border-radius:9px;
+  color:#24364f;
+  background:#fff;
+  font-size:12px;
+  font-weight:500;
+}
+.admin-page .catalog-add-edit-dialog .catalog-model-panel {
+  grid-column:1/-1;
+  width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
+.admin-page .catalog-add-edit-dialog .catalog-model-panel .catalog-model-upload {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  width:100%;
+  min-width:0;
+  gap:10px;
+}
+.admin-page .catalog-add-edit-dialog .catalog-model-panel .catalog-model-upload > label,
+.admin-page .catalog-add-edit-dialog .catalog-model-panel .catalog-model-upload > .admin-field-label {
+  display:grid;
+  width:100%;
+  min-width:0;
+  gap:8px;
+}
+.admin-page .catalog-add-edit-dialog .catalog-model-panel .catalog-model-upload input[type=file] {
+  width:100%;
+  max-width:100%;
+}
+.admin-page .catalog-add-edit-dialog .catalog-model-panel [data-add-model-preview] {
+  display:block;
+  width:100%;
+  max-width:100%;
+}
+.admin-page .catalog-add-edit-dialog .catalog-add-photo-panel .catalog-add-photo-preview {
+  width:100%;
+  max-width:520px;
+  max-height:260px;
+  object-fit:contain;
+  object-position:left center;
+}
+.admin-page .catalog-photo-details {
+  box-sizing:border-box;
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  width:auto;
+  min-width:0;
+  max-width:none;
+  gap:14px;
+  margin:0 12px 12px;
+  padding:16px;
+}
+.admin-page .catalog-photo-details > *,
+.admin-page .catalog-photo-details > label,
+.admin-page .catalog-photo-details-heading {
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+}
+.admin-page .catalog-photo-details > label {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:8px;
+  line-height:1.5;
+  overflow-wrap:anywhere;
+}
+.admin-page .catalog-photo-details input:not([type=checkbox]) {
+  display:block;
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+}
+.admin-page .catalog-photo-details-heading strong {
+  min-width:0;
+  overflow-wrap:anywhere;
+  white-space:normal;
+}
+@media(max-width:700px) {
+  .admin-page .catalog-add-edit-dialog .catalog-add-fields > .catalog-add-photo-panel,
+  .admin-page .catalog-add-edit-dialog .catalog-add-fields > .catalog-model-panel { grid-column:1/-1; }
+  .admin-page .catalog-photo-details { margin:0 8px 8px; padding:12px; }
+}
+html[data-theme="dark"] .admin-page .catalog-add-edit-dialog .catalog-add-photo-caption { color:#c1ccda; }
+html[data-theme="dark"] .admin-page .catalog-add-edit-dialog .catalog-add-photo-caption input {
+  color:#e7edf5;
+  border-color:#46566d;
+  background:#172235;
+}
