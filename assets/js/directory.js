@@ -50,6 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   )?.[1] || null;
 
   function render() {
+    container.querySelectorAll('.directory-card').forEach(card=>clearInterval(card._photoTimer));
     const query = search.value.trim().toLocaleLowerCase();
     const filtered = records.filter(item => {
       const text = `${item.name} ${item.category || ''} ${item.description || ''} ${item.parent_building || ''} ${item.room_number || ''} ${item.services || ''}`.toLocaleLowerCase();
@@ -83,7 +84,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const photoList = Array.isArray(item.photos) ? item.photos.filter(photo => photo?.image) : [];
       const coverPhoto = photoList.find(photo => Number(photo.isCover)) || photoList[0] || null;
       const image = coverPhoto?.image || item.image || '';
-      const slideshowPhotos = photoList.length ? photoList : (image ? [{image,caption:''}] : []);
+      const slideshowPhotos = coverPhoto ? [coverPhoto,...photoList.filter(photo=>photo!==coverPhoto)] : (photoList.length ? photoList : (image ? [{image,caption:''}] : []));
       const photoSlides = slideshowPhotos.map((photo,index) => `<img class="directory-card-photo${index===0?' is-active':''}" src="${escapeHtml(mediaSrc(photo.image))}" alt="" loading="${index===0?'eager':'lazy'}" decoding="async" data-directory-slide="${index}" ${index===0?'':'hidden'}>`).join('');
       const features = item.kind === 'building' && Array.isArray(item.accessibilityFeatures)
         ? item.accessibilityFeatures.filter(feature => featureLabels[feature]).map(feature => `<span class="directory-feature"><span class="material-symbols-rounded" aria-hidden="true">accessible</span>${escapeHtml(featureLabels[feature])}</span>`).join('')
