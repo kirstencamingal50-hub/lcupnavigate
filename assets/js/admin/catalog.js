@@ -203,12 +203,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const form=dialog.querySelector('form');
     const requestClose=async()=>{if(form.dataset.dirty==='true'&&!await window.AdminUI.confirm({title:'Discard unsaved changes?',message:'Your edits will be lost if you close this form.',confirmLabel:'Discard changes',danger:true}))return;form.dataset.dirty='false';dialog.close();};
     form.addEventListener('input',event=>{if(!event.target.matches('[data-model-file]'))form.dataset.dirty='true';});form.addEventListener('change',event=>{if(!event.target.matches('[data-model-file]'))form.dataset.dirty='true';});
-    dialog.addEventListener('change',event=>{
-      if(!event.target.matches('[data-photo-cover]')||!event.target.checked)return;
-      const section=event.target.closest('[data-gallery-owner]');
-      section?.querySelectorAll('[data-photo-cover]').forEach(input=>{if(input!==event.target)input.checked=false;});
-    });
-    dialog.querySelectorAll('[data-editor-close]').forEach(button=>button.addEventListener('click',requestClose));
+        dialog.querySelectorAll('[data-editor-close]').forEach(button=>button.addEventListener('click',requestClose));
     dialog.addEventListener('cancel',event=>{event.preventDefault();requestClose();});
     dialog.addEventListener('click',event=>{if(event.target===dialog)requestClose();});
     dialog.addEventListener('click',manageGalleryAction);
@@ -285,7 +280,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     section.className='admin-edit-wide catalog-model-panel';
     section.dataset.addSection='';
     section.innerHTML=`<div class="catalog-section-heading"><div><h3>3D Model</h3><p>Optionally upload a GLB model and preview it before adding this campus location.</p></div><span class="catalog-count">Optional</span></div>
-      <div class="catalog-model-upload"><span class="admin-field-label">Choose 3D model (.glb)</span><input name="model_3d_file" type="file" accept=".glb,model/gltf-binary,application/octet-stream"></div>
+      <div class="catalog-model-upload"><label class="catalog-model-file-label">Choose 3D model (.glb)<input name="model_3d_file" type="file" accept=".glb,model/gltf-binary,application/octet-stream"></label></div>
       <p data-add-model-name class="text-xs text-slate-500 mt-2">No 3D model selected.</p>
       <model-viewer data-add-model-preview class="w-full mt-3 rounded-xl" style="height:260px;background:#eef3f8;display:none" camera-controls auto-rotate shadow-intensity="1" exposure="1" environment-image="neutral" alt="3D preview of the selected campus model"></model-viewer>
       <button type="button" data-add-model-clear class="admin-button-secondary mt-2" hidden>Remove selected model</button>`;
@@ -353,7 +348,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     presetField('Lunch hours','lunch_break',lunchOptions,item.lunch_break)+
     accessibilityStatusField(item);
   function galleryPhotoCard(photo,itemId,isDefault=false){
-    return `<article class="catalog-gallery-item" data-photo-id="${esc(photo.id)}"><img src="${esc(imageSrc(photo.image))}" alt="${esc(photo.caption||'Campus photo')}" loading="lazy"><div class="catalog-gallery-card-actions"><button type="button" data-photo-details class="admin-button-secondary">Photo details</button><button type="button" data-photo-delete class="admin-button-secondary">Remove</button></div><div class="catalog-photo-details" data-photo-details-panel hidden><div class="catalog-photo-details-heading"><strong>Edit photo details</strong><button type="button" data-photo-details-close aria-label="Close details">Close</button></div><label>Caption<input data-photo-caption maxlength="255" value="${esc(photo.caption||'')}" placeholder="Describe this photo"></label><label class="catalog-cover-toggle"><input type="radio" name="directory-cover-${esc(itemId)}" data-photo-cover value="${esc(photo.id)}" ${(Number(photo.isCover)||isDefault)?'checked':''}> Use as directory photo</label><div class="catalog-gallery-actions"><button type="button" data-photo-save class="admin-button-primary">Save details</button></div></div></article>`;
+    return `<article class="catalog-gallery-item" data-photo-id="${esc(photo.id)}" data-photo-is-cover="${(Number(photo.isCover)||isDefault)?'true':'false'}"><img src="${esc(imageSrc(photo.image))}" alt="${esc(photo.caption||'Campus photo')}" loading="lazy"><div class="catalog-gallery-card-actions"><button type="button" data-photo-details class="admin-button-secondary">Photo details</button><button type="button" data-photo-delete class="admin-button-secondary">Remove</button></div><div class="catalog-photo-details" data-photo-details-panel hidden><div class="catalog-photo-details-heading"><strong>Edit Photo Details</strong><button type="button" data-photo-details-close aria-label="Close photo details">Close</button></div><label class="catalog-photo-caption-field"><span>Caption</span><input data-photo-caption maxlength="255" value="${esc(photo.caption||'')}" placeholder="Describe this photo"></label><div class="catalog-gallery-actions"><button type="button" data-photo-save class="admin-button-primary">Save details</button></div></div></article>`;
   }
   function galleryMarkup(type,item){
     const ownerType=type==='location'?'location':'room';
@@ -407,12 +402,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       }else if(button.hasAttribute('data-photo-save')){
         const caption=card.querySelector('[data-photo-caption]').value.trim()||null;
         const cards=[...section.querySelectorAll('[data-photo-id]')];
-        const selectedCover=section.querySelector('[data-photo-cover]:checked')?.value||null;
         await Promise.all(cards.map(photoCard=>{
           const photoCaption=photoCard.querySelector('[data-photo-caption]').value.trim()||null;
-          return CampusApi.request('facility-photos',{method:'PUT',body:{id:Number(photoCard.dataset.photoId),caption:photoCaption,is_cover:selectedCover===photoCard.dataset.photoId,sort_order:0}});
+          return CampusApi.request('facility-photos',{method:'PUT',body:{id:Number(photoCard.dataset.photoId),caption:photoCaption,is_cover:photoCard.dataset.photoIsCover==='true',sort_order:0}});
         }));
-        status.textContent='Photo details saved. The selected directory photo has been updated.';
+        status.textContent='Photo caption saved successfully.';
       }else{
         if(!await window.AdminUI.confirm({title:'Remove gallery photo?',message:'This removes the photo from the saved campus gallery. The building or room record will remain.',confirmLabel:'Remove photo',danger:true}))return;
         await CampusApi.remove('facility-photos',Number(card.dataset.photoId));status.textContent='Photo removed from the gallery.';
@@ -575,7 +569,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           const photoTitle=form===roomForm?'Room or Office Photo':form===facilityForm?'Facility Photo':'Building Photo';
           photoPanel.innerHTML=`<div class="catalog-section-heading"><div><h3>${photoTitle}</h3><p>Upload the main photo visitors will see in the campus directory.</p></div><span class="catalog-count">Optional</span></div><div class="catalog-gallery-upload catalog-add-photo-upload"></div>`;
           photoLabel.before(photoPanel);
-          photoPanel.querySelector('.catalog-add-photo-upload').append(photoLabel);
+          const photoCaption=document.createElement('label');photoCaption.className='catalog-add-photo-caption';photoCaption.innerHTML='Photo caption (optional)<input type="text" data-add-photo-caption maxlength="255" placeholder="Write a short caption for this photo">';
+          photoPanel.querySelector('.catalog-add-photo-upload').append(photoLabel,photoCaption);
           photoLabel.classList.add('catalog-add-photo-field');
         }
         window.CampusPhotoTools?.bindPreview(form.elements.photo,preview);
@@ -594,6 +589,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       const submitButton=form.querySelector('button[type="submit"]');
       if(submitButton){submitButton.className='admin-button-primary';submitButton.textContent=`Add ${kind==='room'?'Room / Office':kind==='building'?'Building':'Facility'}`;}
       const formDialog=window.AdminUI?.mountFormDialog(form,{title:`Add ${kind}`,description:'Enter the campus information below. Required fields are marked in the form.',triggerLabel:`Add ${kind}`});
+      if(formDialog?.dialog&&kind!=='room'){
+        formDialog.dialog.classList.add('admin-edit-dialog','catalog-add-edit-dialog');
+        formDialog.dialog.querySelector('.admin-create-dialog-heading')?.classList.add('admin-edit-dialog-heading');
+        formDialog.dialog.querySelector('.admin-form-panel')?.classList.add('catalog-add-edit-panel');
+      }
       form.addEventListener('submit',async event=>{event.preventDefault();if(!selectedCategoryIds(form).length){status('Select at least one category.');return;}const button=form.querySelector('[type="submit"]');button.disabled=true;status('Saving to the campus database…');
         try{
           const photoProgress=form.querySelector('[data-add-photo-progress]'),photoBar=photoProgress?.querySelector('[data-add-photo-bar]'),photoValue=photoProgress?.querySelector('[data-add-photo-value]'),photoLabel=photoProgress?.querySelector('[data-add-photo-label]');
@@ -603,7 +603,14 @@ document.addEventListener('DOMContentLoaded', async () => {
           if(form===buildingForm){resource='locations';const model_3d_path=await upload(form.elements.model_3d_file,'model');payload={model_3d_path,name:form.elements.name.value.trim(),kind:'building',category_ids:selectedCategoryIds(form),description:optionalText(form,'description'),floor_count:Number(form.elements.floors.value),capacity:form.elements.capacity.value===''?null:Number(form.elements.capacity.value),image_path,...detailPayload(form),accessibility_features:[...form.querySelectorAll('[name="accessibility_features"]:checked')].map(control=>control.value)};}
           else if(form===facilityForm){resource='locations';const model_3d_path=await upload(form.elements.model_3d_file,'model');payload={model_3d_path,name:form.elements.name.value.trim(),kind:'facility',category_ids:selectedCategoryIds(form),parent_building_id:null,floor_label:null,description:optionalText(form,'description'),floor_count:1,capacity:form.elements.capacity.value===''?null:Number(form.elements.capacity.value),image_path,...detailPayload(form)};}
           else{resource='rooms';payload={name:form.elements.name.value.trim(),building_id:Number(form.elements.buildingId.value),category_ids:selectedCategoryIds(form),room_number:form.elements.room.value.trim(),floor_label:form.elements.floor.value.trim(),floor_number:Number((form.elements.floor.value.match(/\d+/)||[])[0]||0),capacity:form.elements.capacity.value===''?null:Number(form.elements.capacity.value),department_head:optionalText(form,'head'),description:optionalText(form,'description'),function_description:optionalText(form,'function_description'),image_path,...detailPayload(form)};}
-          await CampusApi.save(resource,payload);await refresh();renderAll();form.reset();form.querySelectorAll('[data-photo-preview]').forEach(preview=>{preview.removeAttribute('src');preview.hidden=true;});if(form.elements.floors)form.elements.floors.value='1';if(form.elements.floor)form.elements.floor.value='Ground Level';if(form.elements.capacity)form.elements.capacity.value='0';formDialog?.close();if(photoProgress)photoProgress.hidden=true;status('Saved to the campus database.');notify(`${kind[0].toUpperCase()+kind.slice(1)} added successfully.`);
+          const savedRecord=await CampusApi.save(resource,payload);
+          const photoCaption=form.querySelector('[data-add-photo-caption]')?.value.trim()||'';
+          if(image_path&&photoCaption){
+            await refresh();
+            const savedId=Number(savedRecord?.id||savedRecord?.location?.id||savedRecord?.room?.id||((resource==='rooms'?rooms:locations).filter(record=>record.name===form.elements.name.value.trim()&&(resource==='rooms'||isLocationKind(record,kind))).sort((a,b)=>Number(b.id)-Number(a.id))[0]?.id));
+            if(savedId)await CampusApi.request('facility-photos',{method:'POST',body:{owner_type:resource==='rooms'?'room':'location',owner_id:savedId,image_path,alt_text:photoCaption,caption:photoCaption}});
+          }
+          await refresh();renderAll();form.reset();form.querySelectorAll('[data-photo-preview]').forEach(preview=>{preview.removeAttribute('src');preview.hidden=true;});if(form.elements.floors)form.elements.floors.value='1';if(form.elements.floor)form.elements.floor.value='Ground Level';if(form.elements.capacity)form.elements.capacity.value='0';formDialog?.close();if(photoProgress)photoProgress.hidden=true;status('Saved to the campus database.');notify(`${kind[0].toUpperCase()+kind.slice(1)} added successfully.`);
         }catch(error){status(error.message);notify(error.message,'error');}finally{button.disabled=false;}
       });
     }
