@@ -253,7 +253,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const fields=control.querySelector('[data-service-time-fields]');
     const hidden=control.querySelector('[name="service_hours"]');
     const hint=control.querySelector('[data-service-hours-hint]');
-    if(fields)fields.hidden=mode!=='custom';
+    if(fields){
+      const showTimes=mode==='custom';
+      fields.hidden=!showTimes;
+      fields.style.display=showTimes?'grid':'none';
+      fields.setAttribute('aria-hidden',String(!showTimes));
+    }
     if(hidden)hidden.value=mode==='custom'?(open&&close?`${formatServiceTime(open)} – ${formatServiceTime(close)}`:'') : mode;
     if(hint)hint.textContent=mode==='custom'?'Choose the opening and closing times.':'The selected schedule will be saved as the service hours.';
   };
@@ -271,6 +276,57 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
   document.addEventListener('input',event=>{const control=event.target.closest?.('[data-service-hours-control]');if(control)syncServiceHours(control);});
   document.addEventListener('change',event=>{const control=event.target.closest?.('[data-service-hours-control]');if(control)syncServiceHours(control);});
+  const ensureAddModelField=form=>{
+    if(!form||form===roomForm||form.querySelector('[name="model_3d_file"]'))return;
+    const section=document.createElement('section');
+    section.className='admin-edit-wide catalog-model-panel';
+    section.dataset.addSection='';
+    section.innerHTML=`<div class="catalog-section-heading"><div><h3>3D Model</h3><p>Optionally upload a GLB model and preview it before adding this campus location.</p></div><span class="catalog-count">Optional</span></div>
+      <label class="catalog-model-upload">Choose 3D model (.glb)<input name="model_3d_file" type="file" accept=".glb,model/gltf-binary,application/octet-stream"></label>
+      <p data-add-model-name class="text-xs text-slate-500 mt-2">No 3D model selected.</p>
+      <model-viewer data-add-model-preview class="w-full mt-3 rounded-xl" style="height:260px;background:#eef3f8;display:none" camera-controls auto-rotate shadow-intensity="1" exposure="1" environment-image="neutral" alt="3D preview of the selected campus model"></model-viewer>
+      <button type="button" data-add-model-clear class="admin-button-secondary mt-2" hidden>Remove selected model</button>`;
+    form.append(section);
+    if(!document.querySelector('script[data-model-viewer-loader]')){
+      const script=document.createElement('script');
+      script.type='module';
+      script.src='https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
+      script.dataset.modelViewerLoader='';
+      document.head.append(script);
+    }
+    const input=section.querySelector('[name="model_3d_file"]');
+    const viewer=section.querySelector('[data-add-model-preview]');
+    const name=section.querySelector('[data-add-model-name]');
+    const clear=section.querySelector('[data-add-model-clear]');
+    let previewUrl=null;
+    const clearPreview=()=>{
+      if(previewUrl)URL.revokeObjectURL(previewUrl);
+      previewUrl=null;
+      viewer.removeAttribute('src');
+      viewer.style.display='none';
+      name.textContent='No 3D model selected.';
+      clear.hidden=true;
+      input.value='';
+    };
+    input.addEventListener('change',()=>{
+      const file=input.files?.[0];
+      if(previewUrl)URL.revokeObjectURL(previewUrl);
+      previewUrl=null;
+      if(!file){clearPreview();return;}
+      if(!/\.glb$/i.test(file.name)||file.size>50*1024*1024){
+        window.AdminUI?.toast(file.size>50*1024*1024?'The 3D model must be 50 MB or smaller.':'Choose a .glb 3D model file.','error');
+        clearPreview();
+        return;
+      }
+      previewUrl=URL.createObjectURL(file);
+      viewer.src=previewUrl;
+      viewer.style.display='block';
+      name.textContent=file.name;
+      clear.hidden=false;
+    });
+    clear.addEventListener('click',clearPreview);
+    form.addEventListener('reset',()=>setTimeout(clearPreview,0));
+  };
   const dayOptions=['Select days open','Monday – Friday','Monday – Saturday','Monday – Sunday','Weekdays only','Weekends only','By appointment','Closed'];
   const lunchOptions=['Select lunch hours','12:00 PM – 1:00 PM','12:00 PM – 12:30 PM','12:00 PM – 1:30 PM','No lunch break','Varies'];
   const floorOptions=['Ground Level','2nd Floor','3rd Floor','4th Floor','5th Floor','6th Floor','7th Floor','8th Floor','9th Floor','10th Floor','Basement'];
@@ -514,6 +570,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         preview.after(progress);
       }
       enhanceServiceHoursFields(form);
+      ensureAddModelField(form);
       enhanceDropdownFields(form);
       const kind=form===buildingForm?'building':form===facilityForm?'facility':'room';
       arrangeAddForm(form,kind);
@@ -531,7 +588,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           if(form===buildingForm){resource='locations';const model_3d_path=await upload(form.elements.model_3d_file,'model');payload={model_3d_path,name:form.elements.name.value.trim(),kind:'building',category_ids:selectedCategoryIds(form),description:optionalText(form,'description'),floor_count:Number(form.elements.floors.value),capacity:form.elements.capacity.value===''?null:Number(form.elements.capacity.value),image_path,...detailPayload(form),accessibility_features:[...form.querySelectorAll('[name="accessibility_features"]:checked')].map(control=>control.value)};}
           else if(form===facilityForm){resource='locations';const model_3d_path=await upload(form.elements.model_3d_file,'model');payload={model_3d_path,name:form.elements.name.value.trim(),kind:'facility',category_ids:selectedCategoryIds(form),parent_building_id:null,floor_label:null,description:optionalText(form,'description'),floor_count:1,capacity:form.elements.capacity.value===''?null:Number(form.elements.capacity.value),image_path,...detailPayload(form)};}
           else{resource='rooms';payload={name:form.elements.name.value.trim(),building_id:Number(form.elements.buildingId.value),category_ids:selectedCategoryIds(form),room_number:form.elements.room.value.trim(),floor_label:form.elements.floor.value.trim(),floor_number:Number((form.elements.floor.value.match(/\d+/)||[])[0]||0),capacity:form.elements.capacity.value===''?null:Number(form.elements.capacity.value),department_head:optionalText(form,'head'),description:optionalText(form,'description'),function_description:optionalText(form,'function_description'),...detailPayload(form)};}
-          await CampusApi.save(resource,payload);await refresh();renderAll();form.reset();if(form.elements.floors)form.elements.floors.value='1';if(form.elements.floor)form.elements.floor.value='Ground Level';if(form.elements.capacity)form.elements.capacity.value='0';formDialog?.close();if(photoProgress)photoProgress.hidden=true;status('Saved to the campus database.');notify(`${kind[0].toUpperCase()+kind.slice(1)} added successfully.`);
+          await CampusApi.save(resource,payload);await refresh();renderAll();form.reset();form.querySelectorAll('[data-photo-preview]').forEach(preview=>{preview.removeAttribute('src');preview.hidden=true;});if(form.elements.floors)form.elements.floors.value='1';if(form.elements.floor)form.elements.floor.value='Ground Level';if(form.elements.capacity)form.elements.capacity.value='0';formDialog?.close();if(photoProgress)photoProgress.hidden=true;status('Saved to the campus database.');notify(`${kind[0].toUpperCase()+kind.slice(1)} added successfully.`);
         }catch(error){status(error.message);notify(error.message,'error');}finally{button.disabled=false;}
       });
     }
