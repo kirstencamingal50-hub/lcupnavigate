@@ -121,7 +121,7 @@ begin
           contact_phone = coalesce(canonical.contact_phone, duplicate.contact_phone),
           website_url = coalesce(canonical.website_url, duplicate.website_url),
           model_3d_path = coalesce(canonical.model_3d_path, duplicate.model_3d_path),
-          category_ids = coalesce(canonical.category_ids, duplicate.category_ids),
+          category_ids = case when cardinality(canonical.category_ids) = 0 then duplicate.category_ids else canonical.category_ids end,
           access_hours = coalesce(canonical.access_hours, duplicate.access_hours),
           service_hours = coalesce(canonical.service_hours, duplicate.service_hours),
           days_open = coalesce(canonical.days_open, duplicate.days_open),
@@ -130,7 +130,7 @@ begin
           nearby_landmarks = coalesce(canonical.nearby_landmarks, duplicate.nearby_landmarks),
           accessibility_status = coalesce(canonical.accessibility_status, duplicate.accessibility_status),
           accessibility_details = coalesce(canonical.accessibility_details, duplicate.accessibility_details),
-          accessibility_features = coalesce(canonical.accessibility_features, duplicate.accessibility_features),
+          accessibility_features = case when canonical.accessibility_features is null or canonical.accessibility_features = '[]'::jsonb then duplicate.accessibility_features else canonical.accessibility_features end,
           category_id = coalesce(canonical.category_id, duplicate.category_id),
           verified = canonical.verified or duplicate.verified
       from public.locations duplicate
