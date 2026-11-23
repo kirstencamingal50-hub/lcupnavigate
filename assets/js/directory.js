@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           ${item.parent_building ? `<p class="directory-parent"><span class="material-symbols-rounded" aria-hidden="true">location_on</span>${escapeHtml(item.parent_building)}${item.room_number ? ` · Room ${escapeHtml(item.room_number)}` : ''}</p>` : ''}
           ${features ? `<div class="directory-features" aria-label="Building accessibility features">${features}</div>` : ''}
         </div>
-        <div class="directory-card-actions"><a href="map.html?search=${encodeURIComponent(item.name)}"><span class="material-symbols-rounded" aria-hidden="true">map</span>Show on map</a><a href="${detailUrl}" aria-label="View details for ${escapeHtml(item.name)}">Details<span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></a></div>
+        <div class="directory-card-actions"><a href="map.html?search=${encodeURIComponent(item.name)}"><span class="material-symbols-rounded" aria-hidden="true">map</span>Show on map</a><button type="button" class="directory-card-3d" data-open-directory-3d data-place-id="${escapeHtml(item.id)}" ${item.model_3d_url ? "" : "disabled aria-disabled=\"true\" title=\"No 3D model is available\""}><span class="material-symbols-rounded" aria-hidden="true">view_in_ar</span>View 3D</button><a href="${detailUrl}" aria-label="View details for ${escapeHtml(item.name)}">Details<span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></a></div>
       </article>`;
     }).join('');
     container.querySelectorAll('.directory-card').forEach(card => {
@@ -124,6 +124,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  const modelDialog=document.createElement("dialog");
+  modelDialog.className="directory-3d-dialog";
+  modelDialog.innerHTML='<div class="directory-3d-dialog-head"><strong data-model-title>3D Model View</strong><button type="button" data-model-close aria-label="Close">×</button></div><model-viewer data-model-viewer camera-controls auto-rotate style="display:block;width:100%;height:65vh;min-height:280px;background:#eef3f8;border-radius:12px"></model-viewer><p>Drag to rotate, scroll or pinch to zoom.</p>';
+  document.body.append(modelDialog);
+  container.addEventListener("click",event=>{const button=event.target.closest("[data-open-directory-3d]");if(!button||button.disabled)return;const place=records.find(item=>String(item.id)===button.dataset.placeId);if(!place?.model_3d_url)return;modelDialog.querySelector("[data-model-title]").textContent=place.name;modelDialog.querySelector("[data-model-viewer]").src=mediaSrc(place.model_3d_url);modelDialog.showModal();});
+  modelDialog.querySelector("[data-model-close]").addEventListener("click",()=>modelDialog.close());
+  modelDialog.addEventListener("close",()=>modelDialog.querySelector("[data-model-viewer]").removeAttribute("src"));
   container.innerHTML = '<p class="directory-loading" role="status">Loading campus directory…</p>';
   try {
     const data = await window.CampusApi.get('directory');
