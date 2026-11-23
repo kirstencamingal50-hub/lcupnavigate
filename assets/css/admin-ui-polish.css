@@ -486,6 +486,8 @@ html[data-theme="dark"] .admin-page .catalog-photo-details input:not([type=check
 
 /* Compact dropdown checklist shared by Categories and Accessibility features. */
 .admin-page .catalog-checklist-dropdown{position:relative;min-width:0;border:1px solid #dbe3ed;border-radius:10px;background:#fff;overflow:visible}
+.admin-page .catalog-checklist-dropdown,.admin-page .catalog-checklist-dropdown *{font-family:inherit}
+.admin-page .catalog-checklist-dropdown{width:100%;max-width:100%;box-sizing:border-box}
 .admin-page .catalog-checklist-dropdown>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:11px 13px;list-style:none;cursor:pointer;color:#24364f;font-size:12px;font-weight:800}
 .admin-page .catalog-checklist-dropdown>summary::-webkit-details-marker{display:none}
 .admin-page .catalog-checklist-dropdown>summary::after{content:'⌄';flex:0 0 auto;color:#64748b;font-size:16px;line-height:1;transition:transform .15s ease}
