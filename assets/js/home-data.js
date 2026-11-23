@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
   const announcementDate = item => item.event_start
     ? `Event: ${formatDate(item.event_start)}${item.event_end ? ` – ${formatDate(item.event_end)}` : ''}`
-    : formatDate(item.createdAt) ? `Posted: ${formatDate(item.createdAt)}` : '';
+    : '';
 
   document.getElementById('home-search')?.addEventListener('submit', event => {
     event.preventDefault();
