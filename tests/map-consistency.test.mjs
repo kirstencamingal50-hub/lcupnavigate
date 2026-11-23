@@ -25,6 +25,16 @@ test('map frontend keeps database nodes, legacy junctions, and API loading align
   assert.match(mapPage, /route\.accessible_confirmed/);
 });
 
+test('public map cleanup removes orphaned route geometry before loading graph data', () => {
+  assert.match(api, /await cleanupOrphanedRouteGeometry\(db\)/);
+  assert.match(api, /from\('campus_route_segments'\)/);
+  assert.match(api, /from\('campus_route_points'\)/);
+  assert.match(api, /like\('node_key', 'route-%'\)/);
+  assert.match(api, /update\(\{ route_node_id: null \}\)/);
+  assert.match(api, /from\('map_connections'\)\.delete\(\)/);
+  assert.match(api, /route\.start_marker\?\.id !== route\.destination_marker\?\.id/);
+});
+
 test('Netlify map queries use schema foreign keys and frontend-compatible directory fields', () => {
   // Parent buildings are resolved in JavaScript to avoid depending on the
   // PostgREST self-referencing relationship being present in its schema cache.
