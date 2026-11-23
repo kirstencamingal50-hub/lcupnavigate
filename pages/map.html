@@ -373,7 +373,7 @@
         if (routePoints.length < 2) return;
         const firstNode = `n:${routePoints[0].node_id}`;
         const lastNode = `n:${routePoints[routePoints.length - 1].node_id}`;
-        const accessible = isConfirmedAccessible(route.accessibility_status);
+        const accessible = isConfirmedAccessible(route.accessible_confirmed ?? route.accessibility_status);
         const hasLocationEndpoints = route.start_location_id !== null && route.start_location_id !== undefined &&
           route.destination_location_id !== null && route.destination_location_id !== undefined;
         const startLocations = hasLocationEndpoints
