@@ -200,7 +200,7 @@
     });
     const locations = [...mapPins, ...roomLocations];
     let junctions = Object.fromEntries(storedMap.nodes.map(node=>[`n:${node.id}`,[Number(node.x),Number(node.y)]]));
-    let mapBackbone = storedMap.connections.map(edge=>[`n:${edge.from_node_id}`,`n:${edge.to_node_id}`,Number(edge.weight),isConfirmedAccessible(edge.accessibility_value)]);
+    let mapBackbone = storedMap.connections.map(edge=>[`n:${edge.from_node_id}`,`n:${edge.to_node_id}`,Number(edge.weight),isConfirmedAccessible(edge.accessible_confirmed ?? (edge.verified === true && edge.accessibility_status))]);
     const W = MAP_W, H = MAP_H;
     const bounds = [[0,0], [H,W]];
 
@@ -375,7 +375,7 @@
         if (routePoints.length < 2) return;
         const firstNode = `n:${routePoints[0].node_id}`;
         const lastNode = `n:${routePoints[routePoints.length - 1].node_id}`;
-        const accessible = isConfirmedAccessible(route.accessibility_status ?? route.accessible_confirmed ?? route.accessibility_value);
+        const accessible = isConfirmedAccessible(route.accessibility_status);
         const hasLocationEndpoints = route.start_location_id !== null && route.start_location_id !== undefined &&
           route.destination_location_id !== null && route.destination_location_id !== undefined;
         const startLocations = hasLocationEndpoints
@@ -656,7 +656,8 @@
       }
       // During navigation, show only the selected route, not the full walkway network.
       if (networkLayer) { map.removeLayer(networkLayer); networkLayer = null; }
-      routeEndpointIds = new Set([selected.path[0], selected.path[selected.path.length - 1]]);
+      const endpointLocations=[fromSelect.value,toSelect.value].map(id=>locations.find(loc=>routeId(loc)===id)).filter(Boolean);
+      routeEndpointIds = new Set(endpointLocations.map(loc=>{const marker=mapPins.find(pin=>String(pin.id)===String(loc.routeLocationId??loc.id));return routeId(marker||loc);}));
       updateVisibleMarkers();
       const latlngs = selected.path.map(nodeId => toLatLng(graph[nodeId].px));
       const color = selected.color || (id === 'shortest' ? '#3b82f6' : '#8b5cf6');
@@ -701,7 +702,7 @@
         .filter(route => route.status === 'active')
         .sort((a,b)=>Number(a.id)-Number(b.id))
         .flatMap(route => {
-          if (accessibleOnly && !isConfirmedAccessible(route.accessibility_status ?? route.accessible_confirmed ?? route.accessibility_value)) return [];
+          if (accessibleOnly && !isConfirmedAccessible(route.accessibility_status)) return [];
           const direction = getSavedRouteDirection(route, startLocation, endLocation);
           if (!direction) return [];
           let points = (route.points || [])
