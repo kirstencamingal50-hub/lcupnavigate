@@ -78,20 +78,44 @@ document.addEventListener('DOMContentLoaded', async () => {
   const selectedCategoryIds=form=>[...(form.querySelector('[name="category_ids"]')?.selectedOptions||[])].map(option=>Number(option.value)).filter(Number.isFinite);
   const enhanceCategoryDropdown=select=>{
     if(!select||select.dataset.dropdownEnhanced)return;
-    select.dataset.dropdownEnhanced='true';select.removeAttribute('required');
-    const dropdown=document.createElement('details');dropdown.className='relative w-full text-sm';
-    const summary=document.createElement('summary');summary.className='flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-700 shadow-sm';
-    summary.innerHTML='<span data-category-selection>Select categories</span><span class="material-symbols-rounded text-slate-500" aria-hidden="true">expand_more</span>';
-    const menu=document.createElement('div');menu.className='absolute left-0 top-full z-40 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white p-2 shadow-xl';
+    select.dataset.dropdownEnhanced='true';
+    select.removeAttribute('required');
+    const panel=document.createElement('section');
+    panel.className='catalog-category-checklist admin-edit-wide';
+    const heading=document.createElement('div');
+    heading.className='catalog-category-checklist-heading';
+    const title=document.createElement('strong');
+    title.textContent='Categories';
+    const helper=document.createElement('span');
+    helper.textContent='Select one or more categories';
+    heading.append(title,helper);
+    const list=document.createElement('div');
+    list.className='catalog-category-checklist-options';
     [...select.options].forEach(option=>{
-      const label=document.createElement('label');label.className='flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm font-medium normal-case text-slate-700 hover:bg-slate-50';
-      const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.value=option.value;checkbox.checked=option.selected;checkbox.className='rounded border-slate-300';
-      checkbox.addEventListener('change',()=>{option.selected=checkbox.checked;updateLabel();select.dispatchEvent(new Event('change',{bubbles:true}));});
-      const text=document.createElement('span');text.textContent=option.textContent;label.append(checkbox,text);menu.append(label);
+      const label=document.createElement('label');
+      label.className='catalog-category-checklist-option';
+      const checkbox=document.createElement('input');
+      checkbox.type='checkbox';
+      checkbox.value=option.value;
+      checkbox.checked=option.selected;
+      checkbox.className='catalog-category-checkbox';
+      checkbox.addEventListener('change',()=>{
+        option.selected=checkbox.checked;
+        select.dispatchEvent(new Event('change',{bubbles:true}));
+      });
+      const text=document.createElement('span');
+      text.textContent=option.textContent;
+      label.append(checkbox,text);
+      list.append(label);
     });
-    const updateLabel=()=>{const selected=[...select.selectedOptions].map(option=>option.textContent);summary.querySelector('[data-category-selection]').textContent=selected.length?selected.join(', '):'Select categories';};
-    dropdown.append(summary,menu);select.after(dropdown);select.hidden=true;updateLabel();
-    select.form?.addEventListener('reset',()=>setTimeout(()=>{menu.querySelectorAll('input').forEach((checkbox,index)=>checkbox.checked=!!select.options[index]?.selected);updateLabel();},0));
+    panel.append(heading,list);
+    select.after(panel);
+    select.hidden=true;
+    select.form?.addEventListener('reset',()=>setTimeout(()=>{
+      list.querySelectorAll('input[type="checkbox"]').forEach((checkbox,index)=>{
+        checkbox.checked=!!select.options[index]?.selected;
+      });
+    },0));
   };
   const enhanceAccessibilityDropdown=fieldset=>{
     if(!fieldset||fieldset.dataset.dropdownEnhanced)return;
