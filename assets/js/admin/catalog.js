@@ -266,7 +266,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     accessibilityStatusField(item);
   const extraRoomFields=item=>field('Contact email','contact_email',item.contact_email||'','email',false,'maxlength="254"')+
     field('Contact phone','contact_phone',item.contact_phone||'','tel',false,'maxlength="40"')+
-    presetField('Service hours','service_hours',serviceHourOptions,item.service_hours)+
+    serviceHoursField(item.service_hours)+
     presetField('Days open','days_open',dayOptions,item.days_open)+
     presetField('Lunch hours','lunch_break',lunchOptions,item.lunch_break)+
     accessibilityStatusField(item);
