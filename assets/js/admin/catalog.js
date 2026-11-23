@@ -151,20 +151,39 @@ document.addEventListener('DOMContentLoaded', async () => {
   const enhanceAccessibilityDropdown=fieldset=>{
     if(!fieldset||fieldset.dataset.dropdownEnhanced)return;
     fieldset.dataset.dropdownEnhanced='true';
+    const selected=new Set([...fieldset.querySelectorAll('input[name="accessibility_features"]:checked')].map(input=>input.value));
+    const aliases={
+      wheelchair_accessibility:['wheelchair_accessibility','wheelchair_entrance','wheelchair_accessible_entrance','ramp','wheelchair_accessible_ramp','accessible_pathways','wheelchair_accessible_pathways'],
+      elevator:['elevator'],
+      accessible_restroom:['accessible_restroom'],
+      accessible_parking:['accessible_parking'],
+      handrails:['handrails'],
+      braille_signage:['braille_signage']
+    };
+    const options=[
+      ['wheelchair_accessibility','Wheelchair accessibility'],
+      ['elevator','Elevator'],
+      ['accessible_restroom','Accessible restroom'],
+      ['accessible_parking','Accessible parking'],
+      ['handrails','Handrails'],
+      ['braille_signage','Braille signage']
+    ];
     const details=document.createElement('details');details.className='catalog-checklist-dropdown admin-edit-wide';
     const summary=document.createElement('summary');summary.className='catalog-checklist-summary';
     summary.innerHTML='<span class="catalog-checklist-title">Accessibility features</span><span data-accessibility-selection class="catalog-checklist-count">Select features</span>';
     const content=document.createElement('div');content.className='catalog-category-checklist-options catalog-checklist-options';
-    // Use the same flat checkbox-row structure as Categories; do not retain the
-    // original nested grid wrapper, which was squeezing the checklist to one side.
-    fieldset.querySelectorAll('input[name="accessibility_features"]').forEach(checkbox=>{
-      const label=checkbox.closest('label');
-      if(!label)return;
-      checkbox.classList.add('catalog-category-checkbox');
-      label.classList.add('catalog-category-checklist-option','catalog-checklist-option');
-      content.append(label);
+    options.forEach(([value,labelText])=>{
+      const label=document.createElement('label');label.className='catalog-category-checklist-option catalog-checklist-option';
+      const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.name='accessibility_features';checkbox.value=value;checkbox.className='catalog-category-checkbox';
+      checkbox.checked=(aliases[value]||[value]).some(alias=>selected.has(alias));
+      const labelTextNode=document.createElement('span');labelTextNode.textContent=labelText;
+      label.append(checkbox,labelTextNode);content.append(label);
     });
-    const updateLabel=()=>{const selected=[...details.querySelectorAll('[name="accessibility_features"]:checked')];summary.querySelector('[data-accessibility-selection]').textContent=selected.length?selected.length+' selected':'Select features';summary.setAttribute('aria-label',selected.length?'Accessibility features: '+selected.map(input=>input.closest('label')?.textContent.trim()).filter(Boolean).join(', '):'Select accessibility features');};
+    const updateLabel=()=>{
+      const checked=[...details.querySelectorAll('[name="accessibility_features"]:checked')];
+      summary.querySelector('[data-accessibility-selection]').textContent=checked.length?checked.length+' selected':'Select features';
+      summary.setAttribute('aria-label',checked.length?'Accessibility features: '+checked.map(input=>input.closest('label')?.textContent.trim()).filter(Boolean).join(', '):'Select accessibility features');
+    };
     details.append(summary,content);fieldset.replaceWith(details);details.addEventListener('change',updateLabel);updateLabel();
   };
   const enhanceDropdownFields=root=>{
