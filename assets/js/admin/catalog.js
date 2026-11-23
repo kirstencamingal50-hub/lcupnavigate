@@ -42,13 +42,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       if(node.querySelector('[name="accessibility_features"]')){node.classList.add('admin-edit-wide');nodes.splice(Math.max(0,nodes.findIndex(item=>item.querySelector('[name="contact_email"]'))),0,node);used.add(node);}
     }
     form.replaceChildren(...nodes,...(statusRow?[statusRow]:[]));
-    const nameLabel=take('name')?.querySelector('span,.admin-field-label');
-    if(nameLabel)nameLabel.textContent=kind==='room'?'Room name':kind==='building'?'Name':'Name';
-    const numberLabel=take('room')?.querySelector('span,.admin-field-label');if(numberLabel)numberLabel.textContent='Room number';
-    const buildingLabel=take('buildingId')?.querySelector('span,.admin-field-label');if(buildingLabel)buildingLabel.textContent='Building';
-    const floorLabel=take('floor')?.querySelector('span,.admin-field-label');if(floorLabel)floorLabel.textContent='Floor level';
-    const descriptionLabel=take('description')?.querySelector('span,.admin-field-label');if(descriptionLabel)descriptionLabel.textContent='Description';
-    const capacityLabel=take('capacity')?.querySelector('span,.admin-field-label');if(capacityLabel)capacityLabel.textContent=kind==='room'?'Maximum capacity':'Capacity';
+    const setFieldLabel=(name,label)=>{
+      const wrapper=take(name);if(!wrapper)return;
+      const textNode=[...wrapper.childNodes].find(node=>node.nodeType===Node.TEXT_NODE&&node.textContent.trim());
+      if(textNode)textNode.textContent=' '+label+' ';
+      else{const heading=wrapper.querySelector('.admin-field-label');if(heading)heading.textContent=label;}
+    };
+    setFieldLabel('name',kind==='room'?'Room name':'Name');
+    setFieldLabel('room','Room number');
+    setFieldLabel('buildingId','Building');
+    setFieldLabel('floor','Floor level');
+    setFieldLabel('description','Description');
+    setFieldLabel('capacity',kind==='room'?'Maximum capacity':'Capacity');
+    setFieldLabel('floors','Number of floors');
+    setFieldLabel('building_number','Building number');
+    setFieldLabel('photo',kind==='building'?'Building photo':'Facility photo');
+    setFieldLabel('model_3d_file','3D Model (.glb)');
     form.classList.add('admin-edit-fields','catalog-add-fields');
     form.querySelectorAll('input,select,textarea').forEach(control=>{if(control.type!=='checkbox'&&control.type!=='file')control.classList.add('admin-edit-control');});
   };
