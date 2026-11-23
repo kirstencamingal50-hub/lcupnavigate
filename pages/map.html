@@ -353,7 +353,7 @@
         .map(node=>[`n:${node.id}`,[Number(node.x),Number(node.y)]]));
       mapBackbone=(storedMap.connections || [])
         .filter(edge => databaseNodes.has(String(edge.from_node_id)) && databaseNodes.has(String(edge.to_node_id)))
-        .map(edge=>[`n:${edge.from_node_id}`,`n:${edge.to_node_id}`,Number(edge.weight),Number(edge.accessibility_value)===1]);
+        .map(edge=>[`n:${edge.from_node_id}`,`n:${edge.to_node_id}`,Number(edge.weight),isConfirmedAccessible(edge.accessible_confirmed ?? (edge.verified === true && edge.accessibility_status))]);
       Object.entries(junctions).forEach(([id,px])=>addNode(id,px));
       mapBackbone.forEach(([a,b,weight,accessible])=>{
         if(graph[a]&&graph[b])addEdge(a,b,weight,accessible);
@@ -717,12 +717,12 @@
           if (!path.length) return [];
           if (path[0] !== startId) {
             if (!graph[startId] || !graph[path[0]]) return [];
-            if (!graph[startId].neighbors[path[0]]) addEdge(startId, path[0], null, Number(route.accessibility_status) === 1);
+            if (!graph[startId].neighbors[path[0]]) addEdge(startId, path[0], null, isConfirmedAccessible(route.accessibility_status));
             path.unshift(startId);
           }
           if (path[path.length - 1] !== endId) {
             if (!graph[endId] || !graph[path[path.length - 1]]) return [];
-            if (!graph[endId].neighbors[path[path.length - 1]]) addEdge(path[path.length - 1], endId, null, Number(route.accessibility_status) === 1);
+            if (!graph[endId].neighbors[path[path.length - 1]]) addEdge(path[path.length - 1], endId, null, isConfirmedAccessible(route.accessibility_status));
             path.push(endId);
           }
           if (path.length < 2 || path[0] !== startId || path[path.length - 1] !== endId) return [];
