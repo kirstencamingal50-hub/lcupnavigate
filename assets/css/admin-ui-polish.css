@@ -1070,3 +1070,93 @@ html[data-theme="dark"] .admin-page .admin-edit-dialog .catalog-photo-details {
   background:#172235;
 }
 
+/* Final layout for Edit Photo Details: stack caption and directory-photo option. */
+.admin-page .catalog-photo-details {
+  box-sizing:border-box;
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  width:calc(100% - 24px);
+  min-width:0;
+  gap:14px;
+  margin:0 12px 12px;
+  padding:16px;
+}
+.admin-page .catalog-photo-details[hidden] { display:none!important; }
+.admin-page .catalog-photo-details-heading {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  width:100%;
+  min-width:0;
+  gap:10px;
+}
+.admin-page .catalog-photo-details-heading strong {
+  font-size:13px;
+  line-height:1.4;
+  text-transform:none;
+}
+.admin-page .catalog-photo-caption-field {
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr);
+  width:100%;
+  min-width:0;
+  gap:7px!important;
+  line-height:1.4;
+}
+.admin-page .catalog-photo-caption-field > span {
+  display:block;
+  white-space:normal;
+}
+.admin-page .catalog-photo-caption-field input[data-photo-caption] {
+  box-sizing:border-box;
+  display:block;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  min-height:44px;
+  padding:10px 12px;
+  font-size:13px;
+}
+.admin-page .catalog-photo-directory-toggle {
+  display:flex!important;
+  align-items:center;
+  justify-content:flex-start;
+  flex-wrap:nowrap;
+  width:100%;
+  min-width:0;
+  gap:10px!important;
+  padding:4px 0;
+  line-height:1.4;
+}
+.admin-page .catalog-photo-directory-toggle input[type=radio] {
+  flex:0 0 auto;
+  width:17px;
+  height:17px;
+  margin:0;
+}
+.admin-page .catalog-photo-directory-toggle span {
+  display:block;
+  min-width:0;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+.admin-page .catalog-photo-details .catalog-gallery-actions {
+  display:flex;
+  justify-content:flex-end;
+  width:100%;
+  min-width:0;
+}
+.admin-page .catalog-photo-details .catalog-gallery-actions button {
+  min-width:132px;
+  min-height:40px;
+}
+@media(max-width:520px) {
+  .admin-page .catalog-photo-details {
+    width:calc(100% - 16px);
+    margin:0 8px 10px;
+    padding:13px;
+  }
+  .admin-page .catalog-photo-details .catalog-gallery-actions button { width:100%; }
+}
+
