@@ -86,7 +86,7 @@
     <!-- Row 1: Search & Category Filters -->
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div class="relative flex-1 min-w-[140px] max-w-xs">
-        <input id="searchBox" type="text" placeholder="Search name or pin number..." class="w-full bg-slate-800 border border-slate-700 text-xs text-white rounded-xl px-3 py-1.5 outline-none focus:border-blue-500" autocomplete="off" />
+        <input id="searchBox" type="text" placeholder="Search by location name..." class="w-full bg-slate-800 border border-slate-700 text-xs text-white rounded-xl px-3 py-1.5 outline-none focus:border-blue-500" autocomplete="off" />
         <div id="suggestions" class="absolute top-9 left-0 right-0 bg-white text-slate-900 rounded-xl shadow-xl max-h-56 overflow-y-auto hidden z-50 text-xs"></div>
       </div>
 
@@ -260,10 +260,10 @@
     const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     function openPin(loc) {
       sidebarTitle.textContent = loc.name;
-      const description=[loc.name,loc.category,loc.buildingName,loc.building_number,loc.floorLabel||loc.floor,loc.roomNumber,loc.description,loc.functionDescription,loc.departmentName,loc.departmentHead,loc.contactInfo,loc.contactEmail,loc.contactPhone,loc.websiteUrl,loc.serviceHours,loc.accessHours,loc.daysOpen,loc.lunchBreak,loc.services,loc.nearbyLandmarks,loc.accessibilityDetails].filter(Boolean).join('. ');
+      const description=[loc.name,loc.category,loc.buildingName,loc.floorLabel||loc.floor,loc.roomNumber,loc.description,loc.functionDescription,loc.departmentName,loc.departmentHead,loc.contactInfo,loc.contactEmail,loc.contactPhone,loc.websiteUrl,loc.serviceHours,loc.accessHours,loc.daysOpen,loc.lunchBreak,loc.services,loc.nearbyLandmarks,loc.accessibilityDetails].filter(Boolean).join('. ');
       const photos=loc.photos?.length?loc.photos:(loc.image?[{image:loc.image,altText:`Photo of ${loc.name}`,caption:''}]:[]);
       const accessibility=loc.accessibilityStatus===null||loc.accessibilityStatus===undefined||loc.accessibilityStatus===''?'N/A':([true,1,'1','true','t','yes'].includes(typeof loc.accessibilityStatus==='string'?loc.accessibilityStatus.trim().toLowerCase():loc.accessibilityStatus)?'Accessible':'Not accessible');
-      const info=[['Building',loc.buildingName],['Building number',loc.building_number],['Room number',loc.roomNumber],['Room function',loc.functionDescription],['Floors',loc.floor_count],['Capacity',loc.capacity],['Department',loc.departmentName],['Department head',loc.departmentHead],['Contact information',loc.contactInfo],['Floor',loc.floorLabel||loc.floor],['Service hours',loc.serviceHours],['Access hours',loc.accessHours],['Days open',loc.daysOpen],['Lunch break',loc.lunchBreak],['Services',loc.services],['Nearby landmarks',loc.nearbyLandmarks],['Website',loc.websiteUrl]].filter(([,value])=>value!==null&&value!==undefined&&value!=='');
+      const info=[['Building',loc.buildingName],['Room number',loc.roomNumber],['Room function',loc.functionDescription],['Floors',loc.floor_count],['Capacity',loc.capacity],['Department',loc.departmentName],['Department head',loc.departmentHead],['Contact information',loc.contactInfo],['Floor',loc.floorLabel||loc.floor],['Service hours',loc.serviceHours],['Access hours',loc.accessHours],['Days open',loc.daysOpen],['Lunch break',loc.lunchBreak],['Services',loc.services],['Nearby landmarks',loc.nearbyLandmarks],['Website',loc.websiteUrl]].filter(([,value])=>value!==null&&value!==undefined&&value!=='');
       sidebarContent.innerHTML = `
         <div class="map-place-panel" data-speech-panel>
           ${photos.length?`<div class="map-place-gallery"><figure><img class="map-place-cover" src="../${escapeHtml(photos[0].image)}" alt="${escapeHtml(photos[0].altText||`Photo of ${loc.name}`)}">${photos[0].caption?`<figcaption class="map-place-caption">${escapeHtml(photos[0].caption)}</figcaption>`:''}</figure>${photos.length>1?`<div class="map-place-thumbnails">${photos.slice(1).map(photo=>`<figure><img src="../${escapeHtml(photo.image)}" alt="${escapeHtml(photo.altText||`Photo of ${loc.name}`)}" loading="lazy">${photo.caption?`<figcaption class="map-place-caption">${escapeHtml(photo.caption)}</figcaption>`:''}</figure>`).join('')}</div>`:''}</div>`:`<div class="map-place-photo-empty"><span>No photo available</span></div>`}
@@ -514,7 +514,7 @@
     const closeSuggestions = list => { list.classList.add('hidden'); list.closest('[class~="relative"]')?.querySelector('[role="combobox"]')?.setAttribute('aria-expanded','false'); };
     const renderSuggestions = (control, open = true) => {
       const query = control.input.value.trim().toLocaleLowerCase();
-      const matches = locations.filter(loc => `${loc.name} ${loc.category || ''} ${loc.buildingName || ''} ${loc.kind || ''} ${loc.description || ''} ${loc.functionDescription || ''} ${loc.building_number || ''} ${loc.roomNumber || ''} ${loc.floor || ''} ${loc.floorLabel || ''} ${loc.departmentName || ''} ${loc.departmentHead || ''} ${loc.contactInfo || ''} ${loc.contactEmail || ''} ${loc.contactPhone || ''} ${loc.services || ''} ${loc.nearbyLandmarks || ''}`.toLocaleLowerCase().includes(query)).slice(0, 50);
+      const matches = locations.filter(loc => `${loc.name} ${loc.category || ''} ${loc.buildingName || ''} ${loc.kind || ''} ${loc.description || ''} ${loc.functionDescription || ''} ${loc.roomNumber || ''} ${loc.floor || ''} ${loc.floorLabel || ''} ${loc.departmentName || ''} ${loc.departmentHead || ''} ${loc.contactInfo || ''} ${loc.contactEmail || ''} ${loc.contactPhone || ''} ${loc.services || ''} ${loc.nearbyLandmarks || ''}`.toLocaleLowerCase().includes(query)).slice(0, 50);
       control.list.innerHTML = matches.length ? matches.map(loc => {
         const label = labelFor(routeId(loc));
         const alreadySelected = control.other.value === routeId(loc);
@@ -804,7 +804,7 @@
     });
     if (netToggleBox.checked) showWalkways();
 
-    // Search by pin number
+    // Search campus locations by name and details
     const searchBox = document.getElementById('searchBox');
     const suggestions = document.getElementById('suggestions');
     searchBox.addEventListener('input', () => {
@@ -823,7 +823,7 @@
 
     const initialSearch = new URLSearchParams(location.search).get('search')?.trim().toLowerCase();
     if (initialSearch) {
-      const match = locations.find(loc => `${loc.name} ${loc.buildingName || ''} ${loc.building_number || ''} ${loc.roomNumber || ''} ${loc.floorLabel || ''} ${loc.departmentName || ''} ${loc.contactEmail || ''} ${loc.services || ''} ${loc.nearbyLandmarks || ''}`.toLocaleLowerCase().includes(initialSearch));
+      const match = locations.find(loc => `${loc.name} ${loc.buildingName || ''} ${loc.roomNumber || ''} ${loc.floorLabel || ''} ${loc.departmentName || ''} ${loc.contactEmail || ''} ${loc.services || ''} ${loc.nearbyLandmarks || ''}`.toLocaleLowerCase().includes(initialSearch));
       if (match) {
         searchBox.value = match.name;
         map.setView(toLatLng(match.px), 1, { animate: false });
