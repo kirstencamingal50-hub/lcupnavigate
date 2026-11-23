@@ -594,6 +594,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       const submitButton=form.querySelector('button[type="submit"]');
       if(submitButton){submitButton.className='admin-button-primary';submitButton.textContent=`Add ${kind==='room'?'Room / Office':kind==='building'?'Building':'Facility'}`;}
       const formDialog=window.AdminUI?.mountFormDialog(form,{title:`Add ${kind}`,description:'Enter the campus information below. Required fields are marked in the form.',triggerLabel:`Add ${kind}`});
+      if(formDialog?.dialog&&kind!=='room'){
+        formDialog.dialog.classList.add('admin-edit-dialog','catalog-add-edit-dialog');
+        formDialog.dialog.querySelector('.admin-create-dialog-heading')?.classList.add('admin-edit-dialog-heading');
+        formDialog.dialog.querySelector('.admin-form-panel')?.classList.add('catalog-add-edit-panel');
+      }
       form.addEventListener('submit',async event=>{event.preventDefault();if(!selectedCategoryIds(form).length){status('Select at least one category.');return;}const button=form.querySelector('[type="submit"]');button.disabled=true;status('Saving to the campus database…');
         try{
           const photoProgress=form.querySelector('[data-add-photo-progress]'),photoBar=photoProgress?.querySelector('[data-add-photo-bar]'),photoValue=photoProgress?.querySelector('[data-add-photo-value]'),photoLabel=photoProgress?.querySelector('[data-add-photo-label]');
