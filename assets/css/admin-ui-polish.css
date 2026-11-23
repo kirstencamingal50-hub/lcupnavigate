@@ -708,3 +708,105 @@ html[data-theme="dark"] .admin-page .catalog-add-photo-panel .catalog-add-photo-
   color:#e7edf5;
   background:#172235;
 }
+
+
+/* Add Building and Add Facility use the same dialog shell and form treatment as Edit Building. */
+.admin-page .catalog-add-edit-dialog {
+  width:min(900px,calc(100vw - 28px));
+  max-height:min(88vh,900px);
+  padding:0;
+  overflow:auto;
+  border:1px solid #dce5ef;
+  border-radius:18px;
+  color:#24364f;
+  background:#fff;
+  box-shadow:0 24px 80px rgba(15,35,60,.22);
+}
+.admin-page .catalog-add-edit-dialog::backdrop { background:rgba(15,23,42,.48); backdrop-filter:blur(3px); }
+.admin-page .catalog-add-edit-dialog .admin-edit-dialog-heading {
+  position:sticky;
+  top:0;
+  z-index:5;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+  margin:0;
+  padding:20px 24px;
+  border-bottom:1px solid #e8edf4;
+  background:#fff;
+}
+.admin-page .catalog-add-edit-dialog .admin-edit-dialog-heading h2 { margin:0; color:#15243a; font-size:18px; font-weight:850; }
+.admin-page .catalog-add-edit-dialog .admin-edit-dialog-heading p { margin:5px 0 0; color:#748197; font-size:11px; }
+.admin-page .catalog-add-edit-dialog .catalog-add-edit-panel {
+  margin:0;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+.admin-page .catalog-add-edit-dialog .catalog-add-fields {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+  padding:22px 24px;
+  background:#fff;
+}
+.admin-page .catalog-add-edit-dialog .catalog-add-fields > label,
+.admin-page .catalog-add-edit-dialog .catalog-add-fields > div:not(.admin-edit-wide) {
+  display:grid;
+  min-width:0;
+  gap:6px;
+  color:#52637a;
+  font-size:11px;
+  font-weight:800;
+}
+.admin-page .catalog-add-edit-dialog .catalog-add-fields :is(input:not([type=checkbox]),select,textarea) {
+  width:100%;
+  min-width:0;
+  min-height:40px;
+  padding:9px 11px;
+  border:1px solid #d5deea;
+  border-radius:9px;
+  color:#24364f;
+  background:#fff;
+  font-size:12px;
+  font-weight:500;
+}
+.admin-page .catalog-add-edit-dialog .catalog-add-fields textarea { min-height:84px; resize:vertical; }
+.admin-page .catalog-add-edit-dialog .catalog-add-fields :is(input,select,textarea):focus { outline:3px solid rgba(37,99,235,.13); border-color:#6b9be8; }
+.admin-page .catalog-add-edit-dialog .catalog-add-fields small { color:#78879a; font-size:10px; font-weight:500; line-height:1.5; }
+.admin-page .catalog-add-edit-dialog .catalog-add-fields .admin-edit-wide { grid-column:1/-1; }
+.admin-page .catalog-add-edit-dialog .catalog-add-fields > .admin-edit-actions {
+  position:sticky;
+  bottom:0;
+  z-index:4;
+  grid-column:1/-1;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:0 -24px -22px;
+  padding:14px 24px;
+  border-top:1px solid #e8edf4;
+  background:#fff;
+}
+.admin-page .catalog-add-edit-dialog .catalog-add-fields > .admin-edit-actions > p { flex:1 1 220px; min-width:0; margin:0 auto 0 0; color:#64748b; font-size:11px; line-height:1.5; text-align:left; }
+.admin-page .catalog-add-edit-dialog .catalog-add-fields > .admin-edit-actions > button { min-height:38px; padding:8px 14px; border-radius:8px; font-size:11px; font-weight:800; }
+.admin-page .catalog-add-edit-dialog .catalog-add-fields > .admin-edit-actions > button[type=submit] { border:1px solid #1d5fce; color:#fff; background:#2563eb; }
+.admin-page .catalog-add-edit-dialog .catalog-add-fields > .admin-edit-actions > button[type=button] { border:1px solid #d7e0ea; color:#485a73; background:#fff; }
+@media(max-width:700px) {
+  .admin-page .catalog-add-edit-dialog .admin-edit-dialog-heading { padding:16px; }
+  .admin-page .catalog-add-edit-dialog .catalog-add-fields { grid-template-columns:minmax(0,1fr); padding:16px; }
+  .admin-page .catalog-add-edit-dialog .catalog-add-fields .admin-edit-wide { grid-column:1; }
+  .admin-page .catalog-add-edit-dialog .catalog-add-fields > .admin-edit-actions { margin:0 -16px -16px; padding:12px 16px; }
+  .admin-page .catalog-add-edit-dialog .catalog-add-fields > .admin-edit-actions > p { flex-basis:100%; }
+  .admin-page .catalog-add-edit-dialog .catalog-add-fields > .admin-edit-actions > button { flex:1 1 100%; width:100%; }
+}
+html[data-theme="dark"] .admin-page .catalog-add-edit-dialog,
+html[data-theme="dark"] .admin-page .catalog-add-edit-dialog .admin-edit-dialog-heading,
+html[data-theme="dark"] .admin-page .catalog-add-edit-dialog .catalog-add-fields,
+html[data-theme="dark"] .admin-page .catalog-add-edit-dialog .catalog-add-fields > .admin-edit-actions { color:#e7edf5; border-color:#344256; background:#1c2738; }
+html[data-theme="dark"] .admin-page .catalog-add-edit-dialog .catalog-add-fields :is(input,select,textarea) { color:#e7edf5; border-color:#46566d; background:#172235; }
