@@ -24,6 +24,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     form.dataset.editLayoutApplied='true';
     const wrapperFor=name=>name==='photo'&&form.querySelector('.catalog-add-photo-panel')
       ?form.querySelector('.catalog-add-photo-panel')
+      :name==='model_3d_file'
+      ?form.querySelector('.catalog-model-panel')
       :name==='accessibility_features'
       ?form.querySelector('.catalog-checklist-dropdown')||form.querySelector('fieldset:has([name="accessibility_features"])')
       :name==='category_ids'
