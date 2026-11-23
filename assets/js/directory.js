@@ -135,13 +135,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const rooms = data.rooms || [];
     records = [...locations, ...rooms.map(room => {
       const parent = locations.find(place => String(place.id) === String(room.buildingId));
-      const roomPhotos = Array.isArray(room.photos) && room.photos.length ? room.photos : (parent?.photos || []);
+      const roomPhotos = Array.isArray(room.photos) ? room.photos : [];
       return {
         ...room,
         kind: 'room',
         parent_building: room.buildingName || parent?.name || '',
         room_number: room.roomNumber,
-        image: room.image || parent?.image || '',
+        image: room.image || '',
         photos: roomPhotos,
         model_3d_url: room.model_3d_url || ''
       };
