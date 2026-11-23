@@ -63,7 +63,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   const statusNode=()=>document.querySelector('#building-form-status,#facility-form-status,#classroom-form-status,#category-status');
   const status=message=>{const node=statusNode();if(node)node.textContent=message;};
   const notify=(message,tone='success')=>window.AdminUI?.toast(message,tone);
-  const upload=async(input,type='photo')=>{const file=input?.files?.[0];if(!file)return null;if(type==='model'&&file.size>50*1024*1024)throw new Error('The 3D model must be 50 MB or smaller.');const data=new FormData();data.append('file',file);data.append('type',type);return(await CampusApi.request('uploads',{method:'POST',body:data})).path;};
+  const upload=async(input,type='photo',onProgress)=>{
+    let file=input?.files?.[0];if(!file)return null;
+    if(type==='model'&&file.size>50*1024*1024)throw new Error('The 3D model must be 50 MB or smaller.');
+    if(type==='photo'){
+      if(!/^image\/(?:png|jpeg|webp)$/i.test(file.type))throw new Error('Choose a PNG, JPG, or WebP photo.');
+      if(file.size>15*1024*1024)throw new Error('Choose a photo smaller than 15 MB.');
+      try{
+        const bitmap=await createImageBitmap(file),scale=Math.min(1,1280/Math.max(bitmap.width,bitmap.height));
+        const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+        const context=canvas.getContext('2d');context.fillStyle='#fff';context.fillRect(0,0,canvas.width,canvas.height);context.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();
+        const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',0.78));
+        if(!blob)throw new Error('The selected photo could not be compressed.');
+        file=new File([blob],(file.name.replace(/\.[^.]+$/,'')||'campus-photo')+'.jpg',{type:'image/jpeg',lastModified:Date.now()});
+      }catch(error){if(error instanceof Error&&/compressed|opened/.test(error.message))throw error;throw new Error('The selected photo could not be prepared. Try another JPG, PNG, or WebP image.');}
+    }
+    const data=new FormData();data.append('file',file);data.append('type',type);
+    return(await CampusApi.request('uploads',{method:'POST',body:data,onUploadProgress:onProgress})).path;
+  };
   const optionalText=(form,name)=>form.elements[name]?.value.trim()||null;
   const detailPayload=form=>({
     contact_email:optionalText(form,'contact_email'),
@@ -143,6 +160,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const requestClose=async()=>{if(form.dataset.dirty==='true'&&!await window.AdminUI.confirm({title:'Discard unsaved changes?',message:'Your edits will be lost if you close this form.',confirmLabel:'Discard changes',danger:true}))return;form.dataset.dirty='false';dialog.close();};
     form.addEventListener('input',event=>{if(!event.target.matches('[data-model-file]'))form.dataset.dirty='true';});form.addEventListener('change',event=>{if(!event.target.matches('[data-model-file]'))form.dataset.dirty='true';});
     dialog.addEventListener('change',event=>{
+      if(event.target.matches('[data-gallery-file]')){
+        const section=event.target.closest('[data-gallery-owner]'),preview=section?.querySelector('[data-gallery-preview]');
+        if(preview){
+          if(preview.dataset.objectUrl)URL.revokeObjectURL(preview.dataset.objectUrl);
+          const file=event.target.files?.[0];
+          if(file&&file.type.startsWith('image/')){const url=URL.createObjectURL(file);preview.src=url;preview.dataset.objectUrl=url;preview.hidden=false;}
+          else{preview.removeAttribute('src');preview.hidden=true;delete preview.dataset.objectUrl;}
+        }
+      }
       if(!event.target.matches('[data-photo-cover]')||!event.target.checked)return;
       const section=event.target.closest('[data-gallery-owner]');
       section?.querySelectorAll('[data-photo-cover]').forEach(input=>{if(input!==event.target)input.checked=false;});
@@ -192,7 +218,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     return `<section class="admin-edit-wide catalog-gallery-panel" data-gallery-owner="${ownerType}" data-gallery-id="${esc(item.id)}">
       <div class="catalog-section-heading"><div><h3>Photo Gallery</h3><p>Upload and manage photos for this location.</p></div><span class="catalog-count">${photos.length} ${photos.length===1?'photo':'photos'}</span></div>
       <div class="catalog-gallery-grid">${photos.map(photo=>`<article class="catalog-gallery-item" data-photo-id="${esc(photo.id)}"><img src="${esc(imageSrc(photo.image))}" alt="${esc(photo.caption||'Campus photo')}" loading="lazy"><div class="catalog-gallery-card-actions"><button type="button" data-photo-details class="admin-button-secondary">Photo details</button><button type="button" data-photo-delete class="admin-button-secondary">Remove</button></div><div class="catalog-photo-details" data-photo-details-panel hidden><div class="catalog-photo-details-heading"><strong>Edit photo details</strong><button type="button" data-photo-details-close aria-label="Close details">Close</button></div><label>Caption<input data-photo-caption maxlength="255" value="${esc(photo.caption||'')}" placeholder="Describe this photo"></label><label class="catalog-cover-toggle"><input type="radio" name="directory-cover-${esc(item.id)}" data-photo-cover value="${esc(photo.id)}" ${(Number(photo.isCover)||photos.indexOf(photo)===0)?'checked':''}> Use as directory photo</label><div class="catalog-gallery-actions"><button type="button" data-photo-save class="admin-button-primary">Save details</button></div></div></article>`).join('')||'<p class="catalog-gallery-empty">No photos have been added yet.</p>'}</div>
-      <div class="catalog-gallery-upload"><div><strong>Add photos</strong><p>Select an image and optionally add a caption.</p></div><label>Choose photo<input type="file" data-gallery-file accept="image/png,image/jpeg,image/webp"></label><label>Caption (optional)<input data-gallery-caption maxlength="255" placeholder="Describe this photo"></label><button type="button" data-photo-add class="admin-button-primary">Upload photo</button></div>
+      <div class="catalog-gallery-upload"><div><strong>Add photos</strong><p>Select one image and optionally add a caption.</p></div><label>Choose photo<input type="file" data-gallery-file accept="image/png,image/jpeg,image/webp"></label><label>Caption (optional)<input data-gallery-caption maxlength="255" placeholder="Describe this photo"></label><img data-gallery-preview class="catalog-gallery-upload-preview" alt="Selected photo preview" hidden><div class="catalog-photo-progress" data-photo-progress hidden><div><span data-photo-progress-label>Uploading photo</span><strong data-photo-progress-value>0%</strong></div><progress max="100" value="0" data-photo-progress-bar></progress></div><button type="button" data-photo-add class="admin-button-primary">Upload photo</button></div>
     </section>`;
   }
   function modelMarkup(item){
@@ -227,10 +253,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     try{
       if(button.hasAttribute('data-photo-add')){
         const fileInput=section.querySelector('[data-gallery-file]'),captionInput=section.querySelector('[data-gallery-caption]');
-        if(!fileInput.files?.length){status.textContent='Choose a photo to upload.';return;}
-        const image_path=await upload(fileInput);
+        const progress=section.querySelector('[data-photo-progress]'),bar=section.querySelector('[data-photo-progress-bar]'),value=section.querySelector('[data-photo-progress-value]'),label=section.querySelector('[data-photo-progress-label]');
+        if(!fileInput?.files?.length){status.textContent='Choose a photo to upload.';return;}
+        const setProgress=percent=>{if(progress)progress.hidden=false;if(bar)bar.value=percent;if(value)value.textContent=percent+'%';if(label)label.textContent=percent>=100?'Saving photo details…':'Uploading photo';};
+        button.textContent='Uploading…';status.textContent='Preparing your photo…';setProgress(0);
+        const image_path=await upload(fileInput,'photo',setProgress);
         await CampusApi.request('facility-photos',{method:'POST',body:{owner_type:section.dataset.galleryOwner,owner_id:Number(section.dataset.galleryId),image_path,alt_text:captionInput.value.trim()||'Campus photo',caption:captionInput.value.trim()||null}});
-        status.textContent='Photo added to the gallery.';
+        status.textContent='Photo added to the gallery.';notify('Photo uploaded successfully.');
       }else if(button.hasAttribute('data-photo-save')){
         const caption=card.querySelector('[data-photo-caption]').value.trim()||null;
         const cards=[...section.querySelectorAll('[data-photo-id]')];
@@ -246,7 +275,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       await refresh();const item=section.dataset.galleryOwner==='location'?locations.find(row=>String(row.id)===section.dataset.galleryId):rooms.find(row=>String(row.id)===section.dataset.galleryId);
       if(item)section.outerHTML=galleryMarkup(section.dataset.galleryOwner==='location'?'location':'room',item);
-    }catch(error){status.textContent=error.message;}finally{button.disabled=false;}
+    }catch(error){status.textContent=error.message;notify(error.message,'error');}finally{button.disabled=false;if(button.hasAttribute('data-photo-add'))button.textContent='Upload photo';}
   }
   function openEditor(type,item){
     ensureEditor();pendingEdit={type,item};
