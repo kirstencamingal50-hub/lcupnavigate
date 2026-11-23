@@ -8,21 +8,8 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
   <link rel="canonical" href="https://lcupnavigate.netlify.app/pages/assistant.html">
   <meta property="og:url" content="https://lcupnavigate.netlify.app/pages/assistant.html">
-  <link rel="stylesheet" href="../assets/css/style.css?v=ask-navigate-20261123-intents">
-  <style>
-    .assistant-shell{max-width:980px;margin:0 auto;padding:28px 16px 110px;color:#172033}
-    .assistant-hero{background:linear-gradient(135deg,#101c3a,#173b70);color:white;border-radius:24px;padding:28px;margin-bottom:20px}
-    .assistant-panel{background:white;border:1px solid #e5eaf2;border-radius:20px;padding:20px;box-shadow:0 8px 30px #0f172a0b}
-    .assistant-message{padding:14px 16px;border-radius:16px;max-width:90%;white-space:pre-wrap;line-height:1.55}
-    .assistant-bot{position:relative;margin-left:54px;background:#f1f5fb;color:#172033;border-top-left-radius:5px}
-    .assistant-bot::before{content:"";position:absolute;left:-54px;top:0;width:44px;height:44px;background:url("../assets/images/navigate-assistant.svg") center/contain no-repeat;filter:drop-shadow(0 4px 8px rgba(23,59,112,.14))}
-    @media(max-width:520px){.assistant-bot{max-width:calc(100% - 54px);margin-left:50px}.assistant-bot::before{left:-50px;width:42px;height:42px}}
-    .assistant-user{background:#173b70;color:white;margin-left:auto;border-top-right-radius:5px}
-    .assistant-chip{border:1px solid #dbe3ef;border-radius:999px;padding:8px 12px;font-size:13px;background:white}
-    .assistant-result{border:1px solid #e4eaf2;border-radius:14px;padding:14px;display:flex;justify-content:space-between;gap:12px;align-items:center}
-    .assistant-action{color:#174a91;font-weight:700;font-size:13px;white-space:nowrap}
-    .assistant-muted{color:#64748b;font-size:13px}
-  </style>
+  <link rel="stylesheet" href="../assets/css/style.css?v=20261123-ui-consistency-assistant-motion">
+
 </head>
 <body class="min-h-screen bg-slate-50 font-sans">
   <div data-component="header"></div>
@@ -45,7 +32,7 @@
         <button class="assistant-chip" data-question="Where is the Registrar's Office?">Registrar's Office</button>
         <button class="assistant-chip" data-question="Which building is used by the CITE Department?">CITE Department</button>
       </div>
-      <form id="ask-form" class="flex gap-2">
+      <form id="ask-form" class="flex gap-2 items-center">
         <label class="sr-only" for="question">Ask a campus question</label>
         <input id="question" class="min-w-0 flex-1 rounded-xl border-slate-300 focus:border-blue-600 focus:ring-blue-600" maxlength="500" placeholder="Ask about a campus place or service…" autocomplete="off" required>
         <button id="ask-button" class="rounded-xl bg-blue-700 px-5 py-2 font-bold text-white hover:bg-blue-800" type="submit">Ask</button>
