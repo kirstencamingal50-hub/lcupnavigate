@@ -590,9 +590,27 @@ document.addEventListener('DOMContentLoaded', async () => {
       if(submitButton){submitButton.className='admin-button-primary';submitButton.textContent=`Add ${kind==='room'?'Room / Office':kind==='building'?'Building':'Facility'}`;}
       const formDialog=window.AdminUI?.mountFormDialog(form,{title:`Add ${kind}`,description:'Enter the campus information below. Required fields are marked in the form.',triggerLabel:`Add ${kind}`});
       if(formDialog?.dialog&&kind!=='room'){
-        formDialog.dialog.classList.add('admin-edit-dialog','catalog-add-edit-dialog');
-        formDialog.dialog.querySelector('.admin-create-dialog-heading')?.classList.add('admin-edit-dialog-heading');
-        formDialog.dialog.querySelector('.admin-form-panel')?.classList.add('catalog-add-edit-panel');
+        const dialog=formDialog.dialog;
+        dialog.classList.add('admin-edit-dialog','catalog-add-edit-dialog');
+        dialog.classList.remove('admin-create-dialog');
+        dialog.querySelector('.admin-create-dialog-heading')?.classList.add('admin-edit-dialog-heading');
+        const panel=dialog.querySelector('.admin-form-panel');
+        if(panel){
+          panel.classList.add('catalog-add-edit-panel');
+          panel.classList.remove('admin-form-panel');
+        }
+        const addForm=dialog.querySelector('form');
+        if(addForm){
+          addForm.classList.add('admin-edit-fields');
+          addForm.classList.remove('catalog-add-fields');
+          addForm.querySelectorAll('.admin-edit-actions').forEach(actions=>actions.classList.add('catalog-add-edit-actions'));
+          const actions=addForm.querySelector('.catalog-add-edit-actions');
+          const fields=[...addForm.children].filter(node=>node!==actions);
+          const fieldsWrap=document.createElement('div');
+          fieldsWrap.className='admin-edit-fields catalog-add-edit-fields';
+          fieldsWrap.append(...fields);
+          addForm.replaceChildren(fieldsWrap,...(actions?[actions]:[]));
+        }
       }
       form.addEventListener('submit',async event=>{event.preventDefault();if(!selectedCategoryIds(form).length){status('Select at least one category.');return;}const button=form.querySelector('[type="submit"]');button.disabled=true;status('Saving to the campus database…');
         try{
