@@ -798,17 +798,8 @@ async function routes(event, method, body, query) {
       .from('campus_route_points')
       .select('node_id')
       .eq('route_id', id)) || [];
-    const routeSegments = unwrap(await database
-      .from('campus_route_segments')
-      .select('connection_id')
-      .eq('route_id', id)) || [];
-
     const generatedNodeIds = [...new Set(routePoints
       .map(point => Number(point.node_id))
-      .filter(Number.isSafeInteger)
-      .filter(Boolean))];
-    const segmentConnectionIds = [...new Set(routeSegments
-      .map(segment => Number(segment.connection_id))
       .filter(Number.isSafeInteger)
       .filter(Boolean))];
 
@@ -828,7 +819,10 @@ async function routes(event, method, body, query) {
     unwrap(await database.from('campus_route_segments').delete().eq('route_id', id));
     unwrap(await database.from('campus_route_points').delete().eq('route_id', id));
 
-    const candidateConnectionIds = new Set(segmentConnectionIds);
+    // A map connection is a shared walkway unless it touches a node generated
+    // specifically for this route. Never remove a manually mapped/shared edge
+    // merely because this was its last saved-route reference.
+    const candidateConnectionIds = new Set();
     if (ownedNodeIds.length) {
       const ownedConnections = unwrap(await database
         .from('map_connections')
