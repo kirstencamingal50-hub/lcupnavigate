@@ -563,8 +563,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     for(const form of [buildingForm,facilityForm,roomForm].filter(Boolean)){
       if(form.elements.category_ids)form.elements.category_ids.innerHTML=catOptions([]);
       if(form.elements.buildingId)form.elements.buildingId.innerHTML=buildingOptions();
-      const preview=form.querySelector('[data-photo-preview]');if(form.elements.photo&&preview){
+      const preview=form.querySelector('[data-photo-preview]');
+      if(form.elements.photo&&preview){
+        const photoLabel=form.elements.photo.closest('label');
+        if(photoLabel&&!photoLabel.closest('.catalog-add-photo-panel')){
+          const photoPanel=document.createElement('section');
+          photoPanel.className='admin-edit-wide catalog-gallery-panel catalog-add-photo-panel';
+          photoPanel.innerHTML='<div class="catalog-section-heading"><div><h3>Building Photo</h3><p>Upload the main photo visitors will see in the campus directory.</p></div><span class="catalog-count">Optional</span></div><div class="catalog-gallery-upload catalog-add-photo-upload"></div>';
+          photoLabel.before(photoPanel);
+          photoPanel.querySelector('.catalog-add-photo-upload').append(photoLabel);
+          photoLabel.classList.add('catalog-add-photo-field');
+        }
         window.CampusPhotoTools?.bindPreview(form.elements.photo,preview);
+        preview.classList.add('catalog-add-photo-preview');
         const progress=document.createElement('div');progress.className='catalog-photo-progress';progress.dataset.addPhotoProgress='';progress.hidden=true;
         progress.innerHTML='<div><span data-add-photo-label>Uploading photo</span><strong data-add-photo-value>0%</strong></div><progress max="100" value="0" data-add-photo-bar></progress>';
         preview.after(progress);
