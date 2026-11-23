@@ -108,14 +108,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     presetField('Service hours','service_hours',serviceHourOptions,item.service_hours)+
     presetField('Days open','days_open',dayOptions,item.days_open)+
     presetField('Lunch hours','lunch_break',lunchOptions,item.lunch_break)+
-    selectField('Accessibility information','accessibility_status','<option value="">Not recorded</option><option value="1">Accessible</option><option value="0">Not accessible</option>',item.accessibility_status===null||item.accessibility_status===undefined?'':(item.accessibility_status===true||Number(item.accessibility_status)===1?'1':'0'),false)+
+    selectField('Accessibility information','accessibility_status','<option value="">Not recorded</option><option value="1">Accessible</option><option value="0">Not accessible</option>',item.accessibility_status===null||item.accessibility_status===undefined||item.accessibility_status===''?'':([true,1,'1','true','t','yes'].includes(typeof item.accessibility_status==='string'?item.accessibility_status.trim().toLowerCase():item.accessibility_status)?'1':'0'),false)+
     areaField('Accessibility features (one per line)','accessibility_details',item.accessibility_details,1000);
   const extraRoomFields=item=>field('Contact email','contact_email',item.contact_email||'','email',false,'maxlength="254"')+
     field('Contact phone','contact_phone',item.contact_phone||'','tel',false,'maxlength="40"')+
     presetField('Service hours','service_hours',serviceHourOptions,item.service_hours)+
     presetField('Days open','days_open',dayOptions,item.days_open)+
     presetField('Lunch hours','lunch_break',lunchOptions,item.lunch_break)+
-    selectField('Accessibility information','accessibility_status','<option value="">Not recorded</option><option value="1">Accessible</option><option value="0">Not accessible</option>',item.accessibility_status===null||item.accessibility_status===undefined?'':(item.accessibility_status===true||Number(item.accessibility_status)===1?'1':'0'),false)+
+    selectField('Accessibility information','accessibility_status','<option value="">Not recorded</option><option value="1">Accessible</option><option value="0">Not accessible</option>',item.accessibility_status===null||item.accessibility_status===undefined||item.accessibility_status===''?'':([true,1,'1','true','t','yes'].includes(typeof item.accessibility_status==='string'?item.accessibility_status.trim().toLowerCase():item.accessibility_status)?'1':'0'),false)+
     areaField('Accessibility features (one per line)','accessibility_details',item.accessibility_details,1000);
   function galleryMarkup(type,item){
     const ownerType=type==='location'?'location':'room';
