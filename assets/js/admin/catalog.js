@@ -146,8 +146,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const details=document.createElement('details');details.className='catalog-checklist-dropdown admin-edit-wide';
     const summary=document.createElement('summary');summary.className='catalog-checklist-summary';
     summary.innerHTML='<span class="catalog-checklist-title">Accessibility features</span><span data-accessibility-selection class="catalog-checklist-count">Select features</span>';
-    const content=document.createElement('div');content.className='catalog-checklist-options';
-    [...fieldset.children].forEach(child=>{if(child.tagName!=='LEGEND')content.append(child);});
+    const content=document.createElement('div');content.className='catalog-category-checklist-options catalog-checklist-options';
+    [...fieldset.children].forEach(child=>{
+      if(child.tagName==='LEGEND')return;
+      const checkbox=child.matches('input[name="accessibility_features"]')?child:child.querySelector?.('[name="accessibility_features"]');
+      const label=child.tagName==='LABEL'?child:checkbox?.closest('label');
+      if(label)label.classList.add('catalog-category-checklist-option','catalog-checklist-option');
+      if(checkbox)checkbox.classList.add('catalog-category-checkbox');
+      content.append(child);
+    });
     const updateLabel=()=>{const selected=[...details.querySelectorAll('[name="accessibility_features"]:checked')];summary.querySelector('[data-accessibility-selection]').textContent=selected.length?selected.length+' selected':'Select features';summary.setAttribute('aria-label',selected.length?'Accessibility features: '+selected.map(input=>input.closest('label')?.textContent.trim()).filter(Boolean).join(', '):'Select accessibility features');};
     details.append(summary,content);fieldset.replaceWith(details);details.addEventListener('change',updateLabel);updateLabel();
   };
@@ -176,15 +183,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const current=section?._galleryPhotos?.[index];
         const grid=section?.querySelector('[data-gallery-single-preview]');
         if(current&&grid)grid.innerHTML=galleryPhotoCard(current,section.dataset.galleryId,index===0);
-      }
-      if(event.target.matches('[data-gallery-file]')){
-        const section=event.target.closest('[data-gallery-owner]'),preview=section?.querySelector('[data-gallery-preview]');
-        if(preview){
-          if(preview.dataset.objectUrl)URL.revokeObjectURL(preview.dataset.objectUrl);
-          const file=event.target.files?.[0];
-          if(file&&file.type.startsWith('image/')){const url=URL.createObjectURL(file);preview.src=url;preview.dataset.objectUrl=url;preview.hidden=false;}
-          else{preview.removeAttribute('src');preview.hidden=true;delete preview.dataset.objectUrl;}
-        }
       }
       if(!event.target.matches('[data-photo-cover]')||!event.target.checked)return;
       const section=event.target.closest('[data-gallery-owner]');
@@ -241,7 +239,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       <div class="catalog-section-heading"><div><h3>Photo Gallery</h3><p>Upload and manage photos for this location.</p></div><span class="catalog-count">${photos.length} ${photos.length===1?'photo':'photos'}</span></div>
       ${photos.length>1?`<label class="catalog-gallery-select-label">Preview photo<select data-gallery-photo-select>${photos.map((photo,index)=>`<option value="${index}" ${index===defaultIndex?'selected':''}>${esc(photo.caption||'Photo '+(index+1))}</option>`).join('')}</select></label>`:''}
       <div class="catalog-gallery-grid" data-gallery-single-preview>${selectedPhoto?galleryPhotoCard(selectedPhoto,item.id,defaultIndex===0):'<p class="catalog-gallery-empty">No photos have been added yet.</p>'}</div>
-      <div class="catalog-gallery-upload"><div><strong>Add photos</strong><p>Select one image and optionally add a caption.</p></div><label>Choose photo<input type="file" data-gallery-file accept="image/png,image/jpeg,image/webp"></label><label>Caption (optional)<input data-gallery-caption maxlength="255" placeholder="Describe this photo"></label><img data-gallery-preview class="catalog-gallery-upload-preview" alt="Selected photo preview" hidden><div class="catalog-photo-progress" data-photo-progress hidden><div><span data-photo-progress-label>Uploading photo</span><strong data-photo-progress-value>0%</strong></div><progress max="100" value="0" data-photo-progress-bar></progress></div><button type="button" data-photo-add class="admin-button-primary">Upload photo</button></div>
+      <div class="catalog-gallery-upload"><div><strong>Add photos</strong><p>Select one image and optionally add a caption.</p></div><label>Choose photo<input type="file" data-gallery-file accept="image/png,image/jpeg,image/webp"></label><label>Caption (optional)<input data-gallery-caption maxlength="255" placeholder="Describe this photo"></label><div class="catalog-photo-progress" data-photo-progress hidden><div><span data-photo-progress-label>Uploading photo</span><strong data-photo-progress-value>0%</strong></div><progress max="100" value="0" data-photo-progress-bar></progress></div><button type="button" data-photo-add class="admin-button-primary">Upload photo</button></div>
     </section>`;
   }
   function modelMarkup(item){
