@@ -977,3 +977,7 @@ html[data-high-contrast] body.admin-page :is(.admin-activity-list,.admin-form-pa
   .admin-page .admin-announcement-card > img,.admin-page .admin-announcement-placeholder { width:84px; height:84px; }
   .admin-announcement-actions { gap:5px; }
 }
+
+/* Keep admin feedback visible above the form area. */
+.admin-toast-host{right:24px;bottom:88px;z-index:1500;width:min(420px,calc(100vw - 32px));}
+@media(max-width:640px){.admin-toast-host{right:16px;bottom:82px;width:calc(100vw - 32px);}}
