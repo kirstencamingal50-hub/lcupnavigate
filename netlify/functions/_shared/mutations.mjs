@@ -173,6 +173,7 @@ async function locations(event, method, body, query) {
         : Math.max(0, Number(body.capacity)),
       floor_count: Math.max(1, Math.min(100, Number(body.floor_count) || 1)),
       category_id: categoryId,
+      category_ids: categoryIds,
       parent_building_id: parentId,
       image_path: storedMediaPath(body.image_path),
       model_3d_path: storedModelPath(body.model_3d_path),
