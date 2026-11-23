@@ -79,6 +79,7 @@
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Campus record
           <select name="location_id" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></select>
         </label>
+        <section id="landmark-record-preview" hidden class="rounded-xl border border-slate-200 bg-slate-50 p-3" aria-live="polite"></section>
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Entrance accessibility information<select name="accessibility_status" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm normal-case"><option value="">Unspecified</option><option value="1">Accessible</option><option value="0">Not accessible</option></select></label>
         <div id="landmark-map-picker" role="button" tabindex="0" aria-label="Click the map to choose the landmark location" class="relative w-full max-w-[520px] overflow-hidden rounded-xl border-2 border-slate-300 bg-slate-100 shadow-sm" style="aspect-ratio: 1330 / 1620; cursor: crosshair; touch-action: manipulation;">
           <img id="landmark-map-image" alt="Map for selecting a landmark location" class="absolute inset-0 h-full w-full select-none" draggable="false" style="object-fit: fill;" />
@@ -99,7 +100,7 @@
     </section>
     <div id="landmarks-list" class="admin-data-panel p-2 sm:p-4"></div>
   </main>
-  <script src="../../assets/js/admin/manage-map.js?v=20261124-unique-building-records"></script>
+  <script src="../../assets/js/admin/manage-map.js?v=20261124-building-facility-records"></script>
   <script src="../../assets/js/admin/route-builder.js?v=20261024-complete-details"></script>
   <script src="../../assets/js/app.js?v=20261118-remove-department-nav"></script>
 </body>
