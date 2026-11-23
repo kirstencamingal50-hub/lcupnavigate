@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       .sort((a, b) => Number(a.id) - Number(b.id))
       .filter(item => {
         const id = String(item.id ?? '');
-        const name = String(item.name ?? '').trim().replace(/\\s+/g, ' ').toLocaleLowerCase();
+        const name = String(item.name ?? '').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
         if (!id || !name || seenIds.has(id) || seenNames.has(name)) return false;
         seenIds.add(id);
         seenNames.add(name);
