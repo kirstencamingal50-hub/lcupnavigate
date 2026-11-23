@@ -455,3 +455,16 @@ html[data-theme="dark"] .admin-page .catalog-photo-details input:not([type=check
     flex:1 1 0;
   }
 }
+
+
+/* Admin category checklist: checkbox sits beside each category label. */
+.admin-page .catalog-category-checklist{display:grid;gap:10px;min-width:0;padding:14px;border:1px solid #dbe3ed;border-radius:11px;background:#f8fafc}
+.admin-page .catalog-category-checklist-heading{display:flex;flex-wrap:wrap;align-items:baseline;gap:5px 12px}
+.admin-page .catalog-category-checklist-heading strong{color:#24364f;font-size:12px;font-weight:800}
+.admin-page .catalog-category-checklist-heading span{color:#718096;font-size:11px;font-weight:500}
+.admin-page .catalog-category-checklist-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 12px}
+.admin-page .catalog-category-checklist-option{display:flex!important;flex-direction:row!important;align-items:center;justify-content:flex-start;gap:9px!important;min-width:0;margin:0;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;color:#334155!important;font-size:12px!important;font-weight:600!important;letter-spacing:normal!important;line-height:1.35;cursor:pointer}
+.admin-page .catalog-category-checklist-option:hover{border-color:#9bbce5;background:#f1f7ff}
+.admin-page .catalog-category-checkbox{display:block!important;flex:0 0 16px;width:16px!important;min-width:16px!important;height:16px!important;min-height:16px!important;margin:0!important;padding:0!important;accent-color:#2563eb;cursor:pointer}
+.admin-page .catalog-category-checklist-option span{min-width:0;text-align:left}
+@media(max-width:640px){.admin-page .catalog-category-checklist-options{grid-template-columns:1fr}}
