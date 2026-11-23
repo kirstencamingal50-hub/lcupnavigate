@@ -138,12 +138,12 @@
     <div id="map-wrapper">
       <div id="map" class="border border-slate-200"></div>
 
-      <!-- Zoom / full-map controls -->
-      <div class="absolute top-3 left-3 flex flex-col gap-2 z-[1000]">
-        <button id="zoomInBtn" type="button" aria-label="Zoom in" class="w-10 h-10 rounded-xl bg-white text-slate-800 border border-slate-300 shadow font-bold text-xl leading-none">+</button>
-        <button id="zoomOutBtn" type="button" aria-label="Zoom out" class="w-10 h-10 rounded-xl bg-white text-slate-800 border border-slate-300 shadow font-bold text-xl leading-none">−</button>
-      </div>
+      <!-- Zoom and map view controls -->
       <div class="absolute bottom-24 right-3 z-[1000] flex items-center gap-2">
+        <div class="flex items-center gap-1.5">
+          <button id="zoomInBtn" type="button" aria-label="Zoom in" title="Zoom in" class="w-10 h-10 rounded-xl bg-white text-slate-800 border border-slate-300 shadow font-bold text-xl leading-none">+</button>
+          <button id="zoomOutBtn" type="button" aria-label="Zoom out" title="Zoom out" class="w-10 h-10 rounded-xl bg-white text-slate-800 border border-slate-300 shadow font-bold text-xl leading-none">−</button>
+        </div>
         <!-- Show All appears here when a selected location is active. -->
         <button id="showAllBtn" type="button" class="bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 font-bold text-xs px-3.5 py-3 rounded-full shadow-xl hidden items-center gap-1.5 transition-all">
           <span>← Show All</span>
