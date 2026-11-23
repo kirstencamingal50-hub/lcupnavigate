@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="../../assets/css/style.css?v=20261102-admin-auth">
   <link rel="stylesheet" href="../../assets/css/admin.css?v=20261102-admin-auth">
   <script src="../../assets/js/campus-api.js"></script>
-  <script src="../../assets/js/admin/admin-auth.js?v=20261115-login-post-fix"></script>
+  <script src="../../assets/js/admin/admin-auth.js?v=20261123-hide-google-unavailable"></script>
 </head>
 <body class="admin-login-page">
   <main class="admin-login-panel" aria-labelledby="auth-heading">
@@ -81,12 +81,6 @@
         <button type="button" class="admin-auth-text-button" data-auth-view="login">Back to Log In</button>
       </form>
 
-      <div class="admin-auth-divider"><span>Or</span></div>
-      <div id="google-auth-area" class="admin-auth-google" hidden>
-        <div id="google-button"></div>
-        <p id="google-status" class="admin-auth-status" role="status" aria-live="polite"></p>
-      </div>
-      <p id="google-unavailable" class="admin-auth-hint" hidden>Google sign-in is not configured. Continue with email and password.</p>
 
       <div class="admin-auth-approval-note">
         New accounts require email verification and administrator approval before access is enabled.

@@ -132,6 +132,20 @@ async function getDirectory() {
     image: row.image_path ? mediaUrl(row.image_path) : null,
     category: row.category?.name || null,
     category_names: (Array.isArray(row.category_ids) && row.category_ids.length ? row.category_ids : row.category_id == null ? [] : [row.category_id]).map(id => categoryNames.get(String(id))).filter(Boolean),
+    // Public detail pages use camelCase fields; preserve the database fields above for admin/API compatibility.
+    parentBuildingId: row.parent_building_id,
+    floorLabel: row.floor_label,
+    departmentName: row.department_name,
+    contactEmail: row.contact_email,
+    contactPhone: row.contact_phone,
+    websiteUrl: row.website_url,
+    serviceHours: row.service_hours,
+    accessHours: row.access_hours,
+    daysOpen: row.days_open,
+    lunchBreak: row.lunch_break,
+    accessibilityStatus: row.accessibility_status,
+    accessibilityDetails: row.accessibility_details,
+    nearbyLandmarks: row.nearby_landmarks,
     parent_building_name: parentBuilding?.name || null,
     parentBuilding: parentBuilding ? {
       id: parentBuilding.id,
@@ -142,7 +156,8 @@ async function getDirectory() {
     accessibilityFeatures: row.kind === 'building' && Array.isArray(row.accessibility_features)
       ? row.accessibility_features
       : [],
-    photos: locationPhotos.get(String(row.id)) || []
+    photos: locationPhotos.get(String(row.id)) || [],
+    model_3d_url: row.model_3d_path ? mediaUrl(row.model_3d_path) : null
   });
   });
 
@@ -160,6 +175,21 @@ async function getDirectory() {
       floorNumber: row.floor_number,
       building_name: row.building?.name || null,
       buildingName: row.building?.name || null,
+      roomNumber: row.room_number,
+      floorLabel: row.floor_label,
+      departmentName: row.department_name,
+      departmentHead: row.department_head,
+      contactInfo: row.contact_info,
+      contactEmail: row.contact_email,
+      contactPhone: row.contact_phone,
+      websiteUrl: row.website_url,
+      serviceHours: row.service_hours,
+      daysOpen: row.days_open,
+      lunchBreak: row.lunch_break,
+      accessibilityStatus: row.accessibility_status,
+      accessibilityDetails: row.accessibility_details,
+      functionDescription: row.function_description,
+      nearbyLandmarks: row.nearby_landmarks,
       category: row.category?.name || null,
       category_names: (Array.isArray(row.category_ids) && row.category_ids.length ? row.category_ids : row.category_id == null ? [] : [row.category_id]).map(id => categoryNames.get(String(id))).filter(Boolean),
       image_path: row.image_path ? mediaUrl(row.image_path) : null,
@@ -1073,6 +1103,8 @@ async function publicResource(event, resource, method, query) {
         // Keep the storage object path available to signed-in admins so edits
         // can preserve the existing photo without resubmitting its public URL.
         image_object_path: user ? row.image_path : null,
+        model_3d_object_path: user ? row.model_3d_path : null,
+        model_3d_url: row.model_3d_path ? mediaUrl(row.model_3d_path) : null,
         image_path: row.image_path ? mediaUrl(row.image_path) : null
       }))
     );

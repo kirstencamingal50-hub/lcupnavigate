@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title id="title">NaviGATE campus guide</title>
+  <desc id="desc">A friendly blue campus guide robot with a location pin on its chest.</desc>
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#4da3ed"/><stop offset="1" stop-color="#15518e"/></linearGradient>
+    <linearGradient id="face" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f9fcff"/><stop offset="1" stop-color="#dcecff"/></linearGradient>
+  </defs>
+  <circle cx="80" cy="80" r="76" fill="#eaf4ff"/>
+  <circle cx="80" cy="80" r="64" fill="#d8eaff"/>
+  <path d="M80 16v14" stroke="#15518e" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="80" cy="13" r="8" fill="#f4ae38" stroke="#fff" stroke-width="3"/>
+  <rect x="35" y="38" width="90" height="76" rx="25" fill="url(#body)" stroke="#fff" stroke-width="5"/>
+  <rect x="45" y="49" width="70" height="48" rx="17" fill="url(#face)"/>
+  <circle cx="65" cy="72" r="6" fill="#15518e"/><circle cx="95" cy="72" r="6" fill="#15518e"/>
+  <path d="M68 85q12 10 24 0" fill="none" stroke="#2c79bd" stroke-width="4" stroke-linecap="round"/>
+  <path d="M35 65H24M125 65h11" stroke="#15518e" stroke-width="7" stroke-linecap="round"/>
+  <rect x="56" y="108" width="48" height="25" rx="10" fill="#fff" stroke="#15518e" stroke-width="4"/>
+  <path d="M80 113c-7 0-12 5-12 11 0 8 12 16 12 16s12-8 12-16c0-6-5-11-12-11zm0 15a4 4 0 1 1 0-8 4 4 0 0 1 0 8z" fill="#2679c8"/>
+  <path d="M60 132v8M100 132v8" stroke="#15518e" stroke-width="6" stroke-linecap="round"/>
+</svg>

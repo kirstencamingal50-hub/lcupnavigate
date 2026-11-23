@@ -34,7 +34,6 @@ function iconSvg(name, size = 22, extraClass = '') {
     'admin_panel_settings':'M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11zm0-13v5m-2-2h4',
     'person_off':'M3 3l18 18M10 10a4 4 0 1 0 5.6-5.6M5 21v-2a4 4 0 0 1 4-4h2m4 0a4 4 0 0 1 3 2',
     refresh:'M20 7v5h-5M4 17v-5h5m-4-3a8 8 0 0 1 13-3l2 1m-1 9a8 8 0 0 1-13 3l-2-1',
-    inventory_2:'M4 4h16v16H4zM8 8h8M8 12h8M8 16h5',
     info:'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zm0-14h.01M11 12h1v5h1',
     'location_on':'M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0zm-5 0a3 3 0 1 1-6 0 3 3 0 0 1 6 0',
     add:'M12 5v14m-7-7h14',
@@ -172,14 +171,16 @@ if (document.body.classList.contains('admin-page')) {
   window.AdminUI = {
     toast(message, tone = 'success') {
       let host = document.querySelector('[data-admin-toasts]');
+      const activeDialog = document.querySelector('dialog[open]');
       if (!host) {
         host = document.createElement('div');
         host.className = 'admin-toast-host';
         host.dataset.adminToasts = '';
         host.setAttribute('aria-live', 'polite');
         host.setAttribute('aria-relevant', 'additions');
-        document.body.append(host);
       }
+      const toastLayer = activeDialog || document.body;
+      if (host.parentElement !== toastLayer) toastLayer.append(host);
       const toast = document.createElement('p');
       toast.className = `admin-toast is-${['success', 'error', 'warning', 'info'].includes(tone) ? tone : 'info'}`;
       toast.setAttribute('role', tone === 'error' ? 'alert' : 'status');

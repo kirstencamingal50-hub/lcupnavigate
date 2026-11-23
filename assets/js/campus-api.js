@@ -46,25 +46,42 @@
     }
   }
 
+  let activeEndpoint = endpoint;
+  const functionEndpoint = '/.netlify/functions/api?resource=';
+
   async function backend() {
     if (!backendPromise) {
       backendPromise = (async () => {
-        let response;
-        try {
-          response = await fetch(`${endpoint}client-config`, { credentials: 'same-origin' });
-        } catch {
-          throw new Error('Could not reach the campus server. Check your connection and retry.');
+        let lastError = null;
+        for (const candidate of [endpoint, functionEndpoint]) {
+          let response;
+          try {
+            response = await fetch(`${candidate}client-config`, { credentials: 'same-origin' });
+          } catch {
+            lastError = new Error('Could not reach the campus server. Check your connection and retry.');
+            continue;
+          }
+
+          let result;
+          try {
+            result = await readJsonResponse(response);
+          } catch (error) {
+            lastError = error;
+            continue;
+          }
+
+          if (response.ok && result.ok && result.data?.url && result.data?.anonKey) {
+            activeEndpoint = candidate;
+            supabaseConfig = result.data;
+            return 'netlify';
+          }
+          if ((response.status === 404 && result.error?.message === 'API resource not found.') ||
+              (response.status === 401 && result.error?.message === 'Administrator sign-in is required.')) {
+            return 'php';
+          }
+          lastError = new Error(result.error?.message || `The campus API could not be configured (${response.status}).`);
         }
-        const result = await readJsonResponse(response);
-        if (response.ok && result.ok && result.data?.url && result.data?.anonKey) {
-          supabaseConfig = result.data;
-          return 'netlify';
-        }
-        if ((response.status === 404 && result.error?.message === 'API resource not found.') ||
-            (response.status === 401 && result.error?.message === 'Administrator sign-in is required.')) {
-          return 'php';
-        }
-        throw new Error(result.error?.message || `The campus API could not be configured (${response.status}).`);
+        throw lastError || new Error('The campus API could not be reached.');
       })();
     }
     return backendPromise;
@@ -73,7 +90,7 @@
   async function refreshSession() {
     const session = readSession();
     if (!session?.refresh_token) return false;
-    const response = await fetch(`${endpoint}auth/refresh`, {
+    const response = await fetch(`${activeEndpoint}auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh_token: session.refresh_token }),
@@ -88,48 +105,75 @@
     return true;
   }
 
-  async function uploadToStorage(formData) {
+  async function uploadToStorage(formData, onProgress) {
     const file = formData.get('file');
     if (!(file instanceof File)) throw new Error('Choose a file to upload.');
-    const isPlan = formData.get('type') === 'floorplan';
-    const maxSize = isPlan ? 15 * 1024 * 1024 : 5 * 1024 * 1024;
+    const type = formData.get('type');
+    const isPlan = type === 'floorplan';
+    const isModel = type === 'model';
+    const maxSize = isPlan ? 15 * 1024 * 1024 : isModel ? 500 * 1024 * 1024 : 5 * 1024 * 1024;
+    // Treat the .glb extension as authoritative: browsers and Windows may
+    // report inconsistent MIME types for binary glTF files.
+    const isGlbFile = isModel && /\.glb$/i.test(file.name.trim());
+    const mimeType = isGlbFile ? 'model/gltf-binary' : file.type;
     const allowed = isPlan
       ? ['application/pdf', 'image/png', 'image/jpeg', 'image/webp']
-      : ['image/png', 'image/jpeg', 'image/webp'];
-    if (file.size > maxSize) throw new Error(isPlan ? 'Floor plans must be 15 MB or smaller.' : 'Images must be 5 MB or smaller.');
-    if (!allowed.includes(file.type)) throw new Error('Unsupported file type.');
+      : isModel ? ['model/gltf-binary', 'application/octet-stream'] : ['image/png', 'image/jpeg', 'image/webp'];
+    if (file.size > maxSize) throw new Error(isPlan ? 'Floor plans must be 15 MB or smaller.' : isModel ? '3D models must be 500 MB or smaller.' : 'Images must be 5 MB or smaller.');
+    if (isModel && !isGlbFile) throw new Error('Please select a file with the .glb extension.');
+    if (!allowed.includes(mimeType)) throw new Error('Unsupported file type.');
 
-    const session = readSession();
+    let session = readSession();
+    if (!session?.refresh_token) throw new Error('Administrator sign-in is required to upload files.');
+    // Direct Storage uploads bypass request(), so refresh the session here
+    // before sending an access token that may have expired while the admin page was open.
+    if (!await refreshSession()) {
+      clearSession();
+      throw new Error('Your administrator session has expired. Sign in again before uploading files.');
+    }
+    session = readSession();
     if (!session?.access_token) throw new Error('Administrator sign-in is required to upload files.');
     const extension = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin';
     const storagePath = `${crypto.randomUUID()}.${extension}`;
-    const bucket = isPlan ? 'floor-plans' : 'campus-photos';
+    const bucket = isPlan ? 'floor-plans' : isModel ? 'campus-models' : 'campus-photos';
     const uploadUrl = `${supabaseConfig.url}/storage/v1/object/${bucket}/${encodeURIComponent(storagePath)}`;
     let response;
     try {
-      response = await fetch(uploadUrl, {
-        method: 'POST',
-        headers: {
-          apikey: supabaseConfig.anonKey,
-          Authorization: `Bearer ${session.access_token}`,
-          'Content-Type': file.type,
-          'x-upsert': 'false'
-        },
-        body: file
+      response = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', uploadUrl);
+        xhr.setRequestHeader('apikey', supabaseConfig.anonKey);
+        xhr.setRequestHeader('Authorization', `Bearer ${session.access_token}`);
+        xhr.setRequestHeader('Content-Type', mimeType);
+        xhr.setRequestHeader('x-upsert', 'false');
+        xhr.upload.addEventListener('progress', event => {
+          if (event.lengthComputable && typeof onProgress === 'function') {
+            onProgress(Math.min(99, Math.round(event.loaded / event.total * 100)));
+          }
+        });
+        xhr.addEventListener('load', () => {
+          let result = {};
+          try { result = JSON.parse(xhr.responseText || '{}'); } catch {}
+          if (xhr.status >= 200 && xhr.status < 300) {
+            if (typeof onProgress === 'function') onProgress(100);
+            resolve({ ok: true, status: xhr.status });
+          } else {
+            reject(new Error(result.message || result.error || `File upload failed (${xhr.status}).`));
+          }
+        });
+        xhr.addEventListener('error', () => reject(new Error('Could not reach Supabase Storage. Check your connection and allowed origins.')));
+        xhr.addEventListener('abort', () => reject(new Error('The file upload was cancelled.')));
+        xhr.send(file);
       });
-    } catch {
-      throw new Error('Could not reach Supabase Storage. Check the Supabase project and allowed origins.');
-    }
-    if (!response.ok) {
-      const result = await readJsonResponse(response);
-      throw new Error(result.message || result.error || `File upload failed (${response.status}).`);
+    } catch (error) {
+      throw error instanceof Error ? error : new Error('Could not reach Supabase Storage. Check your connection and allowed origins.');
     }
 
     const metadata = {
-      type: isPlan ? 'floorplan' : 'photo',
+      type: isPlan ? 'floorplan' : isModel ? 'model' : 'photo',
       object_path: storagePath,
       original_name: file.name,
-      mime_type: file.type,
+      mime_type: mimeType,
       file_size: file.size,
       building_id: formData.get('building_id'),
       floor_number: formData.get('floor_number')
@@ -152,7 +196,7 @@
 
   async function request(resource, options = {}, canRefresh = true) {
     if (resource === 'uploads' && options.body instanceof FormData && (await backend()) === 'netlify') {
-      return uploadToStorage(options.body);
+      return uploadToStorage(options.body, options.onUploadProgress);
     }
 
     const mode = await backend();
@@ -179,8 +223,9 @@
 
     let response;
     try {
-      response = await fetch(`${endpoint}${encodeURIComponent(resourcePath)}${query ? `&${query}` : ''}`, {
+      response = await fetch(`${activeEndpoint}${encodeURIComponent(resourcePath)}${query ? `&${query}` : ''}`, {
         ...options,
+        cache: method === 'GET' ? 'no-store' : (options.cache || 'default'),
         method,
         headers,
         body,
