@@ -105,7 +105,7 @@
     return true;
   }
 
-  async function uploadToStorage(formData) {
+  async function uploadToStorage(formData, onProgress) {
     const file = formData.get('file');
     if (!(file instanceof File)) throw new Error('Choose a file to upload.');
     const type = formData.get('type');
@@ -139,22 +139,34 @@
     const uploadUrl = `${supabaseConfig.url}/storage/v1/object/${bucket}/${encodeURIComponent(storagePath)}`;
     let response;
     try {
-      response = await fetch(uploadUrl, {
-        method: 'POST',
-        headers: {
-          apikey: supabaseConfig.anonKey,
-          Authorization: `Bearer ${session.access_token}`,
-          'Content-Type': mimeType,
-          'x-upsert': 'false'
-        },
-        body: file
+      response = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', uploadUrl);
+        xhr.setRequestHeader('apikey', supabaseConfig.anonKey);
+        xhr.setRequestHeader('Authorization', `Bearer ${session.access_token}`);
+        xhr.setRequestHeader('Content-Type', mimeType);
+        xhr.setRequestHeader('x-upsert', 'false');
+        xhr.upload.addEventListener('progress', event => {
+          if (event.lengthComputable && typeof onProgress === 'function') {
+            onProgress(Math.min(99, Math.round(event.loaded / event.total * 100)));
+          }
+        });
+        xhr.addEventListener('load', () => {
+          let result = {};
+          try { result = JSON.parse(xhr.responseText || '{}'); } catch {}
+          if (xhr.status >= 200 && xhr.status < 300) {
+            if (typeof onProgress === 'function') onProgress(100);
+            resolve({ ok: true, status: xhr.status });
+          } else {
+            reject(new Error(result.message || result.error || `File upload failed (${xhr.status}).`));
+          }
+        });
+        xhr.addEventListener('error', () => reject(new Error('Could not reach Supabase Storage. Check your connection and allowed origins.')));
+        xhr.addEventListener('abort', () => reject(new Error('The file upload was cancelled.')));
+        xhr.send(file);
       });
-    } catch {
-      throw new Error('Could not reach Supabase Storage. Check the Supabase project and allowed origins.');
-    }
-    if (!response.ok) {
-      const result = await readJsonResponse(response);
-      throw new Error(result.message || result.error || `File upload failed (${response.status}).`);
+    } catch (error) {
+      throw error instanceof Error ? error : new Error('Could not reach Supabase Storage. Check your connection and allowed origins.');
     }
 
     const metadata = {
@@ -184,7 +196,7 @@
 
   async function request(resource, options = {}, canRefresh = true) {
     if (resource === 'uploads' && options.body instanceof FormData && (await backend()) === 'netlify') {
-      return uploadToStorage(options.body);
+      return uploadToStorage(options.body, options.onUploadProgress);
     }
 
     const mode = await backend();
