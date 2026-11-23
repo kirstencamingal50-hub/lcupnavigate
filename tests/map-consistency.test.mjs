@@ -75,7 +75,7 @@ test('map and route API pagination loads every record beyond the Supabase row ca
 test('mapping mutations generate and preserve node keys and call the route RPC contract', () => {
   assert.match(mutations, /[\x60]node-\$\{randomUUID\(\)\}[\x60]/);
   assert.match(mutations, /existing\?\.node_key/);
-  assert.match(mutations, /updateById\('map_connections', id, \{ active: false \}/);
+  assert.match(mutations, /deleteCampusRecord\(database, 'map_connection', id\)/);
   assert.match(mutations, /node_key: [\x60]location-\$\{locationId\}[\x60]/);
   assert.match(mutations, /existingMarker\?\.route_node_id/);
   assert.match(mutations, /route_node_id: nodeId/);
