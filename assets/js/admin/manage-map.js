@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const campusRecord = locations.find(item => String(item.id) === String(marker.location_id));
       const accessValues = campusRecord ? Object.entries(campusRecord).filter(([key,value]) => /accessib|accessibility/i.test(key) && value !== null && value !== undefined && String(value).trim() !== '').map(([key,value]) => { const label = key.replace(/([A-Z])/g,' $1').replace(/_/g,' ').replace(/^./,c=>c.toUpperCase()); const detail = Array.isArray(value) ? value.join(', ') : typeof value === 'object' ? JSON.stringify(value) : String(value); return label + ': ' + detail; }) : [];
       const accessText = accessValues.length ? accessValues.join(' · ') : 'N/A';
-      return `<tr class="border-t"><td class="p-3 font-bold">${esc(marker.name)}</td><td class="p-3">${esc(marker.x)}, ${esc(marker.y)}</td><td class="p-3">${node ? 'Generated automatically' : 'Created when a route is saved'}</td><td class="p-3">${esc(accessText)}</td><td class="p-3 text-right"><button data-action="edit-marker" data-id="${esc(marker.id)}" class="mr-3 text-blue-600 font-bold">Edit</button><button data-action="delete-marker" data-id="${esc(marker.id)}" class="text-red-600 font-bold">Remove</button></td></tr>`;
+      return `<tr class="border-t"><td class="p-3 font-bold">${esc(marker.name)}</td><td class="p-3">${esc(marker.x)}, ${esc(marker.y)}</td><td class="p-3">${node ? 'Generated automatically' : 'Created when a route is saved'}</td><td class="p-3">${esc(accessText)}</td><td class="p-3 text-right"><button data-action="edit-marker" data-id="${esc(marker.id)}" class="mr-3 text-blue-600 font-bold">Edit</button><button data-action="delete-marker" data-id="${esc(marker.id)}" class="text-red-600 font-bold">Delete</button></td></tr>`;
     }).join('')}</tbody></table></div>` : '<p class="p-5 text-center text-xs text-slate-500">No campus markers are stored.</p>';
   };
   const refresh = async () => {
@@ -121,9 +121,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       if (button.dataset.action === 'delete-marker') {
         const marker = map.markers.find(item => Number(item.id) === id);
-        if (!await window.AdminUI.confirm({title:'Remove map marker?',message:`Remove the map marker for “${marker?.name || 'this location'}”? Active route safeguards remain in place.`,confirmLabel:'Remove marker',danger:true})) return;
+        if (!await window.AdminUI.confirm({title:'Delete map marker?',message:`Permanently delete the map marker for “${marker?.name || 'this location'}”? Any routes that use this marker will also be deleted.`,confirmLabel:'Delete marker',danger:true})) return;
         await CampusApi.remove('map/markers', id); await refresh();
-        window.AdminUI?.toast('Map marker removed.');
+        window.AdminUI?.toast('Map marker and dependent routes permanently deleted.');
       }
     } catch (error) { status.textContent = error.message; window.AdminUI?.toast(error.message, 'error'); }
     finally { button.disabled = false; }
