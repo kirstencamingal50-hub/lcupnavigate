@@ -15,19 +15,19 @@ const STOP_WORDS = new Set([
 // Natural-language intents are mapped to campus directory categories and
 // common facility names. Results still come only from active campus records.
 const INTENTS = [
-  { key: 'food', patterns: /\\b(eat|food|dining|hungry|meal|lunch|snack|coffee|drink|canteen|cafeteria|cafe|restaurant)\\b/i, terms: ['food', 'dining', 'canteen', 'cafeteria', 'cafe', 'coffee shop'] },
-  { key: 'health', patterns: /\\b(sick|ill|medicine|medical|clinic|nurse|first aid|doctor)\\b/i, terms: ['health', 'medical', 'clinic', 'first aid'] },
-  { key: 'library', patterns: /\\b(library|books|study|research)\\b/i, terms: ['library', 'learning resource'] },
-  { key: 'comfort-room', patterns: /\\b(toilet|restroom|comfort room|cr|washroom|bathroom)\\b/i, terms: ['comfort room', 'restroom', 'toilet', 'washroom'] },
-  { key: 'prayer', patterns: /\\b(pray|prayer|chapel|mass|church)\\b/i, terms: ['chapel', 'prayer'] },
-  { key: 'sports', patterns: /\\b(sport|exercise|basketball|court|gym|swim|pool)\\b/i, terms: ['sports', 'recreation', 'gym', 'court', 'pool'] },
-  { key: 'events', patterns: /\\b(event|auditorium|conference|seminar|program|venue)\\b/i, terms: ['events', 'conference', 'auditorium'] },
-  { key: 'admin', patterns: /\\b(registrar|enroll|enrollment|tuition|payment|pay|finance|admission|records|transcript)\\b/i, terms: ['registrar', 'finance', 'administrative'] },
-  { key: 'accessibility', patterns: /\\b(accessible|accessibility|wheelchair|ramp|elevator|lift)\\b/i, terms: ['accessibility', 'wheelchair', 'ramp', 'elevator'] }
+  { key: 'food', patterns: /\b(eat|food|dining|hungry|meal|lunch|snack|coffee|drink|canteen|cafeteria|cafe|restaurant)\b/i, terms: ['food', 'dining', 'canteen', 'cafeteria', 'cafe', 'coffee shop'] },
+  { key: 'health', patterns: /\b(sick|ill|medicine|medical|clinic|nurse|first aid|doctor)\b/i, terms: ['health', 'medical', 'clinic', 'first aid'] },
+  { key: 'library', patterns: /\b(library|books|study|research)\b/i, terms: ['library', 'learning resource'] },
+  { key: 'comfort-room', patterns: /\b(toilet|restroom|comfort room|cr|washroom|bathroom)\b/i, terms: ['comfort room', 'restroom', 'toilet', 'washroom'] },
+  { key: 'prayer', patterns: /\b(pray|prayer|chapel|mass|church)\b/i, terms: ['chapel', 'prayer'] },
+  { key: 'sports', patterns: /\b(sport|exercise|basketball|court|gym|swim|pool)\b/i, terms: ['sports', 'recreation', 'gym', 'court', 'pool'] },
+  { key: 'events', patterns: /\b(event|auditorium|conference|seminar|program|venue)\b/i, terms: ['events', 'conference', 'auditorium'] },
+  { key: 'admin', patterns: /\b(registrar|enroll|enrollment|tuition|payment|pay|finance|admission|records|transcript)\b/i, terms: ['registrar', 'finance', 'administrative'] },
+  { key: 'accessibility', patterns: /\b(accessible|accessibility|wheelchair|ramp|elevator|lift)\b/i, terms: ['accessibility', 'wheelchair', 'ramp', 'elevator'] }
 ];
 
 function clean(value) {
-  return String(value ?? '').replace(/\\s+/g, ' ').trim();
+  return String(value ?? '').replace(/\s+/g, ' ').trim();
 }
 
 function words(value) {
@@ -137,6 +137,7 @@ function locationDescription(item) {
 }
 
 function publicAnswer(question, matches) {
+  const intent = INTENTS.find(item => item.patterns.test(question));
   if (!matches.length) {
     return 'I could not find a matching campus record. Try the exact building, department, office, room, or facility name, or browse the Campus Directory.';
   }
@@ -147,7 +148,7 @@ function publicAnswer(question, matches) {
       const where = locationDescription(item);
       return `• ${displayName(item, question)}${where ? ` — ${where}` : ''}`;
     });
-    return `Here are the campus food and dining options I found:\\n\\n${options.join('\\n')}\\n\\nChoose “Show on Map” to see where each option is located. If you are looking for a specific menu or operating hours, please check with the establishment.`;
+    return `Here are the campus food and dining options I found:\n\n${options.join('\n')}\n\nChoose “Show on Map” to see where each option is located. If you are looking for a specific menu or operating hours, please check with the establishment.`;
   }
   if (!placeRecords.length && matches[0].record_type === 'announcement') {
     const item = matches[0];
@@ -172,10 +173,10 @@ function publicAnswer(question, matches) {
   const lines = placeRecords.slice(0, 5).map(item => {
     const location = locationDescription(item);
     const details = [clean(item.description), clean(item.service_hours) ? `Hours: ${clean(item.service_hours)}` : null, clean(item.contact_email) ? `Email: ${clean(item.contact_email)}` : null].filter(Boolean);
-    return `• ${displayName(item, question)}${location ? ` — ${location}` : ''}${details.length ? `\\n  ${details.join(' · ')}` : ''}`;
+    return `• ${displayName(item, question)}${location ? ` — ${location}` : ''}${details.length ? `\n  ${details.join(' · ')}` : ''}`;
   });
 
-  return `Here is the most relevant campus information I found:\\n\\n${lines.join('\\n')}\\n\\nSelect “Show on Map” to view a location on the campus map.`;
+  return `Here is the most relevant campus information I found:\n\n${lines.join('\n')}\n\nSelect “Show on Map” to view a location on the campus map.`;
 }
 
 function answer(question, matches) {
