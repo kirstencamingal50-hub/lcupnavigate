@@ -39,21 +39,19 @@ async function cleanupOrphanedRouteGeometry(database) {
     .like('node_key', 'route-%'));
   if (!routeNodes.length) return;
 
-  const [markerReferences, pointReferences] = await Promise.all([
-    fetchAllRows(() => database.from('map_markers')
-      .select('route_node_id')
-      .not('route_node_id', 'is', null)),
-    fetchAllRows(() => database.from('campus_route_points')
-      .select('node_id'))
-  ]);
-  const usedNodeIds = new Set([
-    ...markerReferences.map(row => Number(row.route_node_id)),
-    ...pointReferences.map(row => Number(row.node_id))
-  ]);
+  const pointReferences = await fetchAllRows(() => database.from('campus_route_points')
+    .select('node_id'));
+  const usedNodeIds = new Set(pointReferences.map(row => Number(row.node_id)));
   const orphanNodeIds = routeNodes
     .map(node => Number(node.id))
     .filter(nodeId => Number.isSafeInteger(nodeId) && !usedNodeIds.has(nodeId));
   if (!orphanNodeIds.length) return;
+
+  // Route endpoint nodes can also be cached on their map markers. Clear only
+  // those cached pointers when no remaining route uses the node.
+  unwrap(await database.from('map_markers')
+    .update({ route_node_id: null })
+    .in('route_node_id', orphanNodeIds));
 
   const orphanConnections = await fetchAllRows(() => database
     .from('map_connections')
@@ -72,17 +70,20 @@ async function cleanupOrphanedRouteGeometry(database) {
     }
   }
 
-  // Do not remove any node that still participates in a shared connection.
+  // All remaining edges were either removed above or are still referenced by
+  // a retained route. Keep a node only while a retained route uses it.
   const remainingConnections = await fetchAllRows(() => database
     .from('map_connections')
-    .select('from_node_id,to_node_id')
+    .select('id')
     .or(`from_node_id.in.(${orphanNodeIds.join(',')}),to_node_id.in.(${orphanNodeIds.join(',')})`));
-  const connectedNodeIds = new Set(remainingConnections.flatMap(edge => [
-    Number(edge.from_node_id), Number(edge.to_node_id)
-  ]));
-  const removableNodeIds = orphanNodeIds.filter(nodeId => !connectedNodeIds.has(nodeId));
-  if (removableNodeIds.length) {
-    unwrap(await database.from('map_nodes').delete().in('id', removableNodeIds));
+  const stillUsedConnectionIds = new Set(remainingConnections.map(edge => Number(edge.id)));
+  const retainedSegmentRows = stillUsedConnectionIds.size
+    ? await fetchAllRows(() => database.from('campus_route_segments')
+        .select('connection_id')
+        .in('connection_id', [...stillUsedConnectionIds]))
+    : [];
+  if (!retainedSegmentRows.length) {
+    unwrap(await database.from('map_nodes').delete().in('id', orphanNodeIds));
   }
 }
 
