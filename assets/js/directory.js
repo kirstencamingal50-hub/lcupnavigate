@@ -13,17 +13,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (/^(https?:|data:|blob:)/i.test(path)) return path;
     return path.startsWith('/') ? path : `../${path.replace(/^\.\//, '')}`;
   };
-  const featureLabels = {
-    wheelchair_entrance: 'Wheelchair-accessible entrance',
-    elevator: 'Elevator',
-    ramp: 'Ramp',
-    accessible_restroom: 'Accessible restroom',
-    accessible_parking: 'Accessible parking',
-    handrails: 'Handrails',
-    tactile_paving: 'Tactile paving',
-    braille_signage: 'Braille signage',
-    hearing_assistance: 'Hearing assistance'
-  };
   const params = new URLSearchParams(location.search);
   let category = params.get('category') || '';
   const requestedKind = params.get('type') || '';
@@ -86,9 +75,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       const image = coverPhoto?.image || item.image || '';
       const slideshowPhotos = coverPhoto ? [coverPhoto,...photoList.filter(photo=>photo!==coverPhoto)] : (photoList.length ? photoList : (image ? [{image,caption:''}] : []));
       const photoSlides = slideshowPhotos.map((photo,index) => `<img class="directory-card-photo${index===0?' is-active':''}" src="${escapeHtml(mediaSrc(photo.image))}" alt="" loading="${index===0?'eager':'lazy'}" decoding="async" data-directory-slide="${index}" ${index===0?'':'hidden'}>`).join('');
-      const features = item.kind === 'building' && Array.isArray(item.accessibilityFeatures)
-        ? item.accessibilityFeatures.filter(feature => featureLabels[feature]).map(feature => `<span class="directory-feature"><span class="material-symbols-rounded" aria-hidden="true">accessible</span>${escapeHtml(featureLabels[feature])}</span>`).join('')
-        : '';
       return `<article class="directory-card">
         <div class="directory-card-name" style="${image && !photoSlides ? `background-image:url('${escapeHtml(mediaSrc(image))}')` : ''}">
           <a class="directory-card-name-link" href="${detailUrl}" aria-label="View ${escapeHtml(item.name)}">
@@ -101,7 +87,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div class="directory-card-body">
           <p class="directory-card-description">${escapeHtml(item.description || 'More information is available in this directory profile.')}</p>
           ${item.parent_building ? `<p class="directory-parent"><span class="material-symbols-rounded" aria-hidden="true">location_on</span>${escapeHtml(item.parent_building)}${item.room_number ? ` · Room ${escapeHtml(item.room_number)}` : ''}</p>` : ''}
-          ${features ? `<div class="directory-features" aria-label="Building accessibility features">${features}</div>` : ''}
         </div>
         <div class="directory-card-actions"><a href="map.html?search=${encodeURIComponent(item.name)}"><span class="material-symbols-rounded" aria-hidden="true">map</span>Show on map</a><button type="button" class="directory-card-3d" data-open-directory-3d data-place-id="${escapeHtml(item.id)}" ${item.model_3d_url ? "" : "disabled aria-disabled=\"true\" title=\"No 3D model is available\""}><span class="material-symbols-rounded" aria-hidden="true">view_in_ar</span>View 3D</button><a href="${detailUrl}" aria-label="View details for ${escapeHtml(item.name)}">Details<span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></a></div>
       </article>`;
