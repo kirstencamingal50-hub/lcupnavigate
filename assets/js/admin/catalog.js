@@ -147,9 +147,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       }else if(button.hasAttribute('data-photo-save')){
         const caption=card.querySelector('[data-photo-caption]').value.trim()||null;
         const cards=[...section.querySelectorAll('[data-photo-id]')];
+        const selectedCover=section.querySelector('[data-photo-cover]:checked')?.value||null;
         await Promise.all(cards.map(photoCard=>{
           const photoCaption=photoCard.querySelector('[data-photo-caption]').value.trim()||null;
-          return CampusApi.request('facility-photos',{method:'PUT',body:{id:Number(photoCard.dataset.photoId),caption:photoCaption,is_cover:photoCard.querySelector('[data-photo-cover]').checked,sort_order:0}});
+          return CampusApi.request('facility-photos',{method:'PUT',body:{id:Number(photoCard.dataset.photoId),caption:photoCaption,is_cover:selectedCover===photoCard.dataset.photoId,sort_order:0}});
         }));
         status.textContent='Photo details saved. The selected directory photo has been updated.';
       }else{
