@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if(!form||form.dataset.editLayoutApplied)return;
     form.dataset.editLayoutApplied='true';
     const wrapperFor=name=>name==='accessibility_features'
-      ?form.querySelector('fieldset:has([name="accessibility_features"])')
+      ?form.querySelector('.catalog-checklist-dropdown')||form.querySelector('fieldset:has([name="accessibility_features"])')
       :name==='category_ids'
         ?form.querySelector('[data-category-dropdown]')
         :form.querySelector(`[name="${name}"]`)?.closest('label,[data-add-section]')||null;
