@@ -222,16 +222,21 @@
       map.setView(L.latLngBounds(bounds).getCenter(), z, { animate });
     };
     fitFull();
-    setTimeout(fitFull, 200);
-    window.addEventListener('resize', () => fitFull());
-    new ResizeObserver(() => fitFull()).observe(document.getElementById('map'));
+    setTimeout(() => refreshMapSize(), 200);
+
+    // Recalculate Leaflet's viewport dimensions without changing the user's
+    // current center or zoom. Fitting the full campus is reserved for the
+    // explicit "View full map" action.
+    const refreshMapSize = () => map.invalidateSize({ pan: false });
+    window.addEventListener('resize', refreshMapSize);
+    new ResizeObserver(refreshMapSize).observe(document.getElementById('map'));
     document.getElementById('zoomInBtn').addEventListener('click', () => map.zoomIn(0.5));
     document.getElementById('zoomOutBtn').addEventListener('click', () => map.zoomOut(0.5));
     document.getElementById('fullMapBtn').addEventListener('click', () => fitFull(true));
 
     const controlsPanel=document.getElementById('topbar');
     const controlsToggle=document.getElementById('mapControlsToggle');
-    const setControlsOpen=open=>{controlsPanel.classList.toggle('map-controls-hidden',!open);controlsToggle.classList.toggle('controls-open',open);controlsToggle.setAttribute('aria-expanded',String(open));setTimeout(()=>{map.invalidateSize();fitFull(true);},220);};
+    const setControlsOpen=open=>{controlsPanel.classList.toggle('map-controls-hidden',!open);controlsToggle.classList.toggle('controls-open',open);controlsToggle.setAttribute('aria-expanded',String(open));setTimeout(refreshMapSize,220);};
     controlsToggle.addEventListener('click',()=>setControlsOpen(true));
     document.getElementById('mapControlsClose').addEventListener('click',()=>setControlsOpen(false));
 
