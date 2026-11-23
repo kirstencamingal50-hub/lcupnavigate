@@ -145,18 +145,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   const lunchOptions=['Select lunch hours','12:00 PM – 1:00 PM','12:00 PM – 12:30 PM','12:00 PM – 1:30 PM','No lunch break','Varies'];
   const floorOptions=['Ground Level','2nd Floor','3rd Floor','4th Floor','5th Floor','6th Floor','7th Floor','8th Floor','9th Floor','10th Floor','Basement'];
   const presetField=(label,name,options,value)=>selectField(label,name,options.map((option,index)=>`<option value="${index===0?'':esc(option)}" ${value===option?'selected':''}>${esc(option)}</option>`).join('')+(value&&!options.includes(value)?`<option selected value="${esc(value)}">${esc(value)}</option>`:''),value||'',false);
+  const accessibilityStatusField=item=>{
+    const raw=item.accessibility_status??item.accessibilityStatus;
+    const normalized=typeof raw==='string'?raw.trim().toLowerCase():raw;
+    const selected=raw===null||raw===undefined||raw===''?'':([true,1,'1','true','t','yes'].includes(normalized)?'1':([false,0,'0','false','f','no'].includes(normalized)?'0':''));
+    return selectField('Accessibility information','accessibility_status',`<option value="" ${selected===''?'selected':''}>Not recorded</option><option value="1" ${selected==='1'?'selected':''}>Accessible</option><option value="0" ${selected==='0'?'selected':''}>Not accessible</option>`,selected,false);
+  };
   const extraLocationFields=item=>field('Contact email','contact_email',item.contact_email||'','email',false,'maxlength="254"')+
     field('Contact phone','contact_phone',item.contact_phone||'','tel',false,'maxlength="40"')+
     presetField('Service hours','service_hours',serviceHourOptions,item.service_hours)+
     presetField('Days open','days_open',dayOptions,item.days_open)+
     presetField('Lunch hours','lunch_break',lunchOptions,item.lunch_break)+
-    selectField('Accessibility information','accessibility_status','<option value="">Not recorded</option><option value="1">Accessible</option><option value="0">Not accessible</option>',item.accessibility_status===null||item.accessibility_status===undefined||item.accessibility_status===''?'':([true,1,'1','true','t','yes'].includes(typeof item.accessibility_status==='string'?item.accessibility_status.trim().toLowerCase():item.accessibility_status)?'1':'0'),false);
+    accessibilityStatusField(item);
   const extraRoomFields=item=>field('Contact email','contact_email',item.contact_email||'','email',false,'maxlength="254"')+
     field('Contact phone','contact_phone',item.contact_phone||'','tel',false,'maxlength="40"')+
     presetField('Service hours','service_hours',serviceHourOptions,item.service_hours)+
     presetField('Days open','days_open',dayOptions,item.days_open)+
     presetField('Lunch hours','lunch_break',lunchOptions,item.lunch_break)+
-    selectField('Accessibility information','accessibility_status','<option value="">Not recorded</option><option value="1">Accessible</option><option value="0">Not accessible</option>',item.accessibility_status===null||item.accessibility_status===undefined||item.accessibility_status===''?'':([true,1,'1','true','t','yes'].includes(typeof item.accessibility_status==='string'?item.accessibility_status.trim().toLowerCase():item.accessibility_status)?'1':'0'),false);
+    accessibilityStatusField(item);
   function galleryMarkup(type,item){
     const ownerType=type==='location'?'location':'room';
     const photos=[...new Map((item.photos||[]).filter(photo=>photo?.image).map(photo=>[imageSrc(photo.image),photo])).values()];
@@ -168,7 +174,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   function modelMarkup(item){
     const hasModel=Boolean(item.model_3d_url);
-    return `<section class="admin-edit-wide catalog-model-panel" data-model-owner="location" data-model-id="${esc(item.id)}"><div class="catalog-section-heading"><div><h3>3D Model</h3><p>Upload a 3D model to let visitors explore this building or facility.</p></div><span class="catalog-count">${hasModel?'Model uploaded':'No model'}</span></div><div class="catalog-model-content">${hasModel?`<div class="catalog-model-status"><span class="material-symbols-rounded" aria-hidden="true">view_in_ar</span><div><strong>3D model available</strong><p>Upload a new GLB file below to replace the current model.</p><a href="${esc(item.model_3d_url)}" target="_blank" rel="noopener noreferrer">Open current 3D model</a></div></div>`:'<div class="catalog-model-status"><span class="material-symbols-rounded" aria-hidden="true">view_in_ar</span><div><strong>No 3D model uploaded</strong><p>This is optional. You can add a GLB model at any time.</p></div></div>'}<div class="catalog-model-upload"><label>Choose 3D model (.glb)<input data-model-file type="file" accept=".glb,model/gltf-binary,application/octet-stream"><small>Maximum file size: 500 MB. A new upload replaces the current model.</small></label><button type="button" data-model-upload class="admin-button-primary">Upload 3D Model</button></div></div></section>`;
+    return `<section class="admin-edit-wide catalog-model-panel" data-model-owner="location" data-model-id="${esc(item.id)}"><div class="catalog-section-heading"><div><h3>3D Model</h3><p>Upload a 3D model to let visitors explore this building or facility.</p></div><span class="catalog-count">${hasModel?'Model uploaded':'No model'}</span></div><div class="catalog-model-content">${hasModel?`<div class="catalog-model-status"><span class="material-symbols-rounded" aria-hidden="true">view_in_ar</span><div><strong>3D model available</strong><p>Upload a new GLB file below to replace the current model.</p><a href="${esc(item.model_3d_url)}" target="_blank" rel="noopener noreferrer">Open current 3D model</a></div></div>`:'<div class="catalog-model-status"><span class="material-symbols-rounded" aria-hidden="true">view_in_ar</span><div><strong>No 3D model uploaded</strong><p>This is optional. You can add a GLB model at any time.</p></div></div>'}<div class="catalog-model-upload"><label>Choose 3D model (.glb)<input data-model-file type="file" accept=".glb,model/gltf-binary,application/octet-stream"></label><button type="button" data-model-upload class="admin-button-primary">Upload 3D Model</button><small>Maximum file size: 500 MB. A new upload replaces the current model.</small></div></div></section>`;
   }
   async function manageGalleryAction(event){
     const button=event.target.closest('[data-model-upload],[data-photo-add],[data-photo-save],[data-photo-delete],[data-photo-details],[data-photo-details-close]');if(!button)return;
