@@ -213,6 +213,7 @@
     try {
       response = await fetch(`${activeEndpoint}${encodeURIComponent(resourcePath)}${query ? `&${query}` : ''}`, {
         ...options,
+        cache: method === 'GET' ? 'no-store' : (options.cache || 'default'),
         method,
         headers,
         body,
