@@ -22,7 +22,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const arrangeAddForm=(form,kind)=>{
     if(!form||form.dataset.editLayoutApplied)return;
     form.dataset.editLayoutApplied='true';
-    const wrapperFor=name=>name==='accessibility_features'
+    const wrapperFor=name=>name==='photo'&&form.querySelector('.catalog-add-photo-panel')
+      ?form.querySelector('.catalog-add-photo-panel')
+      :name==='accessibility_features'
       ?form.querySelector('.catalog-checklist-dropdown')||form.querySelector('fieldset:has([name="accessibility_features"])')
       :name==='category_ids'
         ?form.querySelector('[data-category-dropdown]')
