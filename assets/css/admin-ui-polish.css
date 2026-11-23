@@ -482,3 +482,19 @@ html[data-theme="dark"] .admin-page .catalog-photo-details input:not([type=check
 .admin-page .catalog-category-checklist-option{flex-direction:row!important}
 .admin-page .catalog-category-checkbox{order:0;flex-shrink:0}
 .admin-page .admin-toast-host{z-index:999999}
+
+
+/* Compact dropdown checklist shared by Categories and Accessibility features. */
+.admin-page .catalog-checklist-dropdown{position:relative;min-width:0;border:1px solid #dbe3ed;border-radius:10px;background:#fff;overflow:visible}
+.admin-page .catalog-checklist-dropdown>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:11px 13px;list-style:none;cursor:pointer;color:#24364f;font-size:12px;font-weight:800}
+.admin-page .catalog-checklist-dropdown>summary::-webkit-details-marker{display:none}
+.admin-page .catalog-checklist-dropdown>summary::after{content:'⌄';flex:0 0 auto;color:#64748b;font-size:16px;line-height:1;transition:transform .15s ease}
+.admin-page .catalog-checklist-dropdown[open]>summary::after{transform:rotate(180deg)}
+.admin-page .catalog-checklist-title{font-weight:800}
+.admin-page .catalog-checklist-count{margin-left:auto;color:#64748b;font-size:11px;font-weight:600}
+.admin-page .catalog-checklist-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:10px 12px 12px;border-top:1px solid #e8edf4;background:#f8fafc;border-radius:0 0 10px 10px}
+.admin-page .catalog-checklist-option{display:flex!important;flex-direction:row!important;align-items:center;justify-content:flex-start;gap:9px!important;min-width:0;margin:0;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;color:#334155!important;font-size:12px!important;font-weight:600!important;line-height:1.35;cursor:pointer}
+.admin-page .catalog-checklist-option:hover{border-color:#9bbce5;background:#f1f7ff}
+.admin-page .catalog-checklist-option input[type=checkbox]{order:0;flex:0 0 16px;width:16px!important;height:16px!important;min-width:16px!important;min-height:16px!important;margin:0!important;accent-color:#2563eb}
+.admin-page .catalog-checklist-option>span{min-width:0;text-align:left}
+@media(max-width:640px){.admin-page .catalog-checklist-options{grid-template-columns:1fr}}
