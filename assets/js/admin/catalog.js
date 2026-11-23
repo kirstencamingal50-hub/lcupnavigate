@@ -326,6 +326,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       const preview=form.querySelector('[data-photo-preview]');if(form.elements.photo&&preview)window.CampusPhotoTools?.bindPreview(form.elements.photo,preview);
       enhanceDropdownFields(form);
       const kind=form===buildingForm?'building':form===facilityForm?'facility':'room';
+      form.classList.add('admin-edit-fields','catalog-add-fields');
+      const actionRow=form.querySelector('button[type="submit"]')?.parentElement;
+      if(actionRow){actionRow.classList.add('admin-edit-actions','admin-edit-wide');}
+      const submitButton=form.querySelector('button[type="submit"]');
+      if(submitButton){submitButton.className='admin-button-primary';submitButton.textContent=`Add ${kind==='room'?'Room / Office':kind==='building'?'Building':'Facility'}`;}
       const formDialog=window.AdminUI?.mountFormDialog(form,{title:`Add ${kind}`,description:'Enter the campus information below. Required fields are marked in the form.',triggerLabel:`Add ${kind}`});
       form.addEventListener('submit',async event=>{event.preventDefault();if(!selectedCategoryIds(form).length){status('Select at least one category.');return;}const button=form.querySelector('[type="submit"]');button.disabled=true;status('Saving to the campus database…');
         try{const image_path=form===roomForm?null:await upload(form.elements.photo);let payload,resource;
