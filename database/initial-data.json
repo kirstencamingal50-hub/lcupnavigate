@@ -362,14 +362,6 @@
       "verified": false
     },
     {
-      "legacy_id": "pin-34",
-      "name": "Sto. Nino Building",
-      "kind": "building",
-      "category": "Academic",
-      "description": null,
-      "verified": false
-    },
-    {
       "legacy_id": "pin-35",
       "name": "Sto. Nino Grounds",
       "kind": "building",
@@ -864,7 +856,7 @@
       "verified": false
     },
     {
-      "location_name": "Sto. Nino Building",
+      "location_name": "Sto. Niño Building",
       "x": 904,
       "y": 229,
       "floor_number": 0,
