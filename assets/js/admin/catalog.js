@@ -284,7 +284,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     section.className='admin-edit-wide catalog-model-panel';
     section.dataset.addSection='';
     section.innerHTML=`<div class="catalog-section-heading"><div><h3>3D Model</h3><p>Optionally upload a GLB model and preview it before adding this campus location.</p></div><span class="catalog-count">Optional</span></div>
-      <div class="catalog-model-upload"><label class="catalog-model-file-label">3D model file<input name="model_3d_file" type="file" accept=".glb,model/gltf-binary,application/octet-stream"></label><button type="button" class="admin-button-primary" data-add-model-choose>Upload 3D Model</button></div>
+      <div class="catalog-model-upload"><label>Choose 3D model (.glb)<input name="model_3d_file" type="file" accept=".glb,model/gltf-binary,application/octet-stream"></label><button type="button" data-add-model-choose class="admin-button-primary">Upload 3D Model</button><small>Maximum file size: 50 MB. The model will be added when you save this location.</small></div>
       <p data-add-model-name class="text-xs text-slate-500 mt-2">No 3D model selected.</p>
       <model-viewer data-add-model-preview class="w-full mt-3 rounded-xl" style="height:260px;background:#eef3f8;display:none" camera-controls auto-rotate shadow-intensity="1" exposure="1" environment-image="neutral" alt="3D preview of the selected campus model"></model-viewer>
       <button type="button" data-add-model-clear class="admin-button-secondary mt-2" hidden>Remove selected model</button>`;
@@ -574,13 +574,21 @@ document.addEventListener('DOMContentLoaded', async () => {
           const photoTitle=form===roomForm?'Room or Office Photo':form===facilityForm?'Facility Photo':'Building Photo';
           photoPanel.innerHTML=`<div class="catalog-section-heading"><div><h3>${photoTitle}</h3><p>Upload the main photo visitors will see in the campus directory.</p></div><span class="catalog-count">Optional</span></div><div class="catalog-gallery-upload catalog-add-photo-upload"></div>`;
           photoLabel.before(photoPanel);
-          const photoCaption=document.createElement('label');photoCaption.className='catalog-add-photo-caption';photoCaption.innerHTML='Photo caption (optional)<input type="text" data-add-photo-caption maxlength="255" placeholder="Describe this photo">';
-          const photoActions=document.createElement('div');photoActions.className='catalog-add-photo-actions';
-          const photoButton=document.createElement('button');photoButton.type='button';photoButton.className='admin-button-primary';photoButton.textContent='Upload photo';photoButton.addEventListener('click',()=>form.elements.photo.click());
-          photoActions.append(photoButton,photoLabel);
-          photoPanel.querySelector('.catalog-add-photo-upload').append(photoActions,photoCaption);
-          photoLabel.classList.add('catalog-add-photo-field');
-          form.elements.photo.setAttribute('aria-label','Choose the main campus photo');
+          const photoInput=form.elements.photo;
+          const uploadArea=photoPanel.querySelector('.catalog-add-photo-upload');
+          uploadArea.innerHTML='<div><strong>Add photo</strong><p>Select one image and optionally add a caption.</p></div>';
+          photoLabel.innerHTML='<span>Choose photo</span>';
+          photoLabel.append(photoInput);
+          photoLabel.className='catalog-add-photo-field';
+          photoLabel.setAttribute('aria-label','Choose photo file');
+          const photoCaption=document.createElement('label');
+          photoCaption.innerHTML='<span>Caption (optional)</span><input type="text" data-add-photo-caption maxlength="255" placeholder="Describe this photo">';
+          const photoButton=document.createElement('button');
+          photoButton.type='button';
+          photoButton.className='admin-button-primary';
+          photoButton.textContent='Upload photo';
+          photoButton.addEventListener('click',()=>photoInput.click());
+          uploadArea.append(photoLabel,photoCaption,photoButton);
         }
         window.CampusPhotoTools?.bindPreview(form.elements.photo,preview);
         preview.classList.add('catalog-add-photo-preview');
