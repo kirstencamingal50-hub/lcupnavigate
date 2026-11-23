@@ -207,7 +207,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const accessibilityFeatureFields=selected=>`<fieldset class="admin-edit-wide rounded-xl border border-blue-100 bg-blue-50/60 p-4"><legend class="px-1 font-bold">Accessibility features</legend><p class="mb-3 text-xs text-slate-500">Select the accessibility features confirmed for this location.</p><div class="grid gap-2 sm:grid-cols-2">${accessibilityFeatureOptions.map(([value,label])=>`<label class="flex items-center gap-2 text-xs"><input type="checkbox" name="accessibility_features" value="${value}" ${selected.includes(value)?'checked':''}>${label}</label>`).join('')}</div></fieldset>`;
   const serviceHoursField=value=>{
     const raw=String(value||'').trim();
-    const range=raw.match(/(\\d{1,2}:\\d{2})\\s*(AM|PM)\\s*[–—-]\\s*(\\d{1,2}:\\d{2})\\s*(AM|PM)/i);
+    const range=raw.match(/(\d{1,2}:\d{2})\s*(AM|PM)\s*[–—-]\s*(\d{1,2}:\d{2})\s*(AM|PM)/i);
     const to24=(time,ampm)=>{if(!time)return '';let [hour,minute]=time.split(':').map(Number);if(ampm.toUpperCase()==='PM'&&hour!==12)hour+=12;if(ampm.toUpperCase()==='AM'&&hour===12)hour=0;return String(hour).padStart(2,'0')+':'+String(minute).padStart(2,'0');};
     const open=range?to24(range[1],range[2]):'',close=range?to24(range[3],range[4]):'';
     const mode=range?'custom':['24 hours','By appointment','Varies','Closed'].includes(raw)?raw:'custom';
