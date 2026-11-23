@@ -730,8 +730,8 @@ try {
         }
         if ($method === 'DELETE') {
             $recordId=positive_id($body['id'] ?? $id); $q=$pdo->prepare('SELECT kind FROM locations WHERE id=? AND active=1'); $q->execute([$recordId]); $existing=$q->fetch(); if(!$existing)fail('Location not found.',404);
-            if($existing['kind']==='building'){$q=$pdo->prepare('SELECT COUNT(*) FROM rooms WHERE building_id=? AND active=1');$q->execute([$recordId]);if((int)$q->fetchColumn())fail('Move or remove this building’s rooms before archiving the building.',409);}
-            $q=$pdo->prepare('UPDATE locations SET active=0 WHERE id=?'); $q->execute([$recordId]); audit($pdo,$user,'archive','location',$recordId); ok(['id'=>$recordId]);
+            if($existing['kind']==='building'){$q=$pdo->prepare('SELECT COUNT(*) FROM rooms WHERE building_id=? AND active=1');$q->execute([$recordId]);if((int)$q->fetchColumn())fail('Move or delete this building’s rooms before deleting the building.',409);}
+            $q=$pdo->prepare('UPDATE locations SET active=0 WHERE id=?'); $q->execute([$recordId]); audit($pdo,$user,'delete','location',$recordId); ok(['id'=>$recordId]);
         }
     }
     if ($path === 'rooms') {
@@ -752,7 +752,7 @@ try {
             if ($recordId) { $q=$pdo->prepare('UPDATE rooms SET building_id=?,name=?,room_number=?,floor_number=?,floor_label=?,capacity=?,description=?,function_description=?,department_head=?,contact_info=?,category_id=?,image_path=?,contact_email=?,contact_phone=?,website_url=?,department_name=?,service_hours=?,days_open=?,lunch_break=?,services=?,nearby_landmarks=?,accessibility_status=?,accessibility_details=? WHERE id=? AND active=1'); $q->execute([$building,$name,$number,$floor,$floorLabel,$capacity,$description,$fn,$head,$contact,$category,$image,...$detailFields,$recordId]); if (!$q->rowCount()) { $c=$pdo->prepare('SELECT id FROM rooms WHERE id=? AND active=1');$c->execute([$recordId]);if(!$c->fetch())fail('Room not found.',404); } audit($pdo,$user,'update','room',$recordId); ok(['id'=>$recordId]); }
             $q=$pdo->prepare('INSERT INTO rooms (building_id,name,room_number,floor_number,floor_label,capacity,description,function_description,department_head,contact_info,category_id,image_path,contact_email,contact_phone,website_url,department_name,service_hours,days_open,lunch_break,services,nearby_landmarks,accessibility_status,accessibility_details) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'); $q->execute([$building,$name,$number,$floor,$floorLabel,$capacity,$description,$fn,$head,$contact,$category,$image,...$detailFields]);$newId=(int)$pdo->lastInsertId();if($image){$photo=$pdo->prepare('INSERT INTO facility_photos (room_id,image_path,alt_text,caption,is_cover) VALUES (?,?,?,?,1)');$photo->execute([$newId,$image,'Photo of '.$name,'Cover photo']);}audit($pdo,$user,'create','room',$newId);ok(['id'=>$newId],201);
         }
-        if ($method==='DELETE') { $rid=positive_id($body['id']??$id);$q=$pdo->prepare('UPDATE rooms SET active=0 WHERE id=? AND active=1');$q->execute([$rid]);if(!$q->rowCount())fail('Room not found.',404);audit($pdo,$user,'archive','room',$rid);ok(['id'=>$rid]); }
+        if ($method==='DELETE') { $rid=positive_id($body['id']??$id);$q=$pdo->prepare('UPDATE rooms SET active=0 WHERE id=? AND active=1');$q->execute([$rid]);if(!$q->rowCount())fail('Room not found.',404);audit($pdo,$user,'delete','room',$rid);ok(['id'=>$rid]); }
     }
     if ($path === 'categories') {
         if (!in_array($user['role'], ['admin'], true)) fail('Administrator role is required.',403);
