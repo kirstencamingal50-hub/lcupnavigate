@@ -20,6 +20,67 @@ async function fetchAllRows(buildQuery, pageSize = 500) {
 }
 
 async function cleanupOrphanedRouteGeometry(database) {
+  // Stable location nodes use location-{location_id}. If a location was
+  // permanently deleted or archived, its node and every edge/route depending
+  // on it must disappear too; otherwise the public Walkways layer still draws
+  // lines to the deleted place even when the route card is gone.
+  const activeLocations = await fetchAllRows(() => database
+    .from('locations')
+    .select('id')
+    .eq('active', true));
+  const activeLocationIds = new Set(activeLocations.map(row => Number(row.id)));
+  const locationNodes = await fetchAllRows(() => database
+    .from('map_nodes')
+    .select('id,node_key')
+    .like('node_key', 'location-%'));
+  const staleLocationNodeIds = locationNodes
+    .filter(node => {
+      const match = String(node.node_key || '').match(/^location-(\\d+)$/);
+      return match && !activeLocationIds.has(Number(match[1]));
+    })
+    .map(node => Number(node.id))
+    .filter(Number.isSafeInteger);
+
+  if (staleLocationNodeIds.length) {
+    const [staleMarkers, pointRows, segmentRows, incidentConnections] = await Promise.all([
+      fetchAllRows(() => database.from('map_markers')
+        .select('id,location_id,route_node_id')),
+      fetchAllRows(() => database.from('campus_route_points')
+        .select('route_id,node_id')
+        .in('node_id', staleLocationNodeIds)),
+      fetchAllRows(() => database.from('campus_route_segments')
+        .select('route_id,connection_id')),
+      fetchAllRows(() => database.from('map_connections')
+        .select('id')
+        .or(`from_node_id.in.(${staleLocationNodeIds.join(',')}),to_node_id.in.(${staleLocationNodeIds.join(',')})`))
+    ]);
+
+    const staleMarkerIds = staleMarkers
+      .filter(marker => marker.location_id != null && !activeLocationIds.has(Number(marker.location_id)))
+      .map(marker => Number(marker.id))
+      .filter(Number.isSafeInteger);
+    const affectedRouteIds = new Set(pointRows.map(row => Number(row.route_id)));
+    if (staleMarkerIds.length) {
+      const endpointRoutes = await fetchAllRows(() => database.from('campus_routes')
+        .select('id')
+        .or(`start_marker_id.in.(${staleMarkerIds.join(',')}),destination_marker_id.in.(${staleMarkerIds.join(',')}),landmark_marker_id.in.(${staleMarkerIds.join(',')})`));
+      endpointRoutes.forEach(route => affectedRouteIds.add(Number(route.id)));
+    }
+
+    // Remove route-owned records first so foreign-key references cannot keep
+    // deleted-place geometry alive.
+    const affectedIds = [...affectedRouteIds].filter(Number.isSafeInteger);
+    if (affectedIds.length) {
+      unwrap(await database.from('campus_route_segments').delete().in('route_id', affectedIds));
+      unwrap(await database.from('campus_route_points').delete().in('route_id', affectedIds));
+      unwrap(await database.from('campus_routes').delete().in('id', affectedIds));
+    }
+    const connectionIds = incidentConnections.map(edge => Number(edge.id)).filter(Number.isSafeInteger);
+    if (connectionIds.length) unwrap(await database.from('map_connections').delete().in('id', connectionIds));
+    if (staleMarkerIds.length) unwrap(await database.from('map_markers').delete().in('id', staleMarkerIds));
+    unwrap(await database.from('map_nodes').delete().in('id', staleLocationNodeIds));
+  }
+
   const savedRoutes = await fetchAllRows(() => database
     .from('campus_routes')
     .select('id'));
