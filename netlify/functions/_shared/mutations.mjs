@@ -853,26 +853,26 @@ async function routes(event, method, body, query) {
     if (!removed) throw new HttpError(404, 'Saved route not found.');
 
     if (ownedNodeIds.length) {
-      const markerReferences = unwrap(await database
-        .from('map_markers')
-        .select('route_node_id')
-        .in('route_node_id', ownedNodeIds)) || [];
       const pointReferences = unwrap(await database
         .from('campus_route_points')
         .select('node_id')
         .in('node_id', ownedNodeIds)) || [];
-      const connectionReferences = unwrap(await database
-        .from('map_connections')
-        .select('id')
-        .or(`from_node_id.in.(${ownedNodeIds.join(',')}),to_node_id.in.(${ownedNodeIds.join(',')})`)) || [];
-      const stillUsed = new Set([
-        ...markerReferences.map(row => Number(row.route_node_id)),
-        ...pointReferences.map(row => Number(row.node_id))
-      ]);
-      if (!connectionReferences.length) {
-        const unusedNodeIds = ownedNodeIds.filter(nodeId => !stillUsed.has(nodeId));
-        if (unusedNodeIds.length) {
-          unwrap(await database.from('map_nodes').delete().in('id', unusedNodeIds));
+      const stillUsedByRoutes = new Set(pointReferences.map(row => Number(row.node_id)));
+      const noLongerUsedNodeIds = ownedNodeIds.filter(nodeId => !stillUsedByRoutes.has(nodeId));
+
+      if (noLongerUsedNodeIds.length) {
+        // Endpoint nodes generated for this deleted route may still be cached
+        // on their markers. Reset only pointers no remaining route uses.
+        unwrap(await database.from('map_markers')
+          .update({ route_node_id: null })
+          .in('route_node_id', noLongerUsedNodeIds));
+
+        const remainingConnections = unwrap(await database
+          .from('map_connections')
+          .select('id')
+          .or(`from_node_id.in.(${noLongerUsedNodeIds.join(',')}),to_node_id.in.(${noLongerUsedNodeIds.join(',')})`)) || [];
+        if (!remainingConnections.length) {
+          unwrap(await database.from('map_nodes').delete().in('id', noLongerUsedNodeIds));
         }
       }
     }
