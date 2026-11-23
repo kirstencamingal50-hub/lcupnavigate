@@ -86,20 +86,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       const image = coverPhoto?.image || item.image || '';
       const slideshowPhotos = coverPhoto ? [coverPhoto,...photoList.filter(photo=>photo!==coverPhoto)] : (photoList.length ? photoList : (image ? [{image,caption:''}] : []));
       const photoSlides = slideshowPhotos.map((photo,index) => `<img class="directory-card-photo${index===0?' is-active':''}" src="${escapeHtml(mediaSrc(photo.image))}" alt="" loading="${index===0?'eager':'lazy'}" decoding="async" data-directory-slide="${index}" ${index===0?'':'hidden'}>`).join('');
-      const features = item.kind === 'building' && Array.isArray(item.accessibilityFeatures)
-        ? item.accessibilityFeatures.filter(feature => featureLabels[feature]).map(feature => `<span class="directory-feature"><span class="material-symbols-rounded" aria-hidden="true">accessible</span>${escapeHtml(featureLabels[feature])}</span>`).join('')
-        : '';
+      const features = '';
       return `<article class="directory-card">
         <div class="directory-card-name" style="${image && !photoSlides ? `background-image:url('${escapeHtml(mediaSrc(image))}')` : ''}">
           <a class="directory-card-name-link" href="${detailUrl}" aria-label="View ${escapeHtml(item.name)}">
             ${photoSlides}
-            <span class="directory-card-meta"><span class="directory-kind">${kindLabel}</span><span>${escapeHtml((item.category_names?.length ? item.category_names : [item.category]).filter(Boolean).join(' · ') || 'Campus')}</span></span>
+            <span class="directory-card-meta"><span class="directory-kind">${kindLabel}</span><span>${escapeHtml((item.category_names?.length ? item.category_names : [item.category]).filter(Boolean).join(' · '))}</span></span>
             <strong>${escapeHtml(item.name)}</strong>
           </a>
           ${slideshowPhotos.length>1 ? `<div class="directory-photo-controls" aria-label="Photo slideshow"><button type="button" data-photo-prev aria-label="Previous photo">‹</button><span data-photo-count>1 / ${slideshowPhotos.length}</span><button type="button" data-photo-next aria-label="Next photo">›</button></div>` : ''}
         </div>
         <div class="directory-card-body">
-          <p class="directory-card-description">${escapeHtml(item.description || 'More information is available in this directory profile.')}</p>
+          <p class="directory-card-description">${item.description ? escapeHtml(item.description) : ''}</p>
           ${item.parent_building ? `<p class="directory-parent"><span class="material-symbols-rounded" aria-hidden="true">location_on</span>${escapeHtml(item.parent_building)}${item.room_number ? ` · Room ${escapeHtml(item.room_number)}` : ''}</p>` : ''}
           ${features ? `<div class="directory-features" aria-label="Building accessibility features">${features}</div>` : ''}
         </div>
