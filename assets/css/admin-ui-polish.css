@@ -154,3 +154,12 @@ html[data-theme="dark"] .admin-page .admin-edit-dialog-heading,
 html[data-theme="dark"] .admin-page .admin-edit-actions { color:#e7edf5; border-color:#344256; background:#1c2738; }
 html[data-theme="dark"] .admin-page .admin-edit-fields :is(input,select,textarea) { color:#e7edf5; border-color:#46566d; background:#172235; }
 html[data-theme="dark"] .admin-page .catalog-model-field { border-color:#46566d; background:#243247; }
+
+
+/* Shared media upload row for catalog forms */
+.admin-page .catalog-media-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; align-items:start; }
+.admin-page .catalog-media-fields > label { display:grid; min-width:0; gap:6px; color:#52637a; font-size:11px; font-weight:800; }
+.admin-page .catalog-media-fields :is(input[type=file]) { width:100%; min-width:0; min-height:42px; padding:8px; border:1px solid #d5deea; border-radius:9px; background:#fff; color:#24364f; font-size:12px; }
+.admin-page .catalog-media-fields small { color:#78879a; font-size:10px; font-weight:500; line-height:1.5; }
+@media(max-width:700px) { .admin-page .catalog-media-fields { grid-template-columns:minmax(0,1fr); } }
+html[data-theme="dark"] .admin-page .catalog-media-fields :is(input[type=file]) { color:#e7edf5; border-color:#46566d; background:#172235; }
