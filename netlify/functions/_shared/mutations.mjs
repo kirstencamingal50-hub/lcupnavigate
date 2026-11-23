@@ -230,28 +230,12 @@ async function locations(event, method, body, query) {
 
   if (method === 'DELETE') {
     const id = positiveId(body.id ?? query.id);
-    const record = unwrap(await database.from('locations')
-      .select('id,kind,active')
-      .eq('id', id)
-      .maybeSingle());
-    if (!record) throw new HttpError(404, 'Location not found.');
-
-    const checks = await Promise.all([
-      database.from('rooms').select('id', { count: 'exact', head: true }).eq('building_id', id),
-      database.from('locations').select('id', { count: 'exact', head: true }).eq('parent_building_id', id),
-      database.from('map_markers').select('id', { count: 'exact', head: true }).eq('location_id', id),
-      database.from('facility_photos').select('id', { count: 'exact', head: true }).eq('location_id', id),
-      database.from('floor_plans').select('id', { count: 'exact', head: true }).eq('building_id', id),
-      database.from('announcements').select('id', { count: 'exact', head: true }).eq('location_id', id)
-    ]);
-    for (const result of checks) if (result.error) throw result.error;
-    if (checks.some(result => (result.count || 0) > 0)) {
-      throw new HttpError(409, 'This record still has rooms, map markers, photos, floor plans, or announcements linked to it. Remove those linked records first.');
-    }
-
-    unwrap(await database.from('locations').delete().eq('id', id).select('id').single());
+    const result = unwrap(await database.rpc('delete_campus_record', {
+      p_record_type: 'location',
+      p_record_id: id
+    }));
     await audit(user, 'delete', 'location', id);
-    return success({ id, deleted: true });
+    return success(result);
   }
 
   throw new HttpError(405, 'Method not allowed.');
