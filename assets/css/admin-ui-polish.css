@@ -346,3 +346,32 @@ html[data-theme="dark"] .admin-page .catalog-photo-details-heading strong { colo
 html[data-theme="dark"] .admin-page .catalog-photo-details-heading button,
 html[data-theme="dark"] .admin-page .catalog-photo-details input:not([type=checkbox]) { border-color:#46566d; color:#e7edf5; background:#172235; }
 @media(max-width:480px) { .admin-page .catalog-gallery-grid { grid-template-columns:1fr; } .admin-page .catalog-gallery-item > img { height:230px; } }
+
+
+/* Refined gallery upload controls: clearer labels and left-aligned file picker. */
+.admin-page .catalog-gallery-upload {
+  grid-template-columns:minmax(250px,.95fr) minmax(220px,1.15fr) auto;
+  align-items:end;
+  gap:14px 18px;
+}
+.admin-page .catalog-gallery-upload > div { grid-column:1/-1; }
+.admin-page .catalog-gallery-upload strong { font-size:14px; }
+.admin-page .catalog-gallery-upload p { font-size:13px; }
+.admin-page .catalog-gallery-upload label {
+  font-size:13px;
+  text-align:left;
+  justify-items:start;
+}
+.admin-page .catalog-gallery-upload input[type=file] {
+  justify-self:start;
+  text-align:left;
+  font-size:12px;
+}
+.admin-page .catalog-gallery-upload input[type=file]::file-selector-button {
+  font-size:12px;
+  padding:8px 13px;
+}
+.admin-page .catalog-gallery-upload input:not([type=file]) { font-size:13px; }
+@media(max-width:760px) {
+  .admin-page .catalog-gallery-upload { grid-template-columns:minmax(0,1fr); }
+}
