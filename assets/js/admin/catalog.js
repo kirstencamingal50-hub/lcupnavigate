@@ -197,11 +197,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   const multiSelectField=(label,name,options,selected=[])=>`<div class="admin-edit-wide grid gap-1"><span class="font-semibold text-slate-700">${label} <span class="text-red-600" aria-label="required">*</span></span><select name="${name}" multiple size="${Math.min(6,Math.max(3,categories.length))}" class="catalog-multi-category">${catOptions(selected)}</select><small class="block text-slate-500">Choose one or more categories from the dropdown.</small></div>`;
   const areaField=(label,name,value,max=1000)=>`<label class="admin-edit-wide">${label}<textarea name="${name}" rows="2" maxlength="${max}">${esc(value||'')}</textarea></label>`;
   const accessibilityFeatureOptions=[
-    ['wheelchair_entrance','Wheelchair-accessible entrance'],['elevator','Elevator'],['ramp','Ramp'],
-    ['accessible_restroom','Accessible restroom'],['accessible_parking','Accessible parking'],['handrails','Handrails'],
-    ['tactile_paving','Tactile paving'],['braille_signage','Braille signage'],['hearing_assistance','Hearing assistance']
+    ['wheelchair_accessibility','Wheelchair accessibility (entrance, ramp, and pathways)'],
+    ['elevator','Elevator'],
+    ['accessible_restroom','Accessible restroom'],
+    ['accessible_parking','Accessible parking'],
+    ['handrails','Handrails'],
+    ['braille_signage','Braille signage']
   ];
-  const accessibilityFeatureFields=selected=>`<fieldset class="admin-edit-wide rounded-xl border border-blue-100 bg-blue-50/60 p-4"><legend class="px-1 font-bold">Accessibility features</legend><p class="mb-3 text-xs text-slate-500">Select the accessibility features confirmed for this location.</p><div class="grid gap-2 sm:grid-cols-2">${accessibilityFeatureOptions.map(([value,label])=>`<label class="flex items-center gap-2 text-xs"><input type="checkbox" name="accessibility_features" value="${value}" ${selected.includes(value)?'checked':''}>${label}</label>`).join('')}</div></fieldset>`;
+  const accessibilityFeatureFields=selected=>{
+    const values=new Set((Array.isArray(selected)?selected:[]).map(value=>String(value).trim().toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'')));
+    const wheelchairSelected=['wheelchair_accessibility','wheelchair_entrance','wheelchair_accessible_entrance','ramp','wheelchair_accessible_ramp','accessible_pathways','wheelchair_accessible_pathways'].some(value=>values.has(value));
+    return `<fieldset class="admin-edit-wide rounded-xl border border-blue-100 bg-blue-50/60 p-4"><legend class="px-1 font-bold">Accessibility features</legend><p class="mb-3 text-xs text-slate-500">Select the accessibility features confirmed for this location.</p><div class="grid gap-2 sm:grid-cols-2">${accessibilityFeatureOptions.map(([value,label])=>`<label class="flex items-center gap-2 text-xs"><input type="checkbox" name="accessibility_features" value="${value}" ${(value==='wheelchair_accessibility'?wheelchairSelected:values.has(value))?'checked':''}>${label}</label>`).join('')}</div></fieldset>`;
+  };
   const serviceHoursField=value=>{
     const raw=String(value||'').trim();
     const range=raw.match(/(\d{1,2}:\d{2})\s*(AM|PM)\s*[–—-]\s*(\d{1,2}:\d{2})\s*(AM|PM)/i);
