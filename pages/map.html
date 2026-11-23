@@ -66,6 +66,14 @@
 
     /* Keep route search usable on mobile without browser focus-zoom. */
     #fromSearch, #toSearch { font-size:16px !important; }
+    .saved-route-browser summary::-webkit-details-marker { display:none; }
+    .saved-route-browser summary::marker { content:""; }
+    .saved-route-browser-list { max-height:220px; overflow-y:auto; overscroll-behavior:contain; }
+    .saved-route-browser-item { display:flex; width:100%; align-items:center; justify-content:space-between; gap:10px; padding:9px 10px; border-bottom:1px solid rgba(148,163,184,.14); border-radius:8px; color:#e2e8f0; text-align:left; }
+    .saved-route-browser-item:last-child { border-bottom:0; }
+    .saved-route-browser-item:hover,.saved-route-browser-item:focus-visible { background:rgba(59,130,246,.18); outline:none; }
+    .saved-route-browser-item .saved-route-endpoints { min-width:0; overflow-wrap:anywhere; font-size:11px; font-weight:700; line-height:1.4; }
+    .saved-route-browser-item .saved-route-action { flex:none; color:#93c5fd; font-size:10px; font-weight:800; }
     .map-place-accessibility { margin-top:.65rem; padding:.65rem .75rem; border:1px solid rgba(34,197,94,.35); border-radius:12px; background:rgba(34,197,94,.07); }
     .map-place-accessibility h3 { margin:0 0 .35rem; font-size:.72rem; font-weight:800; color:#d1fae5; }
     .map-place-accessibility-status { display:inline-flex; margin:0; padding:.3rem .6rem; border-radius:999px; background:#15803d; color:#fff; font-size:.78rem; font-weight:800; line-height:1.2; }
@@ -139,6 +147,16 @@
       </div>
 
       <div id="routeOptions" class="w-full hidden grid grid-cols-1 md:grid-cols-2 gap-2 mt-1"></div>
+      <details id="savedRoutesPanel" class="saved-route-browser w-full mt-2 rounded-lg border border-slate-700/70 bg-slate-900/60" open>
+        <summary class="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 text-[11px] font-extrabold text-slate-100">
+          <span>Saved campus routes</span>
+          <span class="flex items-center gap-2 text-[10px] font-semibold text-slate-400"><span id="savedRouteCount">Loading routes…</span><span class="material-symbols-rounded" aria-hidden="true">expand_more</span></span>
+        </summary>
+        <div class="border-t border-slate-700/70 p-2">
+          <input id="savedRouteSearch" type="search" placeholder="Search saved routes…" aria-label="Search saved routes" class="mb-2 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-white placeholder:text-slate-400" />
+          <div id="savedRouteList" class="saved-route-browser-list" aria-live="polite"><p class="px-2 py-3 text-center text-[11px] text-slate-400">Loading saved routes…</p></div>
+        </div>
+      </details>
       <div id="routeNotice" class="w-full hidden text-[11px] rounded-lg border px-2.5 py-2"></div>
     </div>
 
@@ -495,6 +513,9 @@
     const routeInfo = document.getElementById('routeInfo');
     const routeOptions = document.getElementById('routeOptions');
     const routeNotice = document.getElementById('routeNotice');
+    const savedRouteList = document.getElementById('savedRouteList');
+    const savedRouteSearch = document.getElementById('savedRouteSearch');
+    const savedRouteCount = document.getElementById('savedRouteCount');
     const findRouteBtn = document.getElementById('findRouteBtn');
     const clearRouteBtn = document.getElementById('clearRouteBtn');
 
@@ -518,6 +539,48 @@
     let routeMarkers = [];
     let animationFrame = null;
     let currentRoutes = {};
+    let preferredSavedRouteId = null;
+
+    function renderSavedRouteList() {
+      const published = savedRoutes
+        .filter(route => route.status === 'active')
+        .sort((a,b) => Number(a.id) - Number(b.id));
+      const term = savedRouteSearch.value.trim().toLocaleLowerCase();
+      const matches = published.filter(route => {
+        const start = mapPins.find(pin => String(pin.markerId) === String(route.start_marker_id));
+        const end = mapPins.find(pin => String(pin.markerId) === String(route.destination_marker_id));
+        const searchable = [start?.name, end?.name, route.name, route.notes].filter(Boolean).join(' ').toLocaleLowerCase();
+        return !term || searchable.includes(term);
+      });
+      savedRouteCount.textContent = `${published.length} published route${published.length === 1 ? '' : 's'}`;
+      savedRouteList.innerHTML = matches.length ? matches.map((route,index) => {
+        const start = mapPins.find(pin => String(pin.markerId) === String(route.start_marker_id));
+        const end = mapPins.find(pin => String(pin.markerId) === String(route.destination_marker_id));
+        const endpoints = `${start?.name || route.start_name || 'Start unavailable'} → ${end?.name || route.destination_name || 'Destination unavailable'}`;
+        return `<button type="button" class="saved-route-browser-item" data-saved-route-id="${escapeHtml(route.id)}" title="Show ${escapeHtml(endpoints)} on the map"><span class="saved-route-endpoints">Path ${index+1} · ${escapeHtml(endpoints)}</span><span class="saved-route-action">View route</span></button>`;
+      }).join('') : `<p class="px-2 py-3 text-center text-[11px] text-slate-400">${published.length ? 'No saved routes match your search.' : 'No published routes are available.'}</p>`;
+    }
+    savedRouteSearch.addEventListener('input', renderSavedRouteList);
+    savedRouteList.addEventListener('click', event => {
+      const button = event.target.closest('[data-saved-route-id]');
+      if (!button) return;
+      const route = savedRoutes.find(item => String(item.id) === String(button.dataset.savedRouteId) && item.status === 'active');
+      if (!route) return;
+      const start = mapPins.find(pin => String(pin.markerId) === String(route.start_marker_id));
+      const end = mapPins.find(pin => String(pin.markerId) === String(route.destination_marker_id));
+      if (!start || !end) {
+        setNotice('This saved route has a missing map endpoint and cannot be displayed.', 'error');
+        return;
+      }
+      fromSelect.value = routeId(start);
+      toSelect.value = routeId(end);
+      fromSearch.value = labelFor(routeId(start));
+      toSearch.value = labelFor(routeId(end));
+      dropdowns.forEach(control => closeSuggestions(control.list));
+      preferredSavedRouteId = `saved:${route.id}`;
+      updateRouteButton();
+      calculateRoutes();
+    });
 
     function clearRoute() {
       if (animationFrame) cancelAnimationFrame(animationFrame);
@@ -717,6 +780,7 @@
       try {
         storedMap = await window.CampusApi.get('map');
         savedRoutes = await window.CampusApi.get('routes/available');
+        renderSavedRouteList();
         rebuildRouteGraph();
         if (netToggleBox.checked) showWalkways();
       } catch (error) {
@@ -790,11 +854,14 @@
       currentRoutes = available;
       renderRouteOptions();
 
-      const preferredRouteId = savedOptions.length ? Object.keys(available)[0] : (available.shortest ? 'shortest' : Object.keys(available)[0]);
+      const preferredRouteId = preferredSavedRouteId && available[preferredSavedRouteId]
+        ? preferredSavedRouteId
+        : (savedOptions.length ? Object.keys(available)[0] : (available.shortest ? 'shortest' : Object.keys(available)[0]));
+      preferredSavedRouteId = null;
       selectRoute(preferredRouteId);
     }
 
-    findRouteBtn.addEventListener('click', calculateRoutes);
+    findRouteBtn.addEventListener('click', () => { preferredSavedRouteId = null; calculateRoutes(); });
     clearRouteBtn.addEventListener('click', clearRoute);
 
     const netToggleBox = document.getElementById('netToggleBox');
@@ -856,6 +923,7 @@
       }
     }
 
+    renderSavedRouteList();
     clearRoute();
   </script>
   <script type="module" src="../assets/js/campus-3d-map.js?v=20261118-3d-view-2"></script>
