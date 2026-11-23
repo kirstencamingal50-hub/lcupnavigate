@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.body.append(dialog);
     const form=dialog.querySelector('form');
     const requestClose=async()=>{if(form.dataset.dirty==='true'&&!await window.AdminUI.confirm({title:'Discard unsaved changes?',message:'Your edits will be lost if you close this form.',confirmLabel:'Discard changes',danger:true}))return;form.dataset.dirty='false';dialog.close();};
-    form.addEventListener('input',()=>{form.dataset.dirty='true';});form.addEventListener('change',()=>{form.dataset.dirty='true';});
+    form.addEventListener('input',event=>{if(!event.target.matches('[data-model-file]'))form.dataset.dirty='true';});form.addEventListener('change',event=>{if(!event.target.matches('[data-model-file]'))form.dataset.dirty='true';});
     dialog.addEventListener('change',event=>{
       if(!event.target.matches('[data-photo-cover]')||!event.target.checked)return;
       const section=event.target.closest('[data-gallery-owner]');
@@ -126,10 +126,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   function modelMarkup(item){
     const hasModel=Boolean(item.model_3d_url);
-    return `<section class="admin-edit-wide catalog-model-panel"><div class="catalog-section-heading"><div><h3>3D Model</h3><p>Upload a 3D model to let visitors explore this building or facility.</p></div><span class="catalog-count">${hasModel?'Model uploaded':'No model'}</span></div><div class="catalog-model-content">${hasModel?`<div class="catalog-model-status"><span class="material-symbols-rounded" aria-hidden="true">view_in_ar</span><div><strong>3D model available</strong><p>Upload a new GLB file below to replace the current model.</p><a href="${esc(item.model_3d_url)}" target="_blank" rel="noopener noreferrer">Open current 3D model</a></div></div>`:'<div class="catalog-model-status"><span class="material-symbols-rounded" aria-hidden="true">view_in_ar</span><div><strong>No 3D model uploaded</strong><p>This is optional. You can add a GLB model at any time.</p></div></div>'}<label class="catalog-model-upload">Upload 3D model (.glb)<input name="model_3d_file" type="file" accept=".glb,model/gltf-binary,application/octet-stream"><small>Maximum file size: 500 MB. Uploading a new file replaces the current model.</small></label></div></section>`;
+    return `<section class="admin-edit-wide catalog-model-panel" data-model-owner="location" data-model-id="${esc(item.id)}"><div class="catalog-section-heading"><div><h3>3D Model</h3><p>Upload a 3D model to let visitors explore this building or facility.</p></div><span class="catalog-count">${hasModel?'Model uploaded':'No model'}</span></div><div class="catalog-model-content">${hasModel?`<div class="catalog-model-status"><span class="material-symbols-rounded" aria-hidden="true">view_in_ar</span><div><strong>3D model available</strong><p>Upload a new GLB file below to replace the current model.</p><a href="${esc(item.model_3d_url)}" target="_blank" rel="noopener noreferrer">Open current 3D model</a></div></div>`:'<div class="catalog-model-status"><span class="material-symbols-rounded" aria-hidden="true">view_in_ar</span><div><strong>No 3D model uploaded</strong><p>This is optional. You can add a GLB model at any time.</p></div></div>'}<div class="catalog-model-upload"><label>Choose 3D model (.glb)<input data-model-file type="file" accept=".glb,model/gltf-binary,application/octet-stream"><small>Maximum file size: 500 MB. A new upload replaces the current model.</small></label><button type="button" data-model-upload class="admin-button-primary">Upload 3D Model</button></div></div></section>`;
   }
   async function manageGalleryAction(event){
-    const button=event.target.closest('[data-photo-add],[data-photo-save],[data-photo-delete],[data-photo-details],[data-photo-details-close]');if(!button)return;
+    const button=event.target.closest('[data-model-upload],[data-photo-add],[data-photo-save],[data-photo-delete],[data-photo-details],[data-photo-details-close]');if(!button)return;
+    const modelSection=button.closest('[data-model-owner]');
+    if(button.hasAttribute('data-model-upload')){
+      const fileInput=modelSection?.querySelector('[data-model-file]'),status=document.getElementById('catalog-editor-status');
+      if(!fileInput?.files?.length){status.textContent='Choose a GLB model to upload.';return;}
+      button.disabled=true;button.textContent='Uploading…';
+      try{
+        const modelPath=await upload(fileInput,'model');
+        await CampusApi.request('locations',{method:'PATCH',body:{id:Number(modelSection.dataset.modelId),model_3d_path:modelPath}});
+        await refresh();
+        const savedItem=locations.find(row=>String(row.id)===modelSection.dataset.modelId);
+        if(!savedItem)throw new Error('The model was uploaded, but the updated record could not be reloaded.');
+        pendingEdit.item=savedItem;
+        modelSection.outerHTML=modelMarkup(savedItem);
+        status.textContent='3D model uploaded successfully.';notify('3D model uploaded successfully.');
+      }catch(error){status.textContent=error.message;notify(error.message,'error');button.disabled=false;button.textContent='Upload 3D Model';}
+      return;
+    }
+
     const section=button.closest('[data-gallery-owner]'),card=button.closest('[data-photo-id]'),status=document.getElementById('catalog-editor-status');
     if(!section)return;
     if(button.hasAttribute('data-photo-details')){const panel=card.querySelector('[data-photo-details-panel]');panel.hidden=!panel.hidden;button.textContent=panel.hidden?'Photo details':'Hide details';return;}
