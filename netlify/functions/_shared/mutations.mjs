@@ -336,15 +336,12 @@ async function rooms(event, method, body, query) {
 
   if (method === 'DELETE') {
     const id = positiveId(body.id ?? query.id);
-    const record = unwrap(await database.from('rooms').select('id,active,route_node_id').eq('id', id).maybeSingle());
-    if (!record) throw new HttpError(404, 'Room not found.');
-    if (record.route_node_id) throw new HttpError(409, 'This room is linked to a campus route node. Remove or reassign that map connection before deleting the room.');
-    const photos = await database.from('facility_photos').select('id', { count: 'exact', head: true }).eq('room_id', id);
-    if (photos.error) throw photos.error;
-    if (photos.count) throw new HttpError(409, 'Remove this room’s gallery photos before deleting it.');
-    unwrap(await database.from('rooms').delete().eq('id', id).select('id').single());
+    const result = unwrap(await database.rpc('delete_campus_record', {
+      p_record_type: 'room',
+      p_record_id: id
+    }));
     await audit(user, 'delete', 'room', id);
-    return success({ id, deleted: true });
+    return success(result);
   }
 
   throw new HttpError(405, 'Method not allowed.');
@@ -491,24 +488,12 @@ async function mapNodes(event, method, body, query) {
   if (method === 'DELETE') {
     const id = positiveId(body.id ?? query.id);
 
-    const references = await database
-      .from('campus_route_points')
-      .select('route_id, route:campus_routes!campus_route_points_route_id_fkey(status)')
-      .eq('node_id', id);
-
-    const points = unwrap(references) || [];
-
-    if (points.some(point => point.route?.status === 'active')) {
-      throw new HttpError(
-        409,
-        'This node is used by an active route. Edit or deactivate those routes first.'
-      );
-    }
-
-    await updateById('map_nodes', id, { active: false }, 'Walkway node not found.');
-    await audit(user, 'archive', 'map_node', id);
-
-    return success({ id, connections_archived: true });
+    const result = unwrap(await database.rpc('delete_campus_record', {
+      p_record_type: 'map_node',
+      p_record_id: id
+    }));
+    await audit(user, 'delete', 'map_node', id);
+    return success(result);
   }
 
   if (!['POST', 'PUT'].includes(method)) {
@@ -581,23 +566,12 @@ async function mapMarkers(event, method, body, query) {
   if (method === 'DELETE') {
     const id = positiveId(body.id ?? query.id);
 
-    const routes = unwrap(await database
-      .from('campus_routes')
-      .select('id')
-      .eq('status', 'active')
-      .or(`start_marker_id.eq.${id},destination_marker_id.eq.${id},landmark_marker_id.eq.${id}`)) || [];
-
-    if (routes.length) {
-      throw new HttpError(
-        409,
-        'This marker is used by an active route. Edit or deactivate those routes first.'
-      );
-    }
-
-    await updateById('map_markers', id, { active: false }, 'Marker not found.');
-    await audit(user, 'archive', 'map_marker', id);
-
-    return success({ id });
+    const result = unwrap(await database.rpc('delete_campus_record', {
+      p_record_type: 'map_marker',
+      p_record_id: id
+    }));
+    await audit(user, 'delete', 'map_marker', id);
+    return success(result);
   }
 
   if (!['POST', 'PUT'].includes(method)) {
@@ -714,22 +688,12 @@ async function mapConnections(event, method, body, query) {
     : null;
 
   if (method === 'DELETE') {
-    const refs = await database
-      .from('campus_route_segments')
-      .select('route_id')
-      .eq('connection_id', id);
-
-    if (unwrap(refs)?.length) {
-      throw new HttpError(
-        409,
-        'This connection is still referenced by a saved route. Edit those routes first.'
-      );
-    }
-
-    await updateById('map_connections', id, { active: false }, 'Connection not found.');
-    await audit(user, 'archive', 'map_connection', id);
-
-    return success({ id });
+    const result = unwrap(await database.rpc('delete_campus_record', {
+      p_record_type: 'map_connection',
+      p_record_id: id
+    }));
+    await audit(user, 'delete', 'map_connection', id);
+    return success(result);
   }
 
   if (!['POST', 'PUT'].includes(method)) {
