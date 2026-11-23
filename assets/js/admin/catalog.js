@@ -282,7 +282,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     section.className='admin-edit-wide catalog-model-panel';
     section.dataset.addSection='';
     section.innerHTML=`<div class="catalog-section-heading"><div><h3>3D Model</h3><p>Optionally upload a GLB model and preview it before adding this campus location.</p></div><span class="catalog-count">Optional</span></div>
-      <label class="catalog-model-upload">Choose 3D model (.glb)<input name="model_3d_file" type="file" accept=".glb,model/gltf-binary,application/octet-stream"></label>
+      <div class="catalog-model-upload"><span class="admin-field-label">Choose 3D model (.glb)</span><input name="model_3d_file" type="file" accept=".glb,model/gltf-binary,application/octet-stream"></div>
       <p data-add-model-name class="text-xs text-slate-500 mt-2">No 3D model selected.</p>
       <model-viewer data-add-model-preview class="w-full mt-3 rounded-xl" style="height:260px;background:#eef3f8;display:none" camera-controls auto-rotate shadow-intensity="1" exposure="1" environment-image="neutral" alt="3D preview of the selected campus model"></model-viewer>
       <button type="button" data-add-model-clear class="admin-button-secondary mt-2" hidden>Remove selected model</button>`;
