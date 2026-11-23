@@ -46,25 +46,42 @@
     }
   }
 
+  let activeEndpoint = endpoint;
+  const functionEndpoint = '/.netlify/functions/api?resource=';
+
   async function backend() {
     if (!backendPromise) {
       backendPromise = (async () => {
-        let response;
-        try {
-          response = await fetch(`${endpoint}client-config`, { credentials: 'same-origin' });
-        } catch {
-          throw new Error('Could not reach the campus server. Check your connection and retry.');
+        let lastError = null;
+        for (const candidate of [endpoint, functionEndpoint]) {
+          let response;
+          try {
+            response = await fetch(`${candidate}client-config`, { credentials: 'same-origin' });
+          } catch {
+            lastError = new Error('Could not reach the campus server. Check your connection and retry.');
+            continue;
+          }
+
+          let result;
+          try {
+            result = await readJsonResponse(response);
+          } catch (error) {
+            lastError = error;
+            continue;
+          }
+
+          if (response.ok && result.ok && result.data?.url && result.data?.anonKey) {
+            activeEndpoint = candidate;
+            supabaseConfig = result.data;
+            return 'netlify';
+          }
+          if ((response.status === 404 && result.error?.message === 'API resource not found.') ||
+              (response.status === 401 && result.error?.message === 'Administrator sign-in is required.')) {
+            return 'php';
+          }
+          lastError = new Error(result.error?.message || `The campus API could not be configured (${response.status}).`);
         }
-        const result = await readJsonResponse(response);
-        if (response.ok && result.ok && result.data?.url && result.data?.anonKey) {
-          supabaseConfig = result.data;
-          return 'netlify';
-        }
-        if ((response.status === 404 && result.error?.message === 'API resource not found.') ||
-            (response.status === 401 && result.error?.message === 'Administrator sign-in is required.')) {
-          return 'php';
-        }
-        throw new Error(result.error?.message || `The campus API could not be configured (${response.status}).`);
+        throw lastError || new Error('The campus API could not be reached.');
       })();
     }
     return backendPromise;
@@ -73,7 +90,7 @@
   async function refreshSession() {
     const session = readSession();
     if (!session?.refresh_token) return false;
-    const response = await fetch(`${endpoint}auth/refresh`, {
+    const response = await fetch(`${activeEndpoint}auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh_token: session.refresh_token }),
@@ -106,7 +123,15 @@
     if (isModel && !isGlbFile) throw new Error('Please select a file with the .glb extension.');
     if (!allowed.includes(mimeType)) throw new Error('Unsupported file type.');
 
-    const session = readSession();
+    let session = readSession();
+    if (!session?.refresh_token) throw new Error('Administrator sign-in is required to upload files.');
+    // Direct Storage uploads bypass request(), so refresh the session here
+    // before sending an access token that may have expired while the admin page was open.
+    if (!await refreshSession()) {
+      clearSession();
+      throw new Error('Your administrator session has expired. Sign in again before uploading files.');
+    }
+    session = readSession();
     if (!session?.access_token) throw new Error('Administrator sign-in is required to upload files.');
     const extension = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin';
     const storagePath = `${crypto.randomUUID()}.${extension}`;
@@ -186,7 +211,7 @@
 
     let response;
     try {
-      response = await fetch(`${endpoint}${encodeURIComponent(resourcePath)}${query ? `&${query}` : ''}`, {
+      response = await fetch(`${activeEndpoint}${encodeURIComponent(resourcePath)}${query ? `&${query}` : ''}`, {
         ...options,
         method,
         headers,
