@@ -217,6 +217,17 @@ async function locations(event, method, body, query) {
 
   if (method === 'PATCH') {
     const id = positiveId(body.id ?? query.id);
+    if (Object.prototype.hasOwnProperty.call(body, 'model_3d_path')) {
+      const modelPath = storedModelPath(body.model_3d_path);
+      const record = unwrap(await database.from('locations')
+        .select('id,name')
+        .eq('id', id)
+        .maybeSingle());
+      if (!record) throw new HttpError(404, 'Location not found.');
+      await updateById('locations', id, { model_3d_path: modelPath }, 'Location not found.');
+      await audit(user, 'update', 'location', id, { name: record.name, model_3d_path: modelPath });
+      return success({ id, model_3d_path: modelPath });
+    }
     const active = booleanValue(body.active, 'Archive status');
     if (active === null) throw new HttpError(400, 'Choose whether the location is active or archived.');
     const record = unwrap(await database.from('locations')
