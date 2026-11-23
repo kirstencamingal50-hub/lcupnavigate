@@ -35,7 +35,7 @@ async function cleanupOrphanedRouteGeometry(database) {
     .like('node_key', 'location-%'));
   const staleLocationNodeIds = locationNodes
     .filter(node => {
-      const match = String(node.node_key || '').match(/^location-(\\d+)$/);
+      const match = String(node.node_key || '').match(/^location-(\d+)$/);
       return match && !activeLocationIds.has(Number(match[1]));
     })
     .map(node => Number(node.id))
@@ -59,7 +59,13 @@ async function cleanupOrphanedRouteGeometry(database) {
       .filter(marker => marker.location_id != null && !activeLocationIds.has(Number(marker.location_id)))
       .map(marker => Number(marker.id))
       .filter(Number.isSafeInteger);
+    const incidentConnectionIds = new Set(incidentConnections.map(edge => Number(edge.id)));
     const affectedRouteIds = new Set(pointRows.map(row => Number(row.route_id)));
+    segmentRows.forEach(row => {
+      if (incidentConnectionIds.has(Number(row.connection_id))) {
+        affectedRouteIds.add(Number(row.route_id));
+      }
+    });
     if (staleMarkerIds.length) {
       const endpointRoutes = await fetchAllRows(() => database.from('campus_routes')
         .select('id')
