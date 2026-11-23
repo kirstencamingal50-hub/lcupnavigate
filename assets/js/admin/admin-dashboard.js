@@ -31,5 +31,4 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.querySelector('[data-admin-overview-refresh]')?.addEventListener('click', refresh);
   refresh();
-  refreshArchive();
 });
