@@ -35,9 +35,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       : ['name','category_ids',...(kind==='building'?['floors']:[]),'capacity','description','accessibility_features','contact_email','contact_phone','service_hours','days_open','lunch_break','accessibility_status'];
     const nodes=[],used=new Set();
     for(const name of ordered){const node=take(name);if(node&&!used.has(node)){nodes.push(node);used.add(node);}}
+    const photo=take('photo');
+    if(photo){photo.classList.add('admin-edit-wide');nodes.push(photo);used.add(photo);}
     if(kind!=='room'){
-      const photo=take('photo'),model=take('model_3d_file');
-      if(photo){photo.classList.add('admin-edit-wide');nodes.push(photo);used.add(photo);}
+      const model=take('model_3d_file');
       if(model){model.classList.add('admin-edit-wide');nodes.push(model);used.add(model);}
     }
     const statusRow=form.querySelector('[id$="-form-status"]')?.parentElement;
