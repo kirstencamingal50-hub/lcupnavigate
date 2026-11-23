@@ -97,20 +97,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     if(!select||select.dataset.dropdownEnhanced)return;
     select.dataset.dropdownEnhanced='true';
     select.removeAttribute('required');
-    const panel=document.createElement('section');
-    panel.className='catalog-category-checklist admin-edit-wide';
-    const heading=document.createElement('div');
-    heading.className='catalog-category-checklist-heading';
-    const title=document.createElement('strong');
-    title.textContent='Categories';
-    const helper=document.createElement('span');
-    helper.textContent='Select one or more categories';
-    heading.append(title,helper);
+    const details=document.createElement('details');
+    details.className='catalog-checklist-dropdown admin-edit-wide';
+    const summary=document.createElement('summary');
+    summary.className='catalog-checklist-summary';
+    summary.innerHTML='<span class="catalog-checklist-title">Categories</span><span class="catalog-checklist-count" data-category-selection>Select categories</span>';
     const list=document.createElement('div');
-    list.className='catalog-category-checklist-options';
+    list.className='catalog-category-checklist-options catalog-checklist-options';
     [...select.options].forEach(option=>{
       const label=document.createElement('label');
-      label.className='catalog-category-checklist-option';
+      label.className='catalog-category-checklist-option catalog-checklist-option';
       const checkbox=document.createElement('input');
       checkbox.type='checkbox';
       checkbox.value=option.value;
@@ -118,6 +114,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       checkbox.className='catalog-category-checkbox';
       checkbox.addEventListener('change',()=>{
         option.selected=checkbox.checked;
+        updateLabel();
         select.dispatchEvent(new Event('change',{bubbles:true}));
       });
       const text=document.createElement('span');
@@ -125,24 +122,33 @@ document.addEventListener('DOMContentLoaded', async () => {
       label.append(checkbox,text);
       list.append(label);
     });
-    panel.append(heading,list);
-    select.after(panel);
+    const updateLabel=()=>{
+      const checked=[...list.querySelectorAll('input[type="checkbox"]:checked')];
+      const names=checked.map(input=>select.querySelector('option[value="'+CSS.escape(input.value)+'"]')?.textContent).filter(Boolean);
+      const label=summary.querySelector('[data-category-selection]');
+      label.textContent=checked.length?checked.length+' selected':'Select categories';
+      summary.setAttribute('aria-label',checked.length?'Categories: '+names.join(', '):'Select categories');
+    };
+    details.append(summary,list);
+    select.after(details);
     select.hidden=true;
     select.form?.addEventListener('reset',()=>setTimeout(()=>{
       list.querySelectorAll('input[type="checkbox"]').forEach((checkbox,index)=>{
         checkbox.checked=!!select.options[index]?.selected;
       });
+      updateLabel();
     },0));
+    updateLabel();
   };
   const enhanceAccessibilityDropdown=fieldset=>{
     if(!fieldset||fieldset.dataset.dropdownEnhanced)return;
     fieldset.dataset.dropdownEnhanced='true';
-    const details=document.createElement('details');details.className='admin-edit-wide relative rounded-xl border border-blue-100 bg-blue-50/60 p-3';
-    const summary=document.createElement('summary');summary.className='flex cursor-pointer list-none items-center justify-between gap-3 font-bold text-slate-800';
-    summary.innerHTML='<span>Accessibility features</span><span data-accessibility-selection class="text-xs font-medium text-slate-500">Select features</span>';
-    const content=document.createElement('div');content.className='mt-3 grid gap-2 rounded-lg bg-white/70 p-3 sm:grid-cols-2';
+    const details=document.createElement('details');details.className='catalog-checklist-dropdown admin-edit-wide';
+    const summary=document.createElement('summary');summary.className='catalog-checklist-summary';
+    summary.innerHTML='<span class="catalog-checklist-title">Accessibility features</span><span data-accessibility-selection class="catalog-checklist-count">Select features</span>';
+    const content=document.createElement('div');content.className='catalog-checklist-options';
     [...fieldset.children].forEach(child=>{if(child.tagName!=='LEGEND')content.append(child);});
-    const updateLabel=()=>{const count=details.querySelectorAll('[name="accessibility_features"]:checked').length;summary.querySelector('[data-accessibility-selection]').textContent=count?count+' selected':'Select features';};
+    const updateLabel=()=>{const selected=[...details.querySelectorAll('[name="accessibility_features"]:checked')];summary.querySelector('[data-accessibility-selection]').textContent=selected.length?selected.length+' selected':'Select features';summary.setAttribute('aria-label',selected.length?'Accessibility features: '+selected.map(input=>input.closest('label')?.textContent.trim()).filter(Boolean).join(', '):'Select accessibility features');};
     details.append(summary,content);fieldset.replaceWith(details);details.addEventListener('change',updateLabel);updateLabel();
   };
   const enhanceDropdownFields=root=>{
