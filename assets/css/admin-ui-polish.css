@@ -223,3 +223,25 @@ html[data-theme="dark"] .admin-page .catalog-section-heading h3,
 html[data-theme="dark"] .admin-page .catalog-gallery-upload strong,
 html[data-theme="dark"] .admin-page .catalog-model-status strong { color:#e7edf5; }
 html[data-theme="dark"] .admin-page :is(.catalog-gallery-item-fields input:not([type=checkbox]),.catalog-gallery-upload input,.catalog-model-upload input[type=file]) { border-color:#46566d; background:#172235; color:#e7edf5; }
+
+
+/* Spacious photo cards with on-demand details forms. */
+.admin-page .catalog-gallery-grid { grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; }
+.admin-page .catalog-gallery-item { display:flex; flex-direction:column; gap:0; }
+.admin-page .catalog-gallery-item > img { height:210px; min-height:210px; }
+.admin-page .catalog-gallery-card-actions { display:flex; gap:8px; padding:12px; }
+.admin-page .catalog-gallery-card-actions button { flex:1; }
+.admin-page .catalog-photo-details { display:grid; gap:12px; margin:0 12px 12px; padding:14px; border:1px solid #dbe3ed; border-radius:10px; background:#f8fafc; }
+.admin-page .catalog-photo-details[hidden] { display:none!important; }
+.admin-page .catalog-photo-details-heading { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.admin-page .catalog-photo-details-heading strong { color:#24364f; font-size:12px; }
+.admin-page .catalog-photo-details-heading button { padding:4px 8px; border:1px solid #d5deea; border-radius:7px; color:#52637a; background:#fff; font-size:10px; font-weight:700; }
+.admin-page .catalog-photo-details > label { display:grid; gap:6px; color:#52637a; font-size:11px; font-weight:800; }
+.admin-page .catalog-photo-details input:not([type=checkbox]) { width:100%; min-width:0; min-height:38px; padding:8px 10px; border:1px solid #d5deea; border-radius:8px; color:#24364f; background:#fff; font-size:12px; }
+.admin-page .catalog-photo-details .catalog-cover-toggle { display:flex; align-items:center; gap:8px; }
+.admin-page .catalog-photo-details .catalog-gallery-actions { display:flex; justify-content:flex-end; }
+html[data-theme="dark"] .admin-page .catalog-photo-details { border-color:#334155; background:#111c2d; }
+html[data-theme="dark"] .admin-page .catalog-photo-details-heading strong { color:#e7edf5; }
+html[data-theme="dark"] .admin-page .catalog-photo-details-heading button,
+html[data-theme="dark"] .admin-page .catalog-photo-details input:not([type=checkbox]) { border-color:#46566d; color:#e7edf5; background:#172235; }
+@media(max-width:480px) { .admin-page .catalog-gallery-grid { grid-template-columns:1fr; } .admin-page .catalog-gallery-item > img { height:230px; } }
