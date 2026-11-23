@@ -171,14 +171,16 @@ if (document.body.classList.contains('admin-page')) {
   window.AdminUI = {
     toast(message, tone = 'success') {
       let host = document.querySelector('[data-admin-toasts]');
+      const activeDialog = document.querySelector('dialog[open]');
       if (!host) {
         host = document.createElement('div');
         host.className = 'admin-toast-host';
         host.dataset.adminToasts = '';
         host.setAttribute('aria-live', 'polite');
         host.setAttribute('aria-relevant', 'additions');
-        document.body.append(host);
       }
+      const toastLayer = activeDialog || document.body;
+      if (host.parentElement !== toastLayer) toastLayer.append(host);
       const toast = document.createElement('p');
       toast.className = `admin-toast is-${['success', 'error', 'warning', 'info'].includes(tone) ? tone : 'info'}`;
       toast.setAttribute('role', tone === 'error' ? 'alert' : 'status');
