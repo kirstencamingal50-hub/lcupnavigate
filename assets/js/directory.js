@@ -92,7 +92,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       return `<article class="directory-card">
         <div class="directory-card-name" style="${image && !photoSlides ? `background-image:url('${escapeHtml(mediaSrc(image))}')` : ''}">
           <a class="directory-card-name-link" href="${detailUrl}" aria-label="View ${escapeHtml(item.name)}">
-            <span class="directory-card-name-fallback material-symbols-rounded" aria-hidden="true">${item.kind === 'room' ? 'meeting_room' : item.kind === 'building' ? 'location_city' : 'storefront'}</span>
             ${photoSlides}
             <span class="directory-card-meta"><span class="directory-kind">${kindLabel}</span><span>${escapeHtml((item.category_names?.length ? item.category_names : [item.category]).filter(Boolean).join(' · ') || 'Campus')}</span></span>
             <strong>${escapeHtml(item.name)}</strong>
