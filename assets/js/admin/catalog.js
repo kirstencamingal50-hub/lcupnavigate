@@ -22,7 +22,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const arrangeAddForm=(form,kind)=>{
     if(!form||form.dataset.editLayoutApplied)return;
     form.dataset.editLayoutApplied='true';
-    const wrapperFor=name=>form.querySelector(`[name="${name}"]`)?.closest('label,[data-add-section]')||null;
+    const wrapperFor=name=>name==='accessibility_features'
+      ?form.querySelector('fieldset:has([name="accessibility_features"])')
+      :form.querySelector(`[name="${name}"]`)?.closest('label,[data-add-section]')||null;
     const take=name=>wrapperFor(name);
     const ordered=kind==='room'
       ? ['name','room','buildingId','category_ids','floor','capacity','description','accessibility_features','contact_email','contact_phone','service_hours','days_open','lunch_break','accessibility_status']
