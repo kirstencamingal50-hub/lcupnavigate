@@ -1093,9 +1093,7 @@ async function publicResource(event, resource, method, query) {
       .select('*')
       .order('name');
 
-    if (!user) {
-      request = request.eq('active', true);
-    }
+    request = request.eq('active', true);
 
     return success(
       (unwrap(await request) || []).map(row => ({
@@ -1124,7 +1122,7 @@ async function publicResource(event, resource, method, query) {
 
     return success(
       (unwrap(await request) || [])
-        .filter(row => user || row.building?.active)
+        .filter(row => row.active && row.building?.active)
         .map(row => ({
           ...row,
           image_path: row.image_path ? mediaUrl(row.image_path) : null,
