@@ -201,3 +201,26 @@ test('admin route editor provides a visible alignment grid and optional grid sna
   assert.match(routeBuilder, /gridLayer\.style\.display/);
   assert.match(routeBuilder, /snapToGrid\(mapPoint\(event\)\)/);
 });
+
+
+test('admin route editor displays a responsive alignment grid above the campus map', async () => {
+  const adminMap = await read('../pages/admin/manage-map.html');
+  const adminCss = await read('../assets/css/admin.css');
+  assert.match(adminMap, /id="route-grid-layer" class="route-editor-grid"/);
+  assert.match(adminMap, /id="route-grid-toggle"/);
+  assert.match(adminCss, /\.route-editor-grid\s*\{/);
+  assert.match(adminCss, /background-image:[\s\S]*linear-gradient\(to right/);
+  assert.match(adminCss, /background-size:[\s\S]*3\.7594% 100%/);
+  assert.match(adminCss, /\.route-editor-map > svg \{ z-index: 2/);
+});
+
+test('admin route editor can add reusable junction waypoints along long route segments', async () => {
+  const adminMap = await read('../pages/admin/manage-map.html');
+  const routeBuilder = await read('../assets/js/admin/route-builder.js');
+  assert.match(adminMap, /id="route-add-junctions"/);
+  assert.match(routeBuilder, /const maxSpacing = 150/);
+  assert.match(routeBuilder, /route-add-junctions/);
+  assert.match(routeBuilder, /Save the route to store them in the shared walkway network/);
+  assert.match(routeBuilder, /markerNodes\.has\(String\(node\.id\)\)/);
+  assert.match(routeBuilder, /expanded\.length > 100/);
+});
