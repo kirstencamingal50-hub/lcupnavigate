@@ -503,6 +503,23 @@
     const routeInfo = document.getElementById('routeInfo');
     const routeOptions = document.getElementById('routeOptions');
     const routeNotice = document.getElementById('routeNotice');
+
+    // Keep the backing selects synchronized with the same live locations used by search.
+    // Without options, assigning select.value from a suggestion silently produces an empty value.
+    function labelFor(locationId) {
+      const loc = locations.find(item => routeId(item) === locationId);
+      if (!loc) return '';
+      const floorLabel = loc.floorLabel || (Number(loc.floor) > 0 ? `Floor ${loc.floor}` : '');
+      return floorLabel ? `${loc.name} · ${floorLabel}` : loc.name;
+    }
+
+    [fromSelect, toSelect].forEach(select => {
+      select.replaceChildren(new Option('', ''));
+      locations.forEach(loc => {
+        select.add(new Option(labelFor(routeId(loc)), routeId(loc)));
+      });
+    });
+
     let preferredSavedRouteId = null;
 
     function clearRoute() {
