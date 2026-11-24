@@ -127,11 +127,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function renderRoutes() {
     const filter = $('route-list-filter').value.trim().toLocaleLowerCase();
-    const activeRouteNumbers = new Map(
-      routes.filter(route => route.status === 'active')
-        .sort((a,b) => Number(a.id) - Number(b.id))
-        .map((route,index) => [String(route.id), index + 1])
-    );
+    // Number published paths independently for each unordered endpoint pair.
+    // This keeps A ↔ B and B ↔ A in the same group and ignores duplicate geometry.
+    const activeRouteNumbers = new Map();
+    const routeCountsByPair = new Map();
+    const seenPublishedPaths = new Set();
+    routes.filter(route => route.status === 'active')
+      .sort((a,b) => Number(a.id) - Number(b.id))
+      .forEach(route => {
+        const startId = String(route.start_marker_id ?? route.start_marker?.id ?? '');
+        const endId = String(route.destination_marker_id ?? route.destination_marker?.id ?? '');
+        if (!startId || !endId) return;
+        const pairKey = [startId, endId].sort().join('::');
+        const points = (route.points || []).map(point => `${Math.round(Number(point.x)*10)/10},${Math.round(Number(point.y)*10)/10},${Number(point.floor_number)||0}`);
+        const forward = points.join('|');
+        const reverse = [...points].reverse().join('|');
+        const geometryKey = forward < reverse ? forward : reverse;
+        const uniquePathKey = `${pairKey}::${geometryKey}`;
+        if (points.length >= 2 && seenPublishedPaths.has(uniquePathKey)) return;
+        if (points.length >= 2) seenPublishedPaths.add(uniquePathKey);
+        const nextNumber = (routeCountsByPair.get(pairKey) || 0) + 1;
+        routeCountsByPair.set(pairKey, nextNumber);
+        activeRouteNumbers.set(String(route.id), nextNumber);
+      });
     const matches = routes.filter(route => `${route.name} ${route.start_name} ${route.destination_name} ${route.notes||''} ${route.status}`.toLocaleLowerCase().includes(filter));
     const seenPaths=new Set();
     const rows=matches.filter(route=>{
