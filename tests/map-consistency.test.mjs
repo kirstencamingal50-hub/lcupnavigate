@@ -256,3 +256,14 @@ test('route editor renders round fixed-size junctions matching enlarged building
   assert.match(adminCss, /\.route-editor-junctions \.route-junction-marker\s*\{[^}]*width: 24px;[^}]*height: 24px/s);
   assert.match(adminCss, /border-radius: 50%/);
 });
+
+
+test('route editor preserves the campus map aspect ratio and visually aligns nearby walkway nodes', async () => {
+  const routeBuilder = await read('../assets/js/admin/route-builder.js');
+  const adminCss = await read('../assets/css/admin.css');
+  assert.match(routeBuilder, /displayPointById/);
+  assert.match(routeBuilder, /Math\.hypot\(cluster\.x - Number\(node\.x\), cluster\.y - Number\(node\.y\)\) <= 28/);
+  assert.match(routeBuilder, /displayPointById\.get/);
+  assert.match(adminCss, /calc\(min\(78vh, 1100px\) \* 1330 \/ 1620\)/);
+  assert.match(adminCss, /width: 12px;\s*height: 12px;/);
+});
