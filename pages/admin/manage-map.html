@@ -50,7 +50,7 @@
           </div>
           <div id="route-editor-map" class="route-editor-map" role="application" aria-label="Campus map route editor. Click walkway positions to add ordered waypoints.">
             <img src="../../assets/images/campus-map.svg" alt="LCUP campus map" draggable="false" />
-            <svg id="route-editor-svg" viewBox="0 0 1330 1620" preserveAspectRatio="none" aria-hidden="true"><g id="route-existing-paths"></g><polyline id="route-draft-line" points="" /></svg>
+            <svg id="route-editor-svg" viewBox="0 0 1330 1620" preserveAspectRatio="none" aria-hidden="true"><defs><pattern id="route-grid-minor" width="50" height="50" patternUnits="userSpaceOnUse"><path d="M 50 0 L 0 0 0 50" fill="none" stroke="#0f766e" stroke-width="1" opacity=".22" /></pattern><pattern id="route-grid-major" width="250" height="250" patternUnits="userSpaceOnUse"><path d="M 250 0 L 0 0 0 250" fill="none" stroke="#0f766e" stroke-width="1.8" opacity=".30" /></pattern></defs><g id="route-grid-layer"><rect width="1330" height="1620" fill="url(#route-grid-minor)" /><rect width="1330" height="1620" fill="url(#route-grid-major)" /></g><g id="route-existing-paths"></g><polyline id="route-draft-line" points="" /></svg>
             <div id="route-editor-endpoints" class="route-editor-layer"></div>
             <div id="route-editor-waypoints" class="route-editor-layer"></div>
           </div>
