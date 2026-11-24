@@ -213,8 +213,13 @@ test('admin route editor includes synchronized zoom controls and a wider map lay
   assert.match(routeBuilder, /function applyMapZoom\(\)/);
   assert.match(routeBuilder, /zoomTargets\.forEach/);
   assert.match(routeBuilder, /\/mapZoom/);
-  assert.match(adminCss, /grid-template-columns: minmax\(0, 2fr\) minmax\(260px, \.72fr\)/);
-  assert.match(adminCss, /\.route-builder-layout > div:first-child \.route-editor-map \{ max-width: none/);
+  assert.match(routeBuilder, /mapPanX/);
+  assert.match(routeBuilder, /panning\.originX/);
+  assert.match(routeBuilder, /route-map-fullscreen/);
+  assert.match(adminMap, /id="route-map-fullscreen"/);
+  assert.match(adminCss, /grid-template-columns: minmax\(0, 1fr\)/);
+  assert.match(adminCss, /\.route-builder-layout\.is-map-fullscreen/);
+  assert.match(adminCss, /\.route-editor-map\.is-zoomed/);
 });
 
 test('admin route editor displays a responsive alignment grid above the campus map', async () => {
