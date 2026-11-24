@@ -136,10 +136,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       const description = cluster.nodes.length > 1
         ? `Aligned visual junction · ${cluster.nodes.length} nearby walkway nodes`
         : usage ? `Shared walkway junction · used by ${usage} saved route${usage === 1 ? '' : 's'}` : 'Walkway junction';
-      return `<span class="route-junction-marker ${usage >= 2 ? 'is-shared' : ''}" style="left:${cluster.nodes.length>1?Math.round(cluster.x/25)*25:Number(cluster.nodes[0].x)/W*100}%;top:${cluster.nodes.length>1?Math.round(cluster.y/25)*25:Number(cluster.nodes[0].y)/H*100}%;--junction-fill:${fill}" title="${esc(description)}" aria-label="${esc(description)}"></span>`;
+      const point = cluster.nodes.length > 1
+        ? {x:Math.round(cluster.x/25)*25,y:Math.round(cluster.y/25)*25}
+        : {x:Number(cluster.nodes[0].x),y:Number(cluster.nodes[0].y)};
+      return `<span class="route-junction-marker ${usage >= 2 ? 'is-shared' : ''}" style="left:${point.x/W*100}%;top:${point.y/H*100}%;--junction-fill:${fill}" title="${esc(description)}" aria-label="${esc(description)}"></span>`;
     }).join('');
-    // Cluster marker coordinates are normalized to the map coordinate space.
-    $('route-editor-junctions').innerHTML = junctionMarkup.replace(/left:(-?\\d+(?:\\.\\d+)?)%;top:(-?\\d+(?:\\.\\d+)?)%/g, (match,x,y)=>`left:${Number(x)/W*100}%;top:${Number(y)/H*100}%`);
+    $('route-editor-junctions').innerHTML = junctionMarkup;
     $('route-existing-paths').innerHTML=`<g pointer-events="none" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" opacity=".32">${mapData.connections.map(edge=>{const from=nodeById.get(String(edge.from_node_id)),to=nodeById.get(String(edge.to_node_id));if(!from||!to)return '';const a=displayPointById.get(String(from.id))||from,b=displayPointById.get(String(to.id))||to;return `<line x1="${Number(a.x)}" y1="${Number(a.y)}" x2="${Number(b.x)}" y2="${Number(b.y)}" />`;}).join('')}</g>`;
     $('route-editor-endpoints').innerHTML = mapData.markers.map(marker=>{
       const selectedStart=String(marker.id)===String(start?.id), selectedEnd=String(marker.id)===String(end?.id);
