@@ -267,3 +267,16 @@ test('route editor preserves the campus map aspect ratio and visually aligns nea
   assert.match(adminCss, /calc\(min\(78vh, 1100px\) \* 1330 \/ 1620\)/);
   assert.match(adminCss, /width: 12px;\s*height: 12px;/);
 });
+
+
+test('landmark picker and route editor share the same campus map dimensions', async () => {
+  const adminMap = await read('../pages/admin/manage-map.html');
+  const adminCss = await read('../assets/css/admin.css');
+  const landmarkJs = await read('../assets/js/admin/manage-map.js');
+  assert.match(adminMap, /id="landmark-map-picker"[^>]*class="landmark-map-picker/);
+  assert.match(adminCss, /\.landmark-map-picker,[\s\S]*?\.route-editor-map\s*\{/);
+  assert.match(adminCss, /width: min\(100%, calc\(min\(78vh, 1100px\) \* 1330 \/ 1620\)\)/);
+  assert.doesNotMatch(adminMap, /landmark-map-picker[^>]*max-w-\[520px\]/);
+  assert.match(landmarkJs, /const getMapCoordinates = event =>/);
+  assert.match(landmarkJs, /event\.clientX - rect\.left - picker\.clientLeft/);
+});
