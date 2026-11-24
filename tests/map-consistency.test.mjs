@@ -280,3 +280,17 @@ test('landmark picker and route editor share the same campus map dimensions', as
   assert.match(landmarkJs, /const getMapCoordinates = event =>/);
   assert.match(landmarkJs, /event\.clientX - rect\.left - picker\.clientLeft/);
 });
+
+
+test('route save and publish actions stay in the waypoint panel beside the map', async () => {
+  const adminMap = await read('../pages/admin/manage-map.html');
+  const adminCss = await read('../assets/css/admin.css');
+  const asideStart = adminMap.indexOf('<aside class="route-waypoint-panel">');
+  const saveActions = adminMap.indexOf('class="route-save-actions');
+  const asideEnd = adminMap.indexOf('</aside>', asideStart);
+  assert.ok(saveActions > asideStart && saveActions < asideEnd);
+  assert.match(adminCss, /grid-template-columns: minmax\(0, 2fr\) minmax\(260px, \.82fr\)/);
+  assert.match(adminCss, /\.route-save-actions \{ position: sticky/);
+  assert.match(adminMap, /id="route-publish"/);
+  assert.match(adminMap, /id="route-save-draft"/);
+});
