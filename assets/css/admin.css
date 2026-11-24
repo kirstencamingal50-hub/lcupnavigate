@@ -520,17 +520,18 @@ html[data-theme="dark"] body.admin-page .admin-stat strong,html[data-theme="dark
 	background: #f8fafc;
 }
 .route-builder-layout.is-map-fullscreen > div:first-child { width: 100%; }
-.route-builder-layout.is-map-fullscreen .route-editor-map { height: calc(100vh - 190px); min-height: 420px; aspect-ratio: auto; }
+.route-builder-layout.is-map-fullscreen .route-editor-map { width: min(100%, calc((100vh - 190px) * 1330 / 1620)); height: calc(100vh - 190px); min-height: 420px; aspect-ratio: 1330 / 1620; margin-inline: auto; }
 .route-builder-layout.is-map-fullscreen > aside { display: none; }
 body.route-map-lock-scroll { overflow: hidden; }
 
 .route-editor-map {
 	position: relative;
 	isolation: isolate;
-	width: 100%;
+	width: min(100%, calc(min(78vh, 1100px) * 1330 / 1620));
 	max-width: none;
 	aspect-ratio: 1330 / 1620;
 	height: min(78vh, 1100px);
+	margin-inline: auto;
 	overflow: hidden;
 	border: 1px solid #cbd5e1;
 	border-radius: 14px;
@@ -581,10 +582,10 @@ body.route-map-lock-scroll { overflow: hidden; }
 .route-editor-junctions .route-junction-marker {
   position: absolute;
   display: block;
-  width: 24px;
-  height: 24px;
+  width: 12px;
+  height: 12px;
   transform: translate(-50%, -50%);
-  border: 3px solid #fff;
+  border: 2px solid #fff;
   border-radius: 50%;
   background: var(--junction-fill, #0f766e);
   box-shadow: 0 1px 4px rgba(15,23,42,.45);
@@ -594,7 +595,7 @@ body.route-map-lock-scroll { overflow: hidden; }
 .route-network-node { fill: #05805b; stroke: #fff; stroke-width: 4; opacity: .8; }
 #route-draft-line { fill: none; stroke: #2563eb; stroke-width: 11; stroke-linecap: round; stroke-linejoin: round; opacity: .92; filter: drop-shadow(0 2px 2px rgba(10,30,65,.35)); }
 .route-editor-layer { pointer-events: none; }
-.route-map-location { position: absolute; display: grid; width: 24px; height: 24px; place-items: center; padding: 0; transform: translate(-50%,-50%); border: 3px solid #fff; border-radius: 50%; color: transparent; background: #f59e0b; box-shadow: 0 1px 4px rgba(15,23,42,.4); cursor: pointer; pointer-events: auto; }
+.route-map-location { position: absolute; display: grid; width: 12px; height: 12px; place-items: center; padding: 0; transform: translate(-50%,-50%); border: 3px solid #fff; border-radius: 50%; color: transparent; background: #f59e0b; box-shadow: 0 1px 4px rgba(15,23,42,.4); cursor: pointer; pointer-events: auto; }
 .route-map-location.is-start { outline: 3px solid #07845e; outline-offset: 2px; }
 .route-map-location.is-end { outline: 3px solid #c2413a; outline-offset: 2px; }
 .route-map-location:hover { z-index: 2; transform: translate(-50%,-50%) scale(1.2); }
