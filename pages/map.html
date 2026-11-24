@@ -503,6 +503,16 @@
     const routeInfo = document.getElementById('routeInfo');
     const routeOptions = document.getElementById('routeOptions');
     const routeNotice = document.getElementById('routeNotice');
+    const findRouteBtn = document.getElementById('findRouteBtn');
+    const clearRouteBtn = document.getElementById('clearRouteBtn');
+    const netToggleBox = document.getElementById('netToggleBox');
+
+    // Route animation and rendering state must be initialized before clearRoute()
+    // or animateRoute() can run.
+    let animationFrame = null;
+    let routeLine = null;
+    let routeMarkers = [];
+    let currentRoutes = {};
 
     // Keep the backing selects synchronized with the same live locations used by search.
     // Without options, assigning select.value from a suggestion silently produces an empty value.
@@ -803,7 +813,6 @@
     findRouteBtn.addEventListener('click', () => { preferredSavedRouteId = null; calculateRoutes(); });
     clearRouteBtn.addEventListener('click', clearRoute);
 
-    const netToggleBox = document.getElementById('netToggleBox');
     // All walkways are shown faintly (transparent blue) so people can see where routes can go.
     // The chosen route is still drawn on top in solid blue with the slow animation.
     let networkLayer = null;
@@ -862,7 +871,7 @@
       }
     }
 
-    renderSavedRouteList();
+    // Initialize the route controls after all route state and listeners are ready.
     clearRoute();
   </script>
   <script type="module" src="../assets/js/campus-3d-map.js?v=20261118-3d-view-2"></script>
