@@ -203,6 +203,20 @@ test('admin route editor provides a visible alignment grid and optional grid sna
 });
 
 
+test('admin route editor includes synchronized zoom controls and a wider map layout', async () => {
+  const adminMap = await read('../pages/admin/manage-map.html');
+  const routeBuilder = await read('../assets/js/admin/route-builder.js');
+  const adminCss = await read('../assets/css/admin.css');
+  for (const id of ['route-zoom-in', 'route-zoom-out', 'route-zoom-reset', 'route-zoom-level']) {
+    assert.ok(adminMap.includes(`id="${id}"`));
+  }
+  assert.match(routeBuilder, /function applyMapZoom\(\)/);
+  assert.match(routeBuilder, /zoomTargets\.forEach/);
+  assert.match(routeBuilder, /\/mapZoom/);
+  assert.match(adminCss, /grid-template-columns: minmax\(0, 2fr\) minmax\(260px, \.72fr\)/);
+  assert.match(adminCss, /\.route-builder-layout > div:first-child \.route-editor-map \{ max-width: none/);
+});
+
 test('admin route editor displays a responsive alignment grid above the campus map', async () => {
   const adminMap = await read('../pages/admin/manage-map.html');
   const adminCss = await read('../assets/css/admin.css');
