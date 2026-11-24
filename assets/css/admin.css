@@ -577,11 +577,24 @@ body.route-map-lock-scroll { overflow: hidden; }
 }
 
 .route-editor-map > svg { z-index: 2; overflow: visible; pointer-events: none; }
-.route-editor-layer { z-index: 3; }
+.route-editor-junctions { z-index: 3; pointer-events: none; }
+.route-editor-junctions .route-junction-marker {
+  position: absolute;
+  display: block;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--junction-fill, #0f766e);
+  box-shadow: 0 1px 4px rgba(15,23,42,.45);
+}
+.route-editor-junctions .route-junction-marker.is-shared { outline: 1px solid rgba(6,78,59,.65); outline-offset: 1px; }
+.route-editor-layer { z-index: 4; }
 .route-network-node { fill: #05805b; stroke: #fff; stroke-width: 4; opacity: .8; }
 #route-draft-line { fill: none; stroke: #2563eb; stroke-width: 11; stroke-linecap: round; stroke-linejoin: round; opacity: .92; filter: drop-shadow(0 2px 2px rgba(10,30,65,.35)); }
 .route-editor-layer { pointer-events: none; }
-.route-map-location { position: absolute; display: grid; width: 16px; height: 16px; place-items: center; padding: 0; transform: translate(-50%,-50%); border: 2px solid #fff; border-radius: 50%; color: transparent; background: #f59e0b; box-shadow: 0 1px 4px rgba(15,23,42,.4); cursor: pointer; pointer-events: auto; }
+.route-map-location { position: absolute; display: grid; width: 24px; height: 24px; place-items: center; padding: 0; transform: translate(-50%,-50%); border: 3px solid #fff; border-radius: 50%; color: transparent; background: #f59e0b; box-shadow: 0 1px 4px rgba(15,23,42,.4); cursor: pointer; pointer-events: auto; }
 .route-map-location.is-start { outline: 3px solid #07845e; outline-offset: 2px; }
 .route-map-location.is-end { outline: 3px solid #c2413a; outline-offset: 2px; }
 .route-map-location:hover { z-index: 2; transform: translate(-50%,-50%) scale(1.2); }
