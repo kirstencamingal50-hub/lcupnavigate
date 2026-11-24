@@ -25,7 +25,7 @@
         <span class="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold text-blue-800">Shared walkway network</span>
       </div>
       <form id="route-builder-form" class="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500 xl:col-span-2">Route name<input name="name" required maxlength="120" placeholder="e.g. Main Gate to Library" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm normal-case" /></label>
+        <input type="hidden" name="name" value="" />
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Accessibility information<select name="accessibility_status" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm normal-case"><option value="">Unspecified</option><option value="1">Accessible</option><option value="0">Not accessible</option></select></label>
         <div class="relative min-w-0 text-[10px] font-bold uppercase tracking-wide text-slate-500">
           <label for="route-start-search">Start location</label>
