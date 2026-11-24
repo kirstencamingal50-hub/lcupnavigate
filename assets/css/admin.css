@@ -535,15 +535,27 @@ html[data-theme="dark"] body.admin-page .admin-stat strong,html[data-theme="dark
   position: absolute;
   inset: 0;
   z-index: 1;
+  display: block;
   pointer-events: none;
+  opacity: 1;
   background-image:
-    linear-gradient(to right, rgba(15, 118, 110, .48) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(15, 118, 110, .48) 1px, transparent 1px),
-    linear-gradient(to right, rgba(15, 78, 70, .68) 1.5px, transparent 1.5px),
-    linear-gradient(to bottom, rgba(15, 78, 70, .68) 1.5px, transparent 1.5px);
-  background-size: 3.7594% 100%, 100% 3.0864%, 18.797% 100%, 100% 15.4321%;
-  background-position: 0 0;
+    repeating-linear-gradient(0deg, transparent 0 23px, rgba(0, 74, 67, .72) 23px 24px),
+    repeating-linear-gradient(90deg, transparent 0 23px, rgba(0, 74, 67, .72) 23px 24px),
+    repeating-linear-gradient(0deg, transparent 0 119px, rgba(0, 55, 50, .9) 119px 121px),
+    repeating-linear-gradient(90deg, transparent 0 119px, rgba(0, 55, 50, .9) 119px 121px);
 }
+.route-editor-grid[hidden] { display: none !important; }
+.route-junction-marker .route-junction-halo {
+  fill: #ffffff;
+  fill-opacity: .96;
+  stroke: #064e3b;
+  stroke-width: 3;
+}
+.route-junction-marker .route-junction-core {
+  stroke: #ffffff;
+  stroke-width: 4;
+}
+
 .route-editor-map > svg { z-index: 2; overflow: visible; pointer-events: none; }
 .route-editor-layer { z-index: 3; }
 .route-network-node { fill: #05805b; stroke: #fff; stroke-width: 4; opacity: .8; }
