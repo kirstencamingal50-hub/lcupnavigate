@@ -83,11 +83,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     preview.innerHTML = '<h3 class="mb-2 text-xs font-extrabold text-slate-800">Saved campus record information</h3><dl class="text-xs">' + (rows || '<p class="text-slate-500">No additional information has been saved for this record.</p>') + '</dl>';
     preview.hidden = false;
   });
-  picker.addEventListener('click', event => {
+  const getMapCoordinates = event => {
     const rect = picker.getBoundingClientRect();
-    const x = Math.max(0, Math.min(1, (event.clientX - rect.left - picker.clientLeft) / picker.clientWidth));
-    const y = Math.max(0, Math.min(1, (event.clientY - rect.top - picker.clientTop) / picker.clientHeight));
-    const px = Math.round(x * W), py = Math.round(y * H);
+    const contentWidth = picker.clientWidth;
+    const contentHeight = picker.clientHeight;
+    const x = Math.max(0, Math.min(1, (event.clientX - rect.left - picker.clientLeft) / contentWidth));
+    const y = Math.max(0, Math.min(1, (event.clientY - rect.top - picker.clientTop) / contentHeight));
+    return {x:Math.round(x * W),y:Math.round(y * H)};
+  };
+  picker.addEventListener('click', event => {
+    const {x:px,y:py} = getMapCoordinates(event);
     form.elements.x.value = px; form.elements.y.value = py; position(px, py);
   });
   form.addEventListener('submit', async event => {
