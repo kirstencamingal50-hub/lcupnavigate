@@ -43,6 +43,11 @@
       </form>
       <div class="route-builder-layout mt-4">
         <div>
+          <div class="mb-2 flex flex-wrap items-center gap-4 text-xs text-slate-600">
+            <label class="inline-flex items-center gap-2"><input id="route-grid-toggle" type="checkbox" checked class="h-4 w-4 rounded border-slate-300 text-emerald-700" /> Show alignment grid</label>
+            <label class="inline-flex items-center gap-2"><input id="route-snap-toggle" type="checkbox" checked class="h-4 w-4 rounded border-slate-300 text-emerald-700" /> Snap new/moved junctions to grid</label>
+            <span class="text-[10px] text-slate-500">50 map-unit spacing · editor only</span>
+          </div>
           <div id="route-editor-map" class="route-editor-map" role="application" aria-label="Campus map route editor. Click walkway positions to add ordered waypoints.">
             <img src="../../assets/images/campus-map.svg" alt="LCUP campus map" draggable="false" />
             <svg id="route-editor-svg" viewBox="0 0 1330 1620" preserveAspectRatio="none" aria-hidden="true"><g id="route-existing-paths"></g><polyline id="route-draft-line" points="" /></svg>
