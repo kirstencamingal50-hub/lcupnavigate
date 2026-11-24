@@ -502,16 +502,19 @@ html[data-theme="dark"] body.admin-page .admin-stat strong,html[data-theme="dark
 
 .route-builder-layout {
 	display: grid;
-	grid-template-columns: minmax(0, 1.65fr) minmax(250px, .75fr);
+	grid-template-columns: minmax(0, 2fr) minmax(260px, .72fr);
 	gap: 18px;
 	align-items: start;
+	width: 100%;
 }
+.route-builder-layout > div:first-child { min-width: 0; }
+.route-builder-layout > div:first-child .route-editor-map { max-width: none; width: 100%; }
 
 .route-editor-map {
 	position: relative;
 	isolation: isolate;
 	width: 100%;
-	max-width: 520px;
+	max-width: none;
 	aspect-ratio: 1330 / 1620;
 	overflow: hidden;
 	border: 1px solid #cbd5e1;
@@ -530,7 +533,7 @@ html[data-theme="dark"] body.admin-page .admin-stat strong,html[data-theme="dark
 	height: 100%;
 }
 
-.route-editor-map > img { object-fit: fill; pointer-events: none; }
+.route-editor-map > img { object-fit: fill; pointer-events: none; transform-origin: 50% 50%; }
 .route-editor-grid {
   position: absolute;
   inset: 0;
