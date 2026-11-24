@@ -502,14 +502,16 @@ html[data-theme="dark"] body.admin-page .admin-stat strong,html[data-theme="dark
 
 .route-builder-layout {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr);
+	grid-template-columns: minmax(0, 2fr) minmax(260px, .82fr);
 	gap: 18px;
 	align-items: start;
 	width: 100%;
 }
 .route-builder-layout > div:first-child { min-width: 0; width: 100%; }
-.route-builder-layout > div:first-child .route-editor-map { max-width: none; }
+.route-builder-layout > div:first-child .route-editor-map { width: min(100%, calc(min(78vh, 1100px) * 1330 / 1620)); max-width: 100%; height: auto; aspect-ratio: 1330 / 1620; margin-inline: auto; }
 .route-builder-layout > aside { width: 100%; }
+.route-save-actions { position: sticky; bottom: 0; z-index: 5; background: #fff; padding-bottom: 4px; }
+.route-waypoint-panel { max-height: calc(100vh - 36px); overflow-y: auto; }
 .route-builder-layout.is-map-fullscreen {
 	position: fixed;
 	inset: 0;
@@ -522,6 +524,7 @@ html[data-theme="dark"] body.admin-page .admin-stat strong,html[data-theme="dark
 .route-builder-layout.is-map-fullscreen > div:first-child { width: 100%; }
 .route-builder-layout.is-map-fullscreen .route-editor-map { width: min(100%, calc((100vh - 190px) * 1330 / 1620)); height: calc(100vh - 190px); min-height: 420px; aspect-ratio: 1330 / 1620; margin-inline: auto; }
 .route-builder-layout.is-map-fullscreen > aside { display: none; }
+.route-builder-layout.is-map-fullscreen > div:first-child .route-editor-map { width: min(100%, calc((100vh - 190px) * 1330 / 1620)); height: calc(100vh - 190px); }
 body.route-map-lock-scroll { overflow: hidden; }
 
 .landmark-map-picker,
@@ -618,9 +621,11 @@ body.route-map-lock-scroll { overflow: hidden; }
 .route-waypoint-notes textarea { display: block; width: 100%; min-height: 48px; margin-top: 4px; padding: 7px; border: 1px solid #dbe3ec; border-radius: 7px; color: #1e293b; font-size: 12px; font-weight: 400; line-height: 1.45; text-transform: none; overflow-wrap: anywhere; resize: vertical; }
 #route-distance-preview { line-height: 1.55; }
 
-@media (max-width: 800px) {
-	.route-builder-layout { grid-template-columns: 1fr; }
-	.route-waypoint-panel { max-height: 360px; }
+@media (max-width: 900px) {
+	.route-builder-layout { grid-template-columns: minmax(0, 1fr); }
+	.route-builder-layout > div:first-child .route-editor-map { width: min(100%, calc(min(68vh, 900px) * 1330 / 1620)); }
+	.route-waypoint-panel { max-height: none; }
+	.route-save-actions { position: sticky; bottom: 0; }
 }
 
 @media (max-width: 900px) {
