@@ -243,3 +243,16 @@ test('admin route editor can add reusable junction waypoints along long route se
   assert.match(routeBuilder, /markerNodes\.has\(String\(node\.id\)\)/);
   assert.match(routeBuilder, /expanded\.length > 100/);
 });
+
+
+test('route editor renders round fixed-size junctions matching enlarged building markers', async () => {
+  const adminMap = await read('../pages/admin/manage-map.html');
+  const routeBuilder = await read('../assets/js/admin/route-builder.js');
+  const adminCss = await read('../assets/css/admin.css');
+  assert.match(adminMap, /id="route-editor-junctions"/);
+  assert.match(routeBuilder, /route-editor-junctions/);
+  assert.match(routeBuilder, /route-junction-marker/);
+  assert.match(adminCss, /\.route-map-location \{[^}]*width: 24px; height: 24px/s);
+  assert.match(adminCss, /\.route-editor-junctions \.route-junction-marker\s*\{[^}]*width: 24px;[^}]*height: 24px/s);
+  assert.match(adminCss, /border-radius: 50%/);
+});
