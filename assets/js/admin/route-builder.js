@@ -116,13 +116,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     );
     const junctionMarkup = junctionNodes.map(node => {
       const usage = routeUsage.get(String(node.id)) || 0;
-      const radius = usage >= 4 ? 12 : usage >= 2 ? 10 : 7;
-      const fill = usage >= 4 ? '#166534' : usage >= 2 ? '#15803d' : '#86a98d';
-      const opacity = usage ? 1 : 0.55;
+      const radius = usage >= 4 ? 22 : usage >= 2 ? 18 : 15;
+      const fill = usage >= 4 ? '#064e3b' : usage >= 2 ? '#047857' : '#0f766e';
       const description = usage
         ? `Shared walkway junction · used by ${usage} saved route${usage === 1 ? '' : 's'}`
         : 'Walkway junction';
-      return `<circle cx="${Number(node.x)}" cy="${Number(node.y)}" r="${radius}" fill="${fill}" opacity="${opacity}"><title>${esc(description)} · ${esc(node.node_key)}</title></circle>`;
+      return `<g class="route-junction-marker" transform="translate(${Number(node.x)} ${Number(node.y)})"><circle class="route-junction-halo" r="${radius + 7}"/><circle class="route-junction-core" r="${radius}" fill="${fill}"/><title>${esc(description)} · ${esc(node.node_key)}</title></g>`;
     }).join('');
     $('route-existing-paths').innerHTML=`<g pointer-events="none" fill="none" stroke="#16a34a" stroke-width="5" stroke-linecap="round" opacity=".58">${mapData.connections.map(edge=>{const from=nodeById.get(String(edge.from_node_id)),to=nodeById.get(String(edge.to_node_id));return from&&to?`<line x1="${Number(from.x)}" y1="${Number(from.y)}" x2="${Number(to.x)}" y2="${Number(to.y)}" />`:'';}).join('')}</g><g pointer-events="none" stroke="white" stroke-width="3">${junctionMarkup}</g>`;
     $('route-editor-endpoints').innerHTML = mapData.markers.map(marker=>{
@@ -298,9 +297,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
   }
 
-  gridToggle?.addEventListener('change', () => {
-    if (gridLayer) gridLayer.style.display = gridToggle.checked ? '' : 'none';
-  });
+  function syncGridVisibility() {
+    if (!gridLayer) return;
+    gridLayer.hidden = !gridToggle?.checked;
+    gridLayer.style.display = gridToggle?.checked ? 'block' : 'none';
+  }
+  syncGridVisibility();
+  gridToggle?.addEventListener('change', syncGridVisibility);
 
   function addMapPoint(event) {
     if (event.target.closest('.route-waypoint-handle,.route-endpoint,.route-map-location')) return;
