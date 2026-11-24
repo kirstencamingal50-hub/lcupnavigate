@@ -502,13 +502,27 @@ html[data-theme="dark"] body.admin-page .admin-stat strong,html[data-theme="dark
 
 .route-builder-layout {
 	display: grid;
-	grid-template-columns: minmax(0, 2fr) minmax(260px, .72fr);
+	grid-template-columns: minmax(0, 1fr);
 	gap: 18px;
 	align-items: start;
 	width: 100%;
 }
-.route-builder-layout > div:first-child { min-width: 0; }
+.route-builder-layout > div:first-child { min-width: 0; width: 100%; }
 .route-builder-layout > div:first-child .route-editor-map { max-width: none; width: 100%; }
+.route-builder-layout > aside { width: 100%; }
+.route-builder-layout.is-map-fullscreen {
+	position: fixed;
+	inset: 0;
+	z-index: 1000;
+	display: block;
+	overflow: auto;
+	padding: 12px;
+	background: #f8fafc;
+}
+.route-builder-layout.is-map-fullscreen > div:first-child { width: 100%; }
+.route-builder-layout.is-map-fullscreen .route-editor-map { height: calc(100vh - 190px); min-height: 420px; aspect-ratio: auto; }
+.route-builder-layout.is-map-fullscreen > aside { display: none; }
+body.route-map-lock-scroll { overflow: hidden; }
 
 .route-editor-map {
 	position: relative;
@@ -516,6 +530,7 @@ html[data-theme="dark"] body.admin-page .admin-stat strong,html[data-theme="dark
 	width: 100%;
 	max-width: none;
 	aspect-ratio: 1330 / 1620;
+	height: min(78vh, 1100px);
 	overflow: hidden;
 	border: 1px solid #cbd5e1;
 	border-radius: 14px;
@@ -534,6 +549,8 @@ html[data-theme="dark"] body.admin-page .admin-stat strong,html[data-theme="dark
 }
 
 .route-editor-map > img { object-fit: fill; pointer-events: none; transform-origin: 50% 50%; }
+.route-editor-map.is-zoomed { cursor: grab; }
+.route-editor-map.is-panning { cursor: grabbing; }
 .route-editor-grid {
   position: absolute;
   inset: 0;
