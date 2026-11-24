@@ -531,7 +531,21 @@ html[data-theme="dark"] body.admin-page .admin-stat strong,html[data-theme="dark
 }
 
 .route-editor-map > img { object-fit: fill; pointer-events: none; }
-.route-editor-map > svg { overflow: visible; pointer-events: none; }
+.route-editor-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(15, 118, 110, .48) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 118, 110, .48) 1px, transparent 1px),
+    linear-gradient(to right, rgba(15, 78, 70, .68) 1.5px, transparent 1.5px),
+    linear-gradient(to bottom, rgba(15, 78, 70, .68) 1.5px, transparent 1.5px);
+  background-size: 3.7594% 100%, 100% 3.0864%, 18.797% 100%, 100% 15.4321%;
+  background-position: 0 0;
+}
+.route-editor-map > svg { z-index: 2; overflow: visible; pointer-events: none; }
+.route-editor-layer { z-index: 3; }
 .route-network-node { fill: #05805b; stroke: #fff; stroke-width: 4; opacity: .8; }
 #route-draft-line { fill: none; stroke: #2563eb; stroke-width: 11; stroke-linecap: round; stroke-linejoin: round; opacity: .92; filter: drop-shadow(0 2px 2px rgba(10,30,65,.35)); }
 .route-editor-layer { pointer-events: none; }
