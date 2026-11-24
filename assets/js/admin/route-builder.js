@@ -122,8 +122,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     summary.innerHTML = `<strong class="block text-slate-900">${distance.toFixed(1)} map units</strong><span>Approximate drawn distance. Define the map scale to calculate meters and walking time.</span>`;
   }
 
+  let savedRoutesPage = 1;
+  const SAVED_ROUTES_PAGE_SIZE = 10;
+
   function renderRoutes() {
     const filter = $('route-list-filter').value.trim().toLocaleLowerCase();
+    const activeRouteNumbers = new Map(
+      routes.filter(route => route.status === 'active')
+        .sort((a,b) => Number(a.id) - Number(b.id))
+        .map((route,index) => [String(route.id), index + 1])
+    );
     const matches = routes.filter(route => `${route.name} ${route.start_name} ${route.destination_name} ${route.notes||''} ${route.status}`.toLocaleLowerCase().includes(filter));
     const seenPaths=new Set();
     const rows=matches.filter(route=>{
@@ -133,7 +141,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       if(seenPaths.has(key))return false;
       seenPaths.add(key);return true;
     });
-    $('saved-routes-list').innerHTML = rows.length ? `<div class="overflow-x-auto"><table class="w-full min-w-[680px] text-left text-xs"><thead><tr><th class="p-3">Start ↔ destination</th><th class="p-3">Distance</th><th class="p-3">Accessibility</th><th class="p-3">Status</th><th class="p-3 text-right">Actions</th></tr></thead><tbody>${rows.map(route => {const label=({active:'Completed',inactive:'Inactive',draft:'Draft',incomplete:'Incomplete'})[route.status]||route.status;const badge=route.status==='active'?'bg-emerald-50 text-emerald-800':route.status==='incomplete'?'bg-amber-50 text-amber-800':'bg-slate-100 text-slate-700';return `<tr class="border-t border-slate-100"><td class="p-3">${esc(route.start_name)} ↔ ${esc(route.destination_name)}${route.notes?`<small class="mt-1 block whitespace-normal break-words text-slate-600">${esc(route.notes)}</small>`:''}${route.landmark_marker_id?`<small class="mt-1 block text-blue-700">Landmark draft · ${esc(route.start_x)}, ${esc(route.start_y)}</small>`:''}<small class="mt-1 block text-slate-500">Updated ${esc(new Date(route.updated_at).toLocaleString())}</small></td><td class="p-3">${route.distance_map_units === null ? 'Unavailable' : `${Number(route.distance_map_units).toFixed(1)} map units`}</td><td class="p-3">${route.accessibility_status === null ? 'Unspecified' : Number(route.accessibility_status) ? 'Accessible' : 'Not accessible'}</td><td class="p-3"><span class="rounded-full px-2 py-1 ${badge}">${esc(label)}</span></td><td class="p-3 text-right"><div class="flex justify-end gap-2"><button type="button" data-route-action="edit" data-id="${route.id}" class="font-bold text-blue-700">Edit</button>${route.status==='active'||route.status==='inactive'?`<button type="button" data-route-action="toggle" data-id="${route.id}" class="font-bold text-amber-700">${route.status==='active'?'Deactivate':'Reactivate'}</button>`:''}<button type="button" data-route-action="delete" data-id="${route.id}" class="font-bold text-red-700">Delete</button></div></td></tr>`}).join('')}</tbody></table></div>` : '<p class="p-5 text-center text-xs text-slate-500">No saved routes match this filter.</p>';
+    const pageCount = Math.max(1, Math.ceil(rows.length / SAVED_ROUTES_PAGE_SIZE));
+    savedRoutesPage = Math.min(savedRoutesPage, pageCount);
+    const pageRows = rows.slice((savedRoutesPage - 1) * SAVED_ROUTES_PAGE_SIZE, savedRoutesPage * SAVED_ROUTES_PAGE_SIZE);
+    const table = pageRows.length ? `<div class="overflow-x-auto"><table class="w-full min-w-[680px] text-left text-xs"><thead><tr><th class="p-3">Route</th><th class="p-3">Distance</th><th class="p-3">Accessibility</th><th class="p-3">Status</th><th class="p-3 text-right">Actions</th></tr></thead><tbody>${pageRows.map(route => {const label=({active:'Completed',inactive:'Inactive',draft:'Draft',incomplete:'Incomplete'})[route.status]||route.status;const badge=route.status==='active'?'bg-emerald-50 text-emerald-800':route.status==='incomplete'?'bg-amber-50 text-amber-800':'bg-slate-100 text-slate-700';const pathNumber=activeRouteNumbers.get(String(route.id));const identifier=pathNumber? `Path ${pathNumber}` : 'Unpublished';return `<tr class="border-t border-slate-100"><td class="p-3"><strong class="block text-slate-900">${identifier}</strong><small class="mt-1 block text-slate-600">${esc(route.start_name)} ↔ ${esc(route.destination_name)}</small>${route.notes?`<small class="mt-1 block whitespace-normal break-words text-slate-600">${esc(route.notes)}</small>`:''}${route.landmark_marker_id?`<small class="mt-1 block text-blue-700">Landmark draft · ${esc(route.start_x)}, ${esc(route.start_y)}</small>`:''}<small class="mt-1 block text-slate-500">Updated ${esc(new Date(route.updated_at).toLocaleString())}</small></td><td class="p-3">${route.distance_map_units === null ? 'Unavailable' : `${Number(route.distance_map_units).toFixed(1)} map units`}</td><td class="p-3">${route.accessibility_status === null ? 'Unspecified' : Number(route.accessibility_status) ? 'Accessible' : 'Not accessible'}</td><td class="p-3"><span class="rounded-full px-2 py-1 ${badge}">${esc(label)}</span></td><td class="p-3 text-right"><div class="flex justify-end gap-2"><button type="button" data-route-action="edit" data-id="${route.id}" class="font-bold text-blue-700">Edit</button>${route.status==='active'||route.status==='inactive'?`<button type="button" data-route-action="toggle" data-id="${route.id}" class="font-bold text-amber-700">${route.status==='active'?'Deactivate':'Reactivate'}</button>`:''}<button type="button" data-route-action="delete" data-id="${route.id}" class="font-bold text-red-700">Delete</button></div></td></tr>`}).join('')}</tbody></table></div>` : '<p class="p-5 text-center text-xs text-slate-500">No saved routes match this filter.</p>';
+    const pager = rows.length > SAVED_ROUTES_PAGE_SIZE ? `<div class="flex items-center justify-between gap-3 border-t border-slate-100 px-3 py-3 text-xs"><span class="text-slate-500">Showing ${(savedRoutesPage-1)*SAVED_ROUTES_PAGE_SIZE+1}–${Math.min(savedRoutesPage*SAVED_ROUTES_PAGE_SIZE,rows.length)} of ${rows.length} routes</span><div class="flex items-center gap-2"><button type="button" data-routes-page="prev" ${savedRoutesPage===1?'disabled':''} class="rounded-lg border px-3 py-1.5 font-semibold disabled:opacity-40">Previous</button><span class="text-slate-600">Page ${savedRoutesPage} of ${pageCount}</span><button type="button" data-routes-page="next" ${savedRoutesPage===pageCount?'disabled':''} class="rounded-lg border px-3 py-1.5 font-semibold disabled:opacity-40">Next</button></div></div>` : (rows.length ? `<div class="border-t border-slate-100 px-3 py-2 text-[11px] text-slate-500">Showing ${rows.length} of ${rows.length} routes</div>` : '');
+    $('saved-routes-list').innerHTML = table + pager;
   }
 
   function hasTwoValidEndpoints(route) {
@@ -286,7 +299,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     draw();
     const marker=byId(id);status(`${marker?.name||'Location'} selected. Choose the other endpoint or add route waypoints.`);
   });
-  $('route-list-filter').addEventListener('input',renderRoutes);
+  $('route-list-filter').addEventListener('input',()=>{savedRoutesPage=1;renderRoutes();});
+  $('saved-routes-list').addEventListener('click',event=>{const button=event.target.closest('[data-routes-page]');if(!button)return;savedRoutesPage+=button.dataset.routesPage==='next'?1:-1;renderRoutes();});
   $('route-undo').addEventListener('click',()=>{if(!undoStack.length)return;redoStack.push(clone(waypoints));waypoints=undoStack.pop();draw();});
   $('route-redo').addEventListener('click',()=>{if(!redoStack.length)return;undoStack.push(clone(waypoints));waypoints=redoStack.pop();draw();});
   $('route-clear').addEventListener('click',()=>{if(!waypoints.length)return;snapshot();waypoints=[];draw();status('Waypoints cleared.');});
