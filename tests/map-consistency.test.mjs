@@ -186,3 +186,18 @@ test('new route waypoints snap only to reusable walkway junctions, never buildin
   assert.match(routeBuilder, /Number\(node\.floor_number \|\| 0\) === 0/);
   assert.match(routeBuilder, /nearest\.distance<=Math\.max\(26,26\*W\/mapElement\.clientWidth\)/);
 });
+
+
+test('admin route editor provides a visible alignment grid and optional grid snapping', async () => {
+  const adminMap = await read('../pages/admin/manage-map.html');
+  const routeBuilder = await read('../assets/js/admin/route-builder.js');
+  assert.match(adminMap, /id="route-grid-toggle"/);
+  assert.match(adminMap, /id="route-snap-toggle"/);
+  assert.match(adminMap, /id="route-grid-layer"/);
+  assert.match(adminMap, /route-grid-minor/);
+  assert.match(adminMap, /route-grid-major/);
+  assert.match(routeBuilder, /const GRID_SIZE = 50/);
+  assert.match(routeBuilder, /function snapToGrid\(point\)/);
+  assert.match(routeBuilder, /gridLayer\.style\.display/);
+  assert.match(routeBuilder, /snapToGrid\(mapPoint\(event\)\)/);
+});
