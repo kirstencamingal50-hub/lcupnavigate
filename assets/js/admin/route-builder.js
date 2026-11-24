@@ -86,10 +86,63 @@ document.addEventListener('DOMContentLoaded', async () => {
     return [[Number(start.x), Number(start.y)], ...waypoints.map(point => [Number(point.x), Number(point.y)]), [Number(end.x), Number(end.y)]];
   }
 
+  function markerNodeIds() {
+    return new Set(mapData.markers
+      .map(marker => marker.route_node_id)
+      .filter(id => id !== null && id !== undefined && String(id) !== '')
+      .map(String));
+  }
+
+  function nodeRouteUsage() {
+    const usage = new Map();
+    const markerNodes = markerNodeIds();
+    routes.forEach(route => {
+      const usedInRoute = new Set((route.points || [])
+        .map(point => point.node_id)
+        .filter(id => id !== null && id !== undefined && !markerNodes.has(String(id)))
+        .map(String));
+      usedInRoute.forEach(id => usage.set(id, (usage.get(id) || 0) + 1));
+    });
+    return usage;
+  }
+
   function draw() {
     const nodeById = new Map(mapData.nodes.map(node => [String(node.id), node]));
     const [start, end] = selectedMarkers();
-    $('route-existing-paths').innerHTML=`<g pointer-events="none" fill="none" stroke="#16a34a" stroke-width="5" stroke-linecap="round" opacity=".72">${mapData.connections.map(edge=>{const from=nodeById.get(String(edge.from_node_id)),to=nodeById.get(String(edge.to_node_id));return from&&to?`<line x1="${Number(from.x)}" y1="${Number(from.y)}" x2="${Number(to.x)}" y2="${Number(to.y)}" />`:'';}).join('')}</g><g pointer-events="none" fill="#15803d" stroke="white" stroke-width="3">${mapData.nodes.map(node=>`<circle cx="${Number(node.x)}" cy="${Number(node.y)}" r="8"><title>${esc(node.node_key)}</title></circle>`).join('')}</g>`;
+    const buildingNodeIds = markerNodeIds();
+    const routeUsage = nodeRouteUsage();
+    const junctionNodes = mapData.nodes.filter(node =>
+      Number(node.active) !== 0 && !buildingNodeIds.has(String(node.id))
+    );
+    // Display nearby same-floor walkway nodes as one shared junction. This is a
+    // visual alignment only; saved node IDs and route records remain untouched.
+    const displayPointById = new Map();
+    const clusters = [];
+    junctionNodes.forEach(node => {
+      const match = clusters.find(cluster =>
+        Number(cluster.floor_number || 0) === Number(node.floor_number || 0) &&
+        Math.hypot(cluster.x - Number(node.x), cluster.y - Number(node.y)) <= 28
+      );
+      if (match) { match.nodes.push(node); match.x = match.nodes.reduce((sum,item)=>sum+Number(item.x),0)/match.nodes.length; match.y = match.nodes.reduce((sum,item)=>sum+Number(item.y),0)/match.nodes.length; }
+      else clusters.push({x:Number(node.x),y:Number(node.y),floor_number:Number(node.floor_number||0),nodes:[node]});
+    });
+    clusters.forEach(cluster => {
+      const point = {x:Math.round(cluster.x/25)*25,y:Math.round(cluster.y/25)*25};
+      cluster.nodes.forEach(node => displayPointById.set(String(node.id),point));
+    });
+    const junctionMarkup = clusters.map(cluster => {
+      const usage = cluster.nodes.reduce((sum,node)=>sum+(routeUsage.get(String(node.id))||0),0);
+      const fill = usage >= 2 ? '#047857' : '#0f766e';
+      const description = cluster.nodes.length > 1
+        ? `Aligned visual junction · ${cluster.nodes.length} nearby walkway nodes`
+        : usage ? `Shared walkway junction · used by ${usage} saved route${usage === 1 ? '' : 's'}` : 'Walkway junction';
+      const point = cluster.nodes.length > 1
+        ? {x:Math.round(cluster.x/25)*25,y:Math.round(cluster.y/25)*25}
+        : {x:Number(cluster.nodes[0].x),y:Number(cluster.nodes[0].y)};
+      return `<span class="route-junction-marker ${usage >= 2 ? 'is-shared' : ''}" style="left:${point.x/W*100}%;top:${point.y/H*100}%;--junction-fill:${fill}" title="${esc(description)}" aria-label="${esc(description)}"></span>`;
+    }).join('');
+    $('route-editor-junctions').innerHTML = junctionMarkup;
+    $('route-existing-paths').innerHTML=`<g pointer-events="none" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" opacity=".32">${mapData.connections.map(edge=>{const from=nodeById.get(String(edge.from_node_id)),to=nodeById.get(String(edge.to_node_id));if(!from||!to)return '';const a=displayPointById.get(String(from.id))||from,b=displayPointById.get(String(to.id))||to;return `<line x1="${Number(a.x)}" y1="${Number(a.y)}" x2="${Number(b.x)}" y2="${Number(b.y)}" />`;}).join('')}</g>`;
     $('route-editor-endpoints').innerHTML = mapData.markers.map(marker=>{
       const selectedStart=String(marker.id)===String(start?.id), selectedEnd=String(marker.id)===String(end?.id);
       return `<button type="button" class="route-map-location ${selectedStart?'is-start':''} ${selectedEnd?'is-end':''}" data-marker-id="${esc(marker.id)}" style="left:${Number(marker.x)/W*100}%;top:${Number(marker.y)/H*100}%" title="${esc(marker.name)}" aria-label="Select ${esc(marker.name)} as a route endpoint"></button>`;
@@ -245,24 +298,112 @@ document.addEventListener('DOMContentLoaded', async () => {
     catch(error) { status(error.message); }
   });
 
+  const GRID_SIZE = 50;
+  const gridToggle = $('route-grid-toggle');
+  const snapToggle = $('route-snap-toggle');
+  const gridLayer = $('route-grid-layer');
+
   function mapPoint(event) {
     const rect = mapElement.getBoundingClientRect();
-    return {x:Math.round(Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width))*W),y:Math.round(Math.max(0,Math.min(1,(event.clientY-rect.top)/rect.height))*H)};
+    const x=(event.clientX-rect.left-rect.width/2-mapPanX)/mapZoom+rect.width/2;
+    const y=(event.clientY-rect.top-rect.height/2-mapPanY)/mapZoom+rect.height/2;
+    return {x:Math.round(Math.max(0,Math.min(1,x/rect.width))*W),y:Math.round(Math.max(0,Math.min(1,y/rect.height))*H)};
   }
+
+  function snapToGrid(point) {
+    if (!snapToggle?.checked) return point;
+    return {
+      x: Math.max(0, Math.min(W, Math.round(point.x / GRID_SIZE) * GRID_SIZE)),
+      y: Math.max(0, Math.min(H, Math.round(point.y / GRID_SIZE) * GRID_SIZE))
+    };
+  }
+
+  function syncGridVisibility() {
+    if (!gridLayer) return;
+    gridLayer.hidden = !gridToggle?.checked;
+    gridLayer.style.display = gridToggle?.checked ? 'block' : 'none';
+  }
+  syncGridVisibility();
+  gridToggle?.addEventListener('change', syncGridVisibility);
+
+  // Zoom the complete editor layer together so map markers, routes, waypoints,
+  // and the alignment grid stay registered to the same campus coordinates.
+  let mapZoom = 1, mapPanX = 0, mapPanY = 0, panning = null;
+  const zoomTargets = [...mapElement.querySelectorAll(':scope > img,:scope > #route-grid-layer,:scope > svg,:scope > .route-editor-layer')];
+  function clampMapPan() {
+    const rect = mapElement.getBoundingClientRect();
+    const limitX = rect.width * (mapZoom - 1) / 2;
+    const limitY = rect.height * (mapZoom - 1) / 2;
+    mapPanX = Math.max(-limitX, Math.min(limitX, mapPanX));
+    mapPanY = Math.max(-limitY, Math.min(limitY, mapPanY));
+  }
+  function applyMapZoom() {
+    clampMapPan();
+    zoomTargets.forEach(layer => {
+      layer.style.transform = `translate(${mapPanX}px, ${mapPanY}px) scale(${mapZoom})`;
+      layer.style.transformOrigin = '50% 50%';
+    });
+    const readout = $('route-zoom-level');
+    if (readout) readout.textContent = `${Math.round(mapZoom * 100)}%`;
+    mapElement.classList.toggle('is-zoomed', mapZoom > 1);
+  }
+  $('route-zoom-in')?.addEventListener('click', () => {
+    mapZoom = Math.min(2.5, Math.round((mapZoom + 0.25) * 100) / 100);
+    applyMapZoom();
+  });
+  $('route-zoom-out')?.addEventListener('click', () => {
+    mapZoom = Math.max(1, Math.round((mapZoom - 0.25) * 100) / 100);
+    applyMapZoom();
+  });
+  $('route-zoom-reset')?.addEventListener('click', () => {
+    mapZoom = 1; mapPanX = 0; mapPanY = 0;
+    applyMapZoom();
+  });
+  $('route-map-fullscreen')?.addEventListener('click', () => {
+    const layout = mapElement.closest('.route-builder-layout');
+    const expanded = layout?.classList.toggle('is-map-fullscreen');
+    const button = $('route-map-fullscreen');
+    if (button) button.textContent = expanded ? 'Exit full screen' : 'Full screen';
+    document.body.classList.toggle('route-map-lock-scroll', Boolean(expanded));
+    requestAnimationFrame(applyMapZoom);
+  });
+  window.addEventListener('keydown', event => {
+    if (event.key === 'Escape') {
+      const layout = mapElement.closest('.route-builder-layout');
+      if (layout?.classList.contains('is-map-fullscreen')) {
+        layout.classList.remove('is-map-fullscreen');
+        $('route-map-fullscreen').textContent = 'Full screen';
+        document.body.classList.remove('route-map-lock-scroll');
+        applyMapZoom();
+      }
+    }
+  });
+  applyMapZoom();
+
 
   function addMapPoint(event) {
     if (event.target.closest('.route-waypoint-handle,.route-endpoint,.route-map-location')) return;
     const [start,end]=selectedMarkers();
     if (!start||!end||start.id===end.id) { status('Choose different start and destination locations before adding path points.'); return; }
     const point=mapPoint(event);
-    const nearest=mapData.nodes.filter(node=>Number(node.active)!==0).map(node=>({node,distance:Math.hypot(Number(node.x)-point.x,Number(node.y)-point.y)})).sort((a,b)=>a.distance-b.distance)[0];
+    // Building/facility marker nodes are endpoint anchors, not walkway junctions.
+    // Keep them separate so a newly drawn intermediate point cannot consume or
+    // alter the node reserved for a campus location marker.
+    const protectedMarkerNodes = markerNodeIds();
+    const nearest=mapData.nodes
+      .filter(node => Number(node.active)!==0 &&
+        !protectedMarkerNodes.has(String(node.id)) &&
+        Number(node.floor_number || 0) === 0)
+      .map(node=>({node,distance:Math.hypot(Number(node.x)-point.x,Number(node.y)-point.y)}))
+      .sort((a,b)=>a.distance-b.distance)[0];
     snapshot();
     if(nearest && nearest.distance<=Math.max(26,26*W/mapElement.clientWidth)) {
       waypoints.push({node_id:Number(nearest.node.id),x:Number(nearest.node.x),y:Number(nearest.node.y),floor_number:Number(nearest.node.floor_number)||0});
       status(`Added existing shared node “${nearest.node.node_key}”.`);
     } else {
-      waypoints.push({x:point.x,y:point.y,floor_number:0});
-      status('Added a walkway point.');
+      const alignedPoint = snapToGrid(point);
+      waypoints.push({x:alignedPoint.x,y:alignedPoint.y,floor_number:0});
+      status(snapToggle?.checked ? 'Added a walkway point aligned to the 50-unit grid.' : 'Added a walkway point.');
     }
     draw();
   }
@@ -280,19 +421,36 @@ document.addEventListener('DOMContentLoaded', async () => {
   mapElement.addEventListener('dragstart',event=>event.preventDefault());
   mapElement.addEventListener('pointerdown',event=>{
     const handle=event.target.closest('.route-waypoint-handle');
-    if(!handle)return;
-    suppressMapClick=true;
-    movePoint(Number(handle.dataset.pointIndex),event);
+    if(handle){suppressMapClick=true;movePoint(Number(handle.dataset.pointIndex),event);return;}
+    if(mapZoom>1 && !event.target.closest('.route-map-location,.route-endpoint,button,input,textarea')) {
+      suppressMapClick=true;
+      panning={pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,originX:mapPanX,originY:mapPanY};
+      mapElement.classList.add('is-panning');
+      mapElement.setPointerCapture?.(event.pointerId);
+    }
   });
   mapElement.addEventListener('pointermove',event=>{
+    if(panning){
+      event.preventDefault();
+      mapPanX=panning.originX+(event.clientX-panning.startX);
+      mapPanY=panning.originY+(event.clientY-panning.startY);
+      applyMapZoom();
+      return;
+    }
     if(!dragging)return;
     event.preventDefault();event.stopPropagation();
-    const point=mapPoint(event);const current=waypoints[dragging.index];
+    const point=snapToGrid(mapPoint(event));const current=waypoints[dragging.index];
     waypoints[dragging.index]={x:point.x,y:point.y,floor_number:Number(current.floor_number)||0,notes:current.notes||''};
     dragging.handle.style.left=`${point.x/W*100}%`;dragging.handle.style.top=`${point.y/H*100}%`;
     $('route-draft-line').setAttribute('points',pointCoordinates().map(p=>p.join(',')).join(' '));renderDistance();
   });
   const stopDragging=()=>{
+    if(panning){
+      if(mapElement.hasPointerCapture?.(panning.pointerId))mapElement.releasePointerCapture(panning.pointerId);
+      panning=null;mapElement.classList.remove('is-panning');
+      setTimeout(()=>{suppressMapClick=false;},0);
+      return;
+    }
     if(!dragging)return;
     const {handle,pointerId}=dragging;
     if(handle.hasPointerCapture?.(pointerId))handle.releasePointerCapture(pointerId);
@@ -322,6 +480,75 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('route-undo').addEventListener('click',()=>{if(!undoStack.length)return;redoStack.push(clone(waypoints));waypoints=undoStack.pop();draw();});
   $('route-redo').addEventListener('click',()=>{if(!redoStack.length)return;undoStack.push(clone(waypoints));waypoints=redoStack.pop();draw();});
   $('route-clear').addEventListener('click',()=>{if(!waypoints.length)return;snapshot();waypoints=[];draw();status('Waypoints cleared.');});
+
+  $('route-add-junctions')?.addEventListener('click', () => {
+    const [start, end] = selectedMarkers();
+    if (!start || !end || String(start.id) === String(end.id)) {
+      status('Choose different start and destination locations before adding junctions.');
+      return;
+    }
+    const maxSpacing = 150;
+    const markerNodes = markerNodeIds();
+    const usedNodeIds = new Set([
+      start.route_node_id,
+      end.route_node_id,
+      ...waypoints.map(point => point.node_id)
+    ].filter(id => id !== null && id !== undefined && String(id) !== '').map(String));
+    const originalWaypoints = waypoints;
+    const anchors = [
+      {x:Number(start.x), y:Number(start.y)},
+      ...originalWaypoints.map(point => ({...point})),
+      {x:Number(end.x), y:Number(end.y)}
+    ];
+    const expanded = [];
+    let added = 0;
+    for (let segment = 0; segment < anchors.length - 1; segment++) {
+      if (segment > 0) expanded.push(originalWaypoints[segment - 1]);
+      const from = anchors[segment], to = anchors[segment + 1];
+      const distance = Math.hypot(to.x - from.x, to.y - from.y);
+      const divisions = Math.ceil(distance / maxSpacing);
+      for (let step = 1; step < divisions; step++) {
+        const fraction = step / divisions;
+        const point = snapToGrid({
+          x: Math.round(from.x + (to.x - from.x) * fraction),
+          y: Math.round(from.y + (to.y - from.y) * fraction)
+        });
+        const nearest = mapData.nodes
+          .filter(node => Number(node.active) !== 0 &&
+            !markerNodes.has(String(node.id)) &&
+            Number(node.floor_number || 0) === 0)
+          .map(node => ({node, distance:Math.hypot(Number(node.x)-point.x, Number(node.y)-point.y)}))
+          .sort((a,b) => a.distance - b.distance)[0];
+        if (nearest && nearest.distance <= Math.max(26, 26 * W / mapElement.clientWidth)) {
+          const id = String(nearest.node.id);
+          if (usedNodeIds.has(id)) continue;
+          usedNodeIds.add(id);
+          expanded.push({
+            node_id:Number(nearest.node.id),
+            x:Number(nearest.node.x),
+            y:Number(nearest.node.y),
+            floor_number:Number(nearest.node.floor_number)||0
+          });
+        } else {
+          expanded.push({x:point.x, y:point.y, floor_number:0});
+        }
+        added++;
+      }
+    }
+    if (!added) {
+      status('No long route segments need additional junctions. Segments are already 150 map units or shorter.');
+      return;
+    }
+    if (expanded.length > 100) {
+      status('This would exceed the 100-waypoint route limit. Add junctions to shorter sections instead.');
+      return;
+    }
+    snapshot();
+    waypoints = expanded;
+    draw();
+    status(`Added ${added} intermediate junction(s) at approximately 150 map-unit intervals. Save the route to store them in the shared walkway network.`);
+  });
+
   $('route-waypoint-list').addEventListener('input',event=>{
     const input=event.target.closest('[data-waypoint-notes]');if(!input)return;
     const point=waypoints[Number(input.dataset.index)];if(point)point.notes=input.value;

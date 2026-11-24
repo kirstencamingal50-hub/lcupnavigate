@@ -7,7 +7,7 @@
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
   <link rel="stylesheet" href="../../assets/css/style.css?v=20261115-symbol-font" />
-  <link rel="stylesheet" href="../../assets/css/admin.css?v=20261105-admin-ux" />
+  <link rel="stylesheet" href="../../assets/css/admin.css?v=20261124-shared-map-scale" />
   <script src="../../assets/js/campus-api.js"></script>
   <script src="../../assets/js/admin/admin-auth.js"></script>
 </head>
@@ -43,16 +43,33 @@
       </form>
       <div class="route-builder-layout mt-4">
         <div>
+          <div class="mb-2 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-3 text-xs text-slate-600">
+              <label class="inline-flex items-center gap-2"><input id="route-grid-toggle" type="checkbox" checked class="h-4 w-4 rounded border-slate-300 text-emerald-700" /> Show alignment grid</label>
+              <label class="inline-flex items-center gap-2"><input id="route-snap-toggle" type="checkbox" checked class="h-4 w-4 rounded border-slate-300 text-emerald-700" /> Snap new/moved junctions to grid</label>
+              <span class="text-[10px] text-slate-500">50 map-unit spacing · editor only</span>
+            </div>
+            <div class="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1" aria-label="Map zoom controls">
+              <button type="button" id="route-zoom-out" class="rounded-md px-3 py-1.5 text-sm font-bold text-slate-700 hover:bg-slate-100" aria-label="Zoom out">−</button>
+              <span id="route-zoom-level" class="min-w-12 text-center text-[11px] font-semibold text-slate-600">100%</span>
+              <button type="button" id="route-zoom-in" class="rounded-md px-3 py-1.5 text-sm font-bold text-slate-700 hover:bg-slate-100" aria-label="Zoom in">+</button>
+              <button type="button" id="route-zoom-reset" class="rounded-md px-2 py-1.5 text-[11px] font-semibold text-blue-700 hover:bg-blue-50">Reset</button>
+              <button type="button" id="route-map-fullscreen" class="rounded-md px-2 py-1.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-100">Full screen</button>
+            </div>
+          </div>
           <div id="route-editor-map" class="route-editor-map" role="application" aria-label="Campus map route editor. Click walkway positions to add ordered waypoints.">
             <img src="../../assets/images/campus-map.svg" alt="LCUP campus map" draggable="false" />
+            <div id="route-grid-layer" class="route-editor-grid" aria-hidden="true"></div>
             <svg id="route-editor-svg" viewBox="0 0 1330 1620" preserveAspectRatio="none" aria-hidden="true"><g id="route-existing-paths"></g><polyline id="route-draft-line" points="" /></svg>
+            <div id="route-editor-junctions" class="route-editor-layer route-editor-junctions" aria-label="Walkway junctions"></div>
             <div id="route-editor-endpoints" class="route-editor-layer"></div>
             <div id="route-editor-waypoints" class="route-editor-layer"></div>
           </div>
-          <p class="mt-2 text-[11px] leading-relaxed text-slate-500">Click the map to add path points and drag them to adjust. Review each plotted segment before publishing the route.</p>
+          <p class="mt-2 text-[11px] leading-relaxed text-slate-500">Click to add path points. At zoom levels above 100%, drag an empty map area to pan; drag a waypoint to adjust it. Building markers remain separate from walkway junctions.</p>
           <div class="mt-3 flex flex-wrap gap-2">
             <button type="button" id="route-undo" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700">Undo</button>
             <button type="button" id="route-redo" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700">Redo</button>
+            <button type="button" id="route-add-junctions" class="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800">Add junctions to long segments</button>
             <button type="button" id="route-clear" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700">Clear route</button>
           </div>
         </div>
@@ -61,11 +78,13 @@
           <ol id="route-waypoint-list" class="mt-3 grid gap-2"></ol>
           <div id="route-distance-preview" class="mt-3 rounded-lg bg-slate-50 p-3 text-xs text-slate-600" aria-live="polite">Choose endpoints and add points to preview the route.</div>
           <div class="mt-3 rounded-lg border border-slate-200 p-3 text-[11px] leading-relaxed text-slate-600">The SVG map has no defined scale. Distance is shown in map units only; walking time is unavailable until a scale is added.</div>
+          <div class="route-save-actions mt-4 border-t border-slate-200 pt-4">
+            <p id="route-builder-status" class="mb-3 text-xs text-slate-600" role="status" aria-live="polite"></p>
+            <button type="button" id="route-publish" data-route-status="active" class="mb-2 w-full rounded-lg bg-blue-700 px-4 py-3 text-sm font-bold text-white hover:bg-blue-800">Publish Route</button>
+            <button type="button" id="route-save-draft" data-route-status="draft" class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50">Save Private Draft</button>
+            <button type="button" id="route-cancel-edit" hidden class="mt-2 w-full rounded-lg border border-slate-300 px-4 py-2 text-xs font-bold text-slate-700">Cancel edit</button>
+          </div>
         </aside>
-      </div>
-      <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <p id="route-builder-status" class="text-xs text-slate-600" role="status" aria-live="polite"></p>
-        <div class="flex flex-wrap gap-2"><button type="button" id="route-cancel-edit" hidden class="rounded-lg border border-slate-300 px-4 py-2 text-xs font-bold text-slate-700">Cancel edit</button><button type="button" id="route-save-draft" data-route-status="draft" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">Save Private Draft</button><button type="button" id="route-publish" data-route-status="active" class="rounded-lg bg-blue-700 px-4 py-2 text-xs font-bold text-white hover:bg-blue-800">Publish Route</button></div>
       </div>
       <details id="saved-routes-section" class="mt-6 border-t border-slate-200 pt-5" open>
         <summary class="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 rounded-lg py-1 text-sm font-bold text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600">
@@ -90,7 +109,7 @@
           <p class="mt-1 text-[10px] text-slate-500">Search results appear below as you type. Select a result to view its saved campus information.</p>
         </div>
         <section id="landmark-record-preview" hidden class="rounded-xl border border-slate-200 bg-slate-50 p-3" aria-live="polite"></section>
-        <div id="landmark-map-picker" role="button" tabindex="0" aria-label="Click the map to choose the landmark location" class="relative w-full max-w-[520px] overflow-hidden rounded-xl border-2 border-slate-300 bg-slate-100 shadow-sm" style="aspect-ratio: 1330 / 1620; cursor: crosshair; touch-action: manipulation;">
+        <div id="landmark-map-picker" role="button" tabindex="0" aria-label="Click the map to choose the landmark location" class="landmark-map-picker relative overflow-hidden rounded-xl border-2 border-slate-300 bg-slate-100 shadow-sm" style="cursor: crosshair; touch-action: manipulation;">
           <img id="landmark-map-image" alt="Map for selecting a landmark location" class="absolute inset-0 h-full w-full select-none" draggable="false" style="object-fit: fill;" />
           <div id="landmark-map-pins" class="pointer-events-none absolute inset-0"></div>
           <div id="landmark-map-selection" class="pointer-events-none absolute hidden h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-white bg-blue-600 shadow-lg ring-2 ring-blue-700"></div>
@@ -109,8 +128,8 @@
     </section>
     <div id="landmarks-list" class="admin-data-panel p-2 sm:p-4"></div>
   </main>
-  <script src="../../assets/js/admin/manage-map.js?v=20261124-search-campus-records"></script>
-  <script src="../../assets/js/admin/route-builder.js?v=20261124-archived-endpoint-validation"></script>
+  <script src="../../assets/js/admin/manage-map.js?v=20261124-shared-map-scale"></script>
+  <script src="../../assets/js/admin/route-builder.js?v=20261124-shared-map-scale"></script>
   <script src="../../assets/js/app.js?v=20261118-remove-department-nav"></script>
 </body>
 </html>

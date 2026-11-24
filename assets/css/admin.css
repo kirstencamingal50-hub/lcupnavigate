@@ -502,17 +502,40 @@ html[data-theme="dark"] body.admin-page .admin-stat strong,html[data-theme="dark
 
 .route-builder-layout {
 	display: grid;
-	grid-template-columns: minmax(0, 1.65fr) minmax(250px, .75fr);
+	grid-template-columns: minmax(0, 2fr) minmax(260px, .82fr);
 	gap: 18px;
 	align-items: start;
+	width: 100%;
 }
+.route-builder-layout > div:first-child { min-width: 0; width: 100%; }
+.route-builder-layout > div:first-child .route-editor-map { width: min(100%, calc(min(78vh, 1100px) * 1330 / 1620)); max-width: 100%; height: auto; aspect-ratio: 1330 / 1620; margin-inline: auto; }
+.route-builder-layout > aside { width: 100%; }
+.route-save-actions { position: sticky; bottom: 0; z-index: 5; background: #fff; padding-bottom: 4px; }
+.route-waypoint-panel { max-height: calc(100vh - 36px); overflow-y: auto; }
+.route-builder-layout.is-map-fullscreen {
+	position: fixed;
+	inset: 0;
+	z-index: 1000;
+	display: block;
+	overflow: auto;
+	padding: 12px;
+	background: #f8fafc;
+}
+.route-builder-layout.is-map-fullscreen > div:first-child { width: 100%; }
+.route-builder-layout.is-map-fullscreen .route-editor-map { width: min(100%, calc((100vh - 190px) * 1330 / 1620)); height: calc(100vh - 190px); min-height: 420px; aspect-ratio: 1330 / 1620; margin-inline: auto; }
+.route-builder-layout.is-map-fullscreen > aside { display: none; }
+.route-builder-layout.is-map-fullscreen > div:first-child .route-editor-map { width: min(100%, calc((100vh - 190px) * 1330 / 1620)); height: calc(100vh - 190px); }
+body.route-map-lock-scroll { overflow: hidden; }
 
+.landmark-map-picker,
 .route-editor-map {
 	position: relative;
 	isolation: isolate;
-	width: 100%;
-	max-width: 520px;
+	width: min(100%, calc(min(78vh, 1100px) * 1330 / 1620));
+	max-width: none;
 	aspect-ratio: 1330 / 1620;
+	height: min(78vh, 1100px);
+	margin-inline: auto;
 	overflow: hidden;
 	border: 1px solid #cbd5e1;
 	border-radius: 14px;
@@ -521,6 +544,8 @@ html[data-theme="dark"] body.admin-page .admin-stat strong,html[data-theme="dark
 	user-select: none;
 }
 
+.landmark-map-picker > img,
+.landmark-map-picker > #landmark-map-pins,
 .route-editor-map > img,
 .route-editor-map > svg,
 .route-editor-layer {
@@ -530,12 +555,54 @@ html[data-theme="dark"] body.admin-page .admin-stat strong,html[data-theme="dark
 	height: 100%;
 }
 
-.route-editor-map > img { object-fit: fill; pointer-events: none; }
-.route-editor-map > svg { overflow: visible; pointer-events: none; }
+.landmark-map-picker > img,
+.route-editor-map > img { object-fit: fill; pointer-events: none; transform-origin: 50% 50%; }
+.route-editor-map.is-zoomed { cursor: grab; }
+.route-editor-map.is-panning { cursor: grabbing; }
+.route-editor-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  pointer-events: none;
+  opacity: 1;
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0 23px, rgba(15, 118, 110, .20) 23px 24px),
+    repeating-linear-gradient(90deg, transparent 0 23px, rgba(15, 118, 110, .20) 23px 24px),
+    repeating-linear-gradient(0deg, transparent 0 119px, rgba(15, 78, 70, .34) 119px 121px),
+    repeating-linear-gradient(90deg, transparent 0 119px, rgba(15, 78, 70, .34) 119px 121px);
+}
+.route-editor-grid[hidden] { display: none !important; }
+.route-junction-marker .route-junction-halo {
+  fill: #ffffff;
+  fill-opacity: .96;
+  stroke: #064e3b;
+  stroke-width: 3;
+}
+.route-junction-marker .route-junction-core {
+  stroke: #ffffff;
+  stroke-width: 4;
+}
+
+.route-editor-map > svg { z-index: 2; overflow: visible; pointer-events: none; }
+.route-editor-junctions { z-index: 3; pointer-events: none; }
+.route-editor-junctions .route-junction-marker {
+  position: absolute;
+  display: block;
+  width: 12px;
+  height: 12px;
+  transform: translate(-50%, -50%);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--junction-fill, #0f766e);
+  box-shadow: 0 1px 4px rgba(15,23,42,.45);
+}
+.route-editor-junctions .route-junction-marker.is-shared { outline: 1px solid rgba(6,78,59,.65); outline-offset: 1px; }
+.route-editor-layer { z-index: 4; }
 .route-network-node { fill: #05805b; stroke: #fff; stroke-width: 4; opacity: .8; }
 #route-draft-line { fill: none; stroke: #2563eb; stroke-width: 11; stroke-linecap: round; stroke-linejoin: round; opacity: .92; filter: drop-shadow(0 2px 2px rgba(10,30,65,.35)); }
 .route-editor-layer { pointer-events: none; }
-.route-map-location { position: absolute; display: grid; width: 16px; height: 16px; place-items: center; padding: 0; transform: translate(-50%,-50%); border: 2px solid #fff; border-radius: 50%; color: transparent; background: #f59e0b; box-shadow: 0 1px 4px rgba(15,23,42,.4); cursor: pointer; pointer-events: auto; }
+.route-map-location { position: absolute; display: grid; width: 12px; height: 12px; place-items: center; padding: 0; transform: translate(-50%,-50%); border: 3px solid #fff; border-radius: 50%; color: transparent; background: #f59e0b; box-shadow: 0 1px 4px rgba(15,23,42,.4); cursor: pointer; pointer-events: auto; }
 .route-map-location.is-start { outline: 3px solid #07845e; outline-offset: 2px; }
 .route-map-location.is-end { outline: 3px solid #c2413a; outline-offset: 2px; }
 .route-map-location:hover { z-index: 2; transform: translate(-50%,-50%) scale(1.2); }
@@ -554,10 +621,11 @@ html[data-theme="dark"] body.admin-page .admin-stat strong,html[data-theme="dark
 .route-waypoint-notes textarea { display: block; width: 100%; min-height: 48px; margin-top: 4px; padding: 7px; border: 1px solid #dbe3ec; border-radius: 7px; color: #1e293b; font-size: 12px; font-weight: 400; line-height: 1.45; text-transform: none; overflow-wrap: anywhere; resize: vertical; }
 #route-distance-preview { line-height: 1.55; }
 
-@media (max-width: 800px) {
-	.route-builder-layout { grid-template-columns: 1fr; }
-	.route-editor-map { max-width: 520px; }
-	.route-waypoint-panel { max-height: 360px; }
+@media (max-width: 900px) {
+	.route-builder-layout { grid-template-columns: minmax(0, 1fr); }
+	.route-builder-layout > div:first-child .route-editor-map { width: min(100%, calc(min(68vh, 900px) * 1330 / 1620)); }
+	.route-waypoint-panel { max-height: none; }
+	.route-save-actions { position: sticky; bottom: 0; }
 }
 
 @media (max-width: 900px) {

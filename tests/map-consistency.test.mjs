@@ -168,3 +168,129 @@ test('saved route location endpoints take priority over shared building marker I
 test('room locations retain their parent building route location ID', () => {
   assert.match(mapPage, /routeLocationId:building\.id/);
 });
+
+
+test('admin route editor keeps building marker nodes separate from shared walkway junctions', async () => {
+  const routeBuilder = await read('../assets/js/admin/route-builder.js');
+  assert.match(routeBuilder, /function markerNodeIds\(\)/);
+  assert.match(routeBuilder, /marker\.route_node_id/);
+  assert.match(routeBuilder, /const junctionNodes = mapData\.nodes\.filter\(node =>[\s\S]*?!buildingNodeIds\.has\(String\(node\.id\)\)/);
+  assert.match(routeBuilder, /Shared walkway junction/);
+  assert.match(routeBuilder, /saved route/);
+});
+
+test('new route waypoints snap only to reusable walkway junctions, never building marker nodes', async () => {
+  const routeBuilder = await read('../assets/js/admin/route-builder.js');
+  assert.match(routeBuilder, /const protectedMarkerNodes = markerNodeIds\(\)/);
+  assert.match(routeBuilder, /!protectedMarkerNodes\.has\(String\(node\.id\)\)/);
+  assert.match(routeBuilder, /Number\(node\.floor_number \|\| 0\) === 0/);
+  assert.match(routeBuilder, /nearest\.distance<=Math\.max\(26,26\*W\/mapElement\.clientWidth\)/);
+});
+
+
+test('admin route editor provides a visible alignment grid and optional grid snapping', async () => {
+  const adminMap = await read('../pages/admin/manage-map.html');
+  const routeBuilder = await read('../assets/js/admin/route-builder.js');
+  assert.match(adminMap, /id="route-grid-toggle"/);
+  assert.match(adminMap, /id="route-snap-toggle"/);
+  assert.match(adminMap, /id="route-grid-layer"/);
+  assert.match(adminMap, /route-grid-minor/);
+  assert.match(adminMap, /route-grid-major/);
+  assert.match(routeBuilder, /const GRID_SIZE = 50/);
+  assert.match(routeBuilder, /function snapToGrid\(point\)/);
+  assert.match(routeBuilder, /gridLayer\.style\.display/);
+  assert.match(routeBuilder, /snapToGrid\(mapPoint\(event\)\)/);
+});
+
+
+test('admin route editor includes synchronized zoom controls and a wider map layout', async () => {
+  const adminMap = await read('../pages/admin/manage-map.html');
+  const routeBuilder = await read('../assets/js/admin/route-builder.js');
+  const adminCss = await read('../assets/css/admin.css');
+  for (const id of ['route-zoom-in', 'route-zoom-out', 'route-zoom-reset', 'route-zoom-level']) {
+    assert.ok(adminMap.includes(`id="${id}"`));
+  }
+  assert.match(routeBuilder, /function applyMapZoom\(\)/);
+  assert.match(routeBuilder, /zoomTargets\.forEach/);
+  assert.match(routeBuilder, /\/mapZoom/);
+  assert.match(routeBuilder, /mapPanX/);
+  assert.match(routeBuilder, /panning\.originX/);
+  assert.match(routeBuilder, /route-map-fullscreen/);
+  assert.match(adminMap, /id="route-map-fullscreen"/);
+  assert.match(adminCss, /grid-template-columns: minmax\(0, 1fr\)/);
+  assert.match(adminCss, /\.route-builder-layout\.is-map-fullscreen/);
+  assert.match(adminCss, /\.route-editor-map\.is-zoomed/);
+});
+
+test('admin route editor displays a responsive alignment grid above the campus map', async () => {
+  const adminMap = await read('../pages/admin/manage-map.html');
+  const adminCss = await read('../assets/css/admin.css');
+  assert.match(adminMap, /id="route-grid-layer" class="route-editor-grid"/);
+  assert.match(adminMap, /id="route-grid-toggle"/);
+  assert.match(adminCss, /\.route-editor-grid\s*\{/);
+  assert.match(adminCss, /background-image:[\s\S]*linear-gradient\(to right/);
+  assert.match(adminCss, /background-size:[\s\S]*3\.7594% 100%/);
+  assert.match(adminCss, /\.route-editor-map > svg \{ z-index: 2/);
+});
+
+test('admin route editor can add reusable junction waypoints along long route segments', async () => {
+  const adminMap = await read('../pages/admin/manage-map.html');
+  const routeBuilder = await read('../assets/js/admin/route-builder.js');
+  assert.match(adminMap, /id="route-add-junctions"/);
+  assert.match(routeBuilder, /const maxSpacing = 150/);
+  assert.match(routeBuilder, /route-add-junctions/);
+  assert.match(routeBuilder, /Save the route to store them in the shared walkway network/);
+  assert.match(routeBuilder, /markerNodes\.has\(String\(node\.id\)\)/);
+  assert.match(routeBuilder, /expanded\.length > 100/);
+});
+
+
+test('route editor renders small round fixed-size junctions matching building markers', async () => {
+  const adminMap = await read('../pages/admin/manage-map.html');
+  const routeBuilder = await read('../assets/js/admin/route-builder.js');
+  const adminCss = await read('../assets/css/admin.css');
+  assert.match(adminMap, /id="route-editor-junctions"/);
+  assert.match(routeBuilder, /route-editor-junctions/);
+  assert.match(routeBuilder, /route-junction-marker/);
+  assert.match(adminCss, /\.route-map-location \{[^}]*width: 12px; height: 12px/s);
+  assert.match(adminCss, /\.route-editor-junctions \.route-junction-marker\s*\{[^}]*width: 12px;[^}]*height: 12px/s);
+  assert.match(adminCss, /border-radius: 50%/);
+});
+
+
+test('route editor preserves the campus map aspect ratio and visually aligns nearby walkway nodes', async () => {
+  const routeBuilder = await read('../assets/js/admin/route-builder.js');
+  const adminCss = await read('../assets/css/admin.css');
+  assert.match(routeBuilder, /displayPointById/);
+  assert.match(routeBuilder, /Math\.hypot\(cluster\.x - Number\(node\.x\), cluster\.y - Number\(node\.y\)\) <= 28/);
+  assert.match(routeBuilder, /displayPointById\.get/);
+  assert.match(adminCss, /calc\(min\(78vh, 1100px\) \* 1330 \/ 1620\)/);
+  assert.match(adminCss, /width: 12px;\s*height: 12px;/);
+});
+
+
+test('landmark picker and route editor share the same campus map dimensions', async () => {
+  const adminMap = await read('../pages/admin/manage-map.html');
+  const adminCss = await read('../assets/css/admin.css');
+  const landmarkJs = await read('../assets/js/admin/manage-map.js');
+  assert.match(adminMap, /id="landmark-map-picker"[^>]*class="landmark-map-picker/);
+  assert.match(adminCss, /\.landmark-map-picker,[\s\S]*?\.route-editor-map\s*\{/);
+  assert.match(adminCss, /width: min\(100%, calc\(min\(78vh, 1100px\) \* 1330 \/ 1620\)\)/);
+  assert.doesNotMatch(adminMap, /landmark-map-picker[^>]*max-w-\[520px\]/);
+  assert.match(landmarkJs, /const getMapCoordinates = event =>/);
+  assert.match(landmarkJs, /event\.clientX - rect\.left - picker\.clientLeft/);
+});
+
+
+test('route save and publish actions stay in the waypoint panel beside the map', async () => {
+  const adminMap = await read('../pages/admin/manage-map.html');
+  const adminCss = await read('../assets/css/admin.css');
+  const asideStart = adminMap.indexOf('<aside class="route-waypoint-panel">');
+  const saveActions = adminMap.indexOf('class="route-save-actions');
+  const asideEnd = adminMap.indexOf('</aside>', asideStart);
+  assert.ok(saveActions > asideStart && saveActions < asideEnd);
+  assert.match(adminCss, /grid-template-columns: minmax\(0, 2fr\) minmax\(260px, \.82fr\)/);
+  assert.match(adminCss, /\.route-save-actions \{ position: sticky/);
+  assert.match(adminMap, /id="route-publish"/);
+  assert.match(adminMap, /id="route-save-draft"/);
+});
