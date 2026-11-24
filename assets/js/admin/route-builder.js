@@ -384,6 +384,75 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('route-undo').addEventListener('click',()=>{if(!undoStack.length)return;redoStack.push(clone(waypoints));waypoints=undoStack.pop();draw();});
   $('route-redo').addEventListener('click',()=>{if(!redoStack.length)return;undoStack.push(clone(waypoints));waypoints=redoStack.pop();draw();});
   $('route-clear').addEventListener('click',()=>{if(!waypoints.length)return;snapshot();waypoints=[];draw();status('Waypoints cleared.');});
+
+  $('route-add-junctions')?.addEventListener('click', () => {
+    const [start, end] = selectedMarkers();
+    if (!start || !end || String(start.id) === String(end.id)) {
+      status('Choose different start and destination locations before adding junctions.');
+      return;
+    }
+    const maxSpacing = 150;
+    const markerNodes = markerNodeIds();
+    const usedNodeIds = new Set([
+      start.route_node_id,
+      end.route_node_id,
+      ...waypoints.map(point => point.node_id)
+    ].filter(id => id !== null && id !== undefined && String(id) !== '').map(String));
+    const originalWaypoints = waypoints;
+    const anchors = [
+      {x:Number(start.x), y:Number(start.y)},
+      ...originalWaypoints.map(point => ({...point})),
+      {x:Number(end.x), y:Number(end.y)}
+    ];
+    const expanded = [];
+    let added = 0;
+    for (let segment = 0; segment < anchors.length - 1; segment++) {
+      if (segment > 0) expanded.push(originalWaypoints[segment - 1]);
+      const from = anchors[segment], to = anchors[segment + 1];
+      const distance = Math.hypot(to.x - from.x, to.y - from.y);
+      const divisions = Math.ceil(distance / maxSpacing);
+      for (let step = 1; step < divisions; step++) {
+        const fraction = step / divisions;
+        const point = snapToGrid({
+          x: Math.round(from.x + (to.x - from.x) * fraction),
+          y: Math.round(from.y + (to.y - from.y) * fraction)
+        });
+        const nearest = mapData.nodes
+          .filter(node => Number(node.active) !== 0 &&
+            !markerNodes.has(String(node.id)) &&
+            Number(node.floor_number || 0) === 0)
+          .map(node => ({node, distance:Math.hypot(Number(node.x)-point.x, Number(node.y)-point.y)}))
+          .sort((a,b) => a.distance - b.distance)[0];
+        if (nearest && nearest.distance <= Math.max(26, 26 * W / mapElement.clientWidth)) {
+          const id = String(nearest.node.id);
+          if (usedNodeIds.has(id)) continue;
+          usedNodeIds.add(id);
+          expanded.push({
+            node_id:Number(nearest.node.id),
+            x:Number(nearest.node.x),
+            y:Number(nearest.node.y),
+            floor_number:Number(nearest.node.floor_number)||0
+          });
+        } else {
+          expanded.push({x:point.x, y:point.y, floor_number:0});
+        }
+        added++;
+      }
+    }
+    if (!added) {
+      status('No long route segments need additional junctions. Segments are already 150 map units or shorter.');
+      return;
+    }
+    if (expanded.length > 100) {
+      status('This would exceed the 100-waypoint route limit. Add junctions to shorter sections instead.');
+      return;
+    }
+    snapshot();
+    waypoints = expanded;
+    draw();
+    status(`Added ${added} intermediate junction(s) at approximately 150 map-unit intervals. Save the route to store them in the shared walkway network.`);
+  });
+
   $('route-waypoint-list').addEventListener('input',event=>{
     const input=event.target.closest('[data-waypoint-notes]');if(!input)return;
     const point=waypoints[Number(input.dataset.index)];if(point)point.notes=input.value;
