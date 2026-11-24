@@ -147,16 +147,6 @@
       </div>
 
       <div id="routeOptions" class="w-full hidden grid grid-cols-1 md:grid-cols-2 gap-2 mt-1"></div>
-      <details id="savedRoutesPanel" class="saved-route-browser w-full mt-2 rounded-lg border border-slate-700/70 bg-slate-900/60" open>
-        <summary class="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 text-[11px] font-extrabold text-slate-100">
-          <span>Saved campus routes</span>
-          <span class="flex items-center gap-2 text-[10px] font-semibold text-slate-400"><span id="savedRouteCount">Loading routes…</span><span class="material-symbols-rounded" aria-hidden="true">expand_more</span></span>
-        </summary>
-        <div class="border-t border-slate-700/70 p-2">
-          <input id="savedRouteSearch" type="search" placeholder="Search saved routes…" aria-label="Search saved routes" class="mb-2 w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-white placeholder:text-slate-400" />
-          <div id="savedRouteList" class="saved-route-browser-list" aria-live="polite"><p class="px-2 py-3 text-center text-[11px] text-slate-400">Loading saved routes…</p></div>
-        </div>
-      </details>
       <div id="routeNotice" class="w-full hidden text-[11px] rounded-lg border px-2.5 py-2"></div>
     </div>
 
@@ -513,74 +503,7 @@
     const routeInfo = document.getElementById('routeInfo');
     const routeOptions = document.getElementById('routeOptions');
     const routeNotice = document.getElementById('routeNotice');
-    const savedRouteList = document.getElementById('savedRouteList');
-    const savedRouteSearch = document.getElementById('savedRouteSearch');
-    const savedRouteCount = document.getElementById('savedRouteCount');
-    const findRouteBtn = document.getElementById('findRouteBtn');
-    const clearRouteBtn = document.getElementById('clearRouteBtn');
-
-    fromSelect.add(new Option('Select a start location', ''));
-    toSelect.add(new Option('Select a destination', ''));
-    locations.forEach(loc => {
-      const option = `<option value="${routeId(loc)}">${escapeHtml(loc.name)}${loc.floor ? ` · Floor ${loc.floor}` : ''}</option>`;
-      fromSelect.insertAdjacentHTML('beforeend', option);
-      toSelect.insertAdjacentHTML('beforeend', option);
-    });
-    const locationLabels = new Map();
-    locations.forEach(loc => {
-      const label = `${loc.name}${loc.category ? ` · ${loc.category}` : ''}${loc.floor ? ` · Floor ${loc.floor}` : ''}`;
-      locationLabels.set(label, routeId(loc));
-    });
-    const labelFor = id => [...locationLabels.entries()].find(([, locationId]) => locationId === id)?.[0] || '';
-    fromSearch.value = '';
-    toSearch.value = '';
-
-    let routeLine = null;
-    let routeMarkers = [];
-    let animationFrame = null;
-    let currentRoutes = {};
     let preferredSavedRouteId = null;
-
-    function renderSavedRouteList() {
-      const published = savedRoutes
-        .filter(route => route.status === 'active')
-        .sort((a,b) => Number(a.id) - Number(b.id));
-      const term = savedRouteSearch.value.trim().toLocaleLowerCase();
-      const matches = published.filter(route => {
-        const start = mapPins.find(pin => String(pin.markerId) === String(route.start_marker_id));
-        const end = mapPins.find(pin => String(pin.markerId) === String(route.destination_marker_id));
-        const searchable = [start?.name, end?.name, route.name, route.notes].filter(Boolean).join(' ').toLocaleLowerCase();
-        return !term || searchable.includes(term);
-      });
-      savedRouteCount.textContent = `${published.length} published route${published.length === 1 ? '' : 's'}`;
-      savedRouteList.innerHTML = matches.length ? matches.map((route,index) => {
-        const start = mapPins.find(pin => String(pin.markerId) === String(route.start_marker_id));
-        const end = mapPins.find(pin => String(pin.markerId) === String(route.destination_marker_id));
-        const endpoints = `${start?.name || route.start_name || 'Start unavailable'} ↔ ${end?.name || route.destination_name || 'Destination unavailable'}`;
-        return `<button type="button" class="saved-route-browser-item" data-saved-route-id="${escapeHtml(route.id)}" title="Show ${escapeHtml(endpoints)} on the map"><span class="saved-route-endpoints">Path ${index+1} · ${escapeHtml(endpoints)}</span><span class="saved-route-action">View route</span></button>`;
-      }).join('') : `<p class="px-2 py-3 text-center text-[11px] text-slate-400">${published.length ? 'No saved routes match your search.' : 'No published routes are available.'}</p>`;
-    }
-    savedRouteSearch.addEventListener('input', renderSavedRouteList);
-    savedRouteList.addEventListener('click', event => {
-      const button = event.target.closest('[data-saved-route-id]');
-      if (!button) return;
-      const route = savedRoutes.find(item => String(item.id) === String(button.dataset.savedRouteId) && item.status === 'active');
-      if (!route) return;
-      const start = mapPins.find(pin => String(pin.markerId) === String(route.start_marker_id));
-      const end = mapPins.find(pin => String(pin.markerId) === String(route.destination_marker_id));
-      if (!start || !end) {
-        setNotice('This saved route has a missing map endpoint and cannot be displayed.', 'error');
-        return;
-      }
-      fromSelect.value = routeId(start);
-      toSelect.value = routeId(end);
-      fromSearch.value = labelFor(routeId(start));
-      toSearch.value = labelFor(routeId(end));
-      dropdowns.forEach(control => closeSuggestions(control.list));
-      preferredSavedRouteId = `saved:${route.id}`;
-      updateRouteButton();
-      calculateRoutes();
-    });
 
     function clearRoute() {
       if (animationFrame) cancelAnimationFrame(animationFrame);
@@ -780,8 +703,7 @@
       try {
         storedMap = await window.CampusApi.get('map');
         savedRoutes = await window.CampusApi.get('routes/available');
-        renderSavedRouteList();
-        rebuildRouteGraph();
+            rebuildRouteGraph();
         if (netToggleBox.checked) showWalkways();
       } catch (error) {
         setNotice(error.message || 'Saved routes could not be refreshed.', 'error');
