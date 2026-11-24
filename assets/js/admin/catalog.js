@@ -24,6 +24,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     form.dataset.editLayoutApplied='true';
     const wrapperFor=name=>name==='photo'&&form.querySelector('.catalog-add-photo-panel')
       ?form.querySelector('.catalog-add-photo-panel')
+      :name==='model_3d_file'
+      ?form.querySelector('.catalog-model-panel')
       :name==='accessibility_features'
       ?form.querySelector('.catalog-checklist-dropdown')||form.querySelector('fieldset:has([name="accessibility_features"])')
       :name==='category_ids'
@@ -87,6 +89,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     return(await CampusApi.request('uploads',{method:'POST',body:data,onUploadProgress:onProgress})).path;
   };
   const optionalText=(form,name)=>form.elements[name]?.value.trim()||null;
+  const supportedAccessibilityFeatures=new Set(['wheelchair_entrance','elevator','ramp','accessible_restroom','accessible_parking','handrails','tactile_paving','braille_signage','hearing_assistance']);
+  const accessibilityFeatureApiValue=value=>value==='wheelchair_accessibility'?'wheelchair_entrance':value;
+  const selectedAccessibilityFeatures=form=>[...form.querySelectorAll('[name="accessibility_features"]:checked')].map(control=>accessibilityFeatureApiValue(control.value)).filter(value=>supportedAccessibilityFeatures.has(value));
   const detailPayload=form=>({
     contact_email:optionalText(form,'contact_email'),
     contact_phone:optionalText(form,'contact_phone'),
@@ -94,7 +99,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     days_open:optionalText(form,'days_open'),
     lunch_break:optionalText(form,'lunch_break'),
     accessibility_status:form.elements.accessibility_status?.value===''||!form.elements.accessibility_status?null:Number(form.elements.accessibility_status.value),
-    accessibility_details:[...form.querySelectorAll('[name="accessibility_features"]:checked')].map(control=>control.value.replaceAll('_',' ')).join('\n')||null
+    accessibility_details:selectedAccessibilityFeatures(form).map(feature=>feature.replaceAll('_',' ')).join('\n')||null
   });
   const catOptions=(selected=[])=>{const ids=(Array.isArray(selected)?selected:[selected]).map(String);return categories.map(item=>`<option value="${esc(item.id)}" ${ids.includes(String(item.id))?'selected':''}>${esc(item.name)}</option>`).join('');};
   const selectedCategoryIds=form=>[...(form.querySelector('[name="category_ids"]')?.selectedOptions||[])].map(option=>Number(option.value)).filter(Number.isFinite);
@@ -280,7 +285,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     section.className='admin-edit-wide catalog-model-panel';
     section.dataset.addSection='';
     section.innerHTML=`<div class="catalog-section-heading"><div><h3>3D Model</h3><p>Optionally upload a GLB model and preview it before adding this campus location.</p></div><span class="catalog-count">Optional</span></div>
-      <div class="catalog-model-upload"><label class="catalog-model-file-label">Choose 3D model (.glb)<input name="model_3d_file" type="file" accept=".glb,model/gltf-binary,application/octet-stream"></label></div>
+      <div class="catalog-model-upload"><label>Choose 3D model (.glb)<input name="model_3d_file" type="file" accept=".glb,model/gltf-binary,application/octet-stream"></label><button type="button" data-add-model-choose class="admin-button-primary">Upload 3D Model</button><small>Maximum file size: 50 MB. The model will be added when you save this location.</small></div>
       <p data-add-model-name class="text-xs text-slate-500 mt-2">No 3D model selected.</p>
       <model-viewer data-add-model-preview class="w-full mt-3 rounded-xl" style="height:260px;background:#eef3f8;display:none" camera-controls auto-rotate shadow-intensity="1" exposure="1" environment-image="neutral" alt="3D preview of the selected campus model"></model-viewer>
       <button type="button" data-add-model-clear class="admin-button-secondary mt-2" hidden>Remove selected model</button>`;
@@ -293,6 +298,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.head.append(script);
     }
     const input=section.querySelector('[name="model_3d_file"]');
+    section.querySelector('[data-add-model-choose]')?.addEventListener('click',()=>input.click());
     const viewer=section.querySelector('[data-add-model-preview]');
     const name=section.querySelector('[data-add-model-name]');
     const clear=section.querySelector('[data-add-model-clear]');
@@ -471,12 +477,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     try{
       if(pendingEdit.type==='location'){
         const isBuilding=item.kind==='building';
-        const accessibilityFeatures=[...form.querySelectorAll('[name="accessibility_features"]:checked')].map(control=>control.value);
+        const accessibilityFeatures=selectedAccessibilityFeatures(form);
         const uploadedModel=await upload(form.querySelector('[name="model_3d_file"]'),'model');
         await CampusApi.save('locations',{model_3d_path:uploadedModel||item.model_3d_object_path||item.model_3d_path||null,name:value('name'),kind:item.kind,category_ids:selectedCategoryIds(form),description:value('description')||null,building_number:item.building_number||null,floor_label:null,floor_count:isBuilding?Number(value('floor_count')||item.floor_count||1):1,parent_building_id:null,capacity:value('capacity')===''?null:Number(value('capacity')),image_path:item.image_object_path||item.image_path||null,department_name:item.department_name||null,contact_email:value('contact_email')||null,contact_phone:value('contact_phone')||null,website_url:item.website_url||null,service_hours:value('service_hours')||null,days_open:value('days_open')||null,lunch_break:value('lunch_break')||null,services:item.services||null,nearby_landmarks:item.nearby_landmarks||null,accessibility_status:value('accessibility_status')===''?null:Number(value('accessibility_status')),accessibility_details:accessibilityFeatures.map(feature=>feature.replaceAll('_',' ')).join('\n')||null,accessibility_features:isBuilding?accessibilityFeatures:[]},item.id);
       }else{
         const floorLabel=value('floor_label');
-        await CampusApi.save('rooms',{name:value('name'),room_number:value('room_number'),route_node_id:item.route_node_id||null,building_id:Number(value('building_id')),category_ids:selectedCategoryIds(form),floor_label:floorLabel||null,floor_number:Number((floorLabel.match(/\d+/)||[])[0]||item.floor_number||0),capacity:value('capacity')===''?null:Number(value('capacity')),description:value('description')||null,function_description:item.function_description||null,department_head:item.department_head||null,image_path:item.image_path||null,department_name:item.department_name||null,contact_email:value('contact_email')||null,contact_phone:value('contact_phone')||null,website_url:item.website_url||null,service_hours:value('service_hours')||null,days_open:value('days_open')||null,lunch_break:value('lunch_break')||null,services:item.services||null,nearby_landmarks:item.nearby_landmarks||null,accessibility_status:value('accessibility_status')===''?null:Number(value('accessibility_status')),accessibility_details:[...form.querySelectorAll('[name="accessibility_features"]:checked')].map(control=>control.value.replaceAll('_',' ')).join('\n')||null},item.id);
+        await CampusApi.save('rooms',{name:value('name'),room_number:value('room_number'),route_node_id:item.route_node_id||null,building_id:Number(value('building_id')),category_ids:selectedCategoryIds(form),floor_label:floorLabel||null,floor_number:Number((floorLabel.match(/\d+/)||[])[0]||item.floor_number||0),capacity:value('capacity')===''?null:Number(value('capacity')),description:value('description')||null,function_description:item.function_description||null,department_head:item.department_head||null,image_path:item.image_path||null,department_name:item.department_name||null,contact_email:value('contact_email')||null,contact_phone:value('contact_phone')||null,website_url:item.website_url||null,service_hours:value('service_hours')||null,days_open:value('days_open')||null,lunch_break:value('lunch_break')||null,services:item.services||null,nearby_landmarks:item.nearby_landmarks||null,accessibility_status:value('accessibility_status')===''?null:Number(value('accessibility_status')),accessibility_details:selectedAccessibilityFeatures(form).map(feature=>feature.replaceAll('_',' ')).join('\n')||null},item.id);
       }
       form.dataset.dirty='false';await refresh();renderAll();
       const savedItem=pendingEdit.type==='location'
@@ -511,7 +517,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     return `<article class="catalog-directory-card" data-id="${esc(item.id)}">
       <div class="catalog-directory-photo">${image?`<a href="${esc(imageSrc(image))}" target="_blank" rel="noopener noreferrer" aria-label="Open cover photo of ${esc(item.name)}"><img src="${esc(imageSrc(image))}" alt="" loading="lazy"></a>`:`<span class="material-symbols-rounded" aria-hidden="true">${room?'meeting_room':building?'location_city':'storefront'}</span>`}</div>
       <div class="catalog-directory-info"><div class="catalog-directory-meta"><span>${kindLabel}</span><span>${esc((item.category_names||[item.category]).filter(Boolean).join(' · ')||'Campus')}</span></div><h3>${esc(item.name)}</h3><p class="catalog-directory-description">${esc(item.description||'More information is available in this directory profile.')}</p><p class="catalog-directory-location">${esc(subtitle)}</p></div>
-      <div class="catalog-directory-actions"><a href="${mapHref}"><span class="material-symbols-rounded" aria-hidden="true">map</span><span>Show on map</span></a><a href="${detailHref}"><span>Public page</span><span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></a><span class="catalog-row-action-group"><button data-action="details" class="admin-row-action">View details</button><button data-action="edit" class="admin-row-action">Edit</button><button data-action="archive" class="admin-row-action is-danger">Archive</button></span></div>
+      <div class="catalog-directory-actions"><a href="${mapHref}"><span class="material-symbols-rounded" aria-hidden="true">map</span><span>Show on map</span></a><a href="${detailHref}"><span>Public page</span><span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></a><span class="catalog-row-action-group"><button data-action="details" class="admin-row-action">View details</button><button data-action="edit" class="admin-row-action">Edit</button><button data-action="delete" class="admin-row-action is-danger">Delete</button></span></div>
     </article>`;
   }).join('')}</div>`;
   function renderLocations(kind){
@@ -523,8 +529,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     target.querySelector('[data-category-filter]')?.addEventListener('change',event=>{categoryFilters[kind]=event.target.value;pageNumbers[kind]=0;renderLocations(kind);});
     target.querySelector('[data-sort-order]')?.addEventListener('change',event=>{sortOrders[kind]=event.target.value;pageNumbers[kind]=0;renderLocations(kind);});
     bindPagination(target,kind,filtered.length);
-    target.querySelector('.catalog-list-cards')?.addEventListener('click',async event=>{const button=event.target.closest('[data-action]');if(!button)return;const item=all.find(record=>String(record.id)===button.closest('[data-id]').dataset.id);if(!item)return;if(button.dataset.action==='details'){showDetails(item,kind);return;}if(button.dataset.action==='edit'){openEditor('location',item);return;}if(button.dataset.action==='archive'&&!await window.AdminUI.confirm({title:`Archive ${kind}?`,message:`Archive “${item.name}”? It will no longer appear in active campus records. Related records are not automatically deleted; the server will enforce relationship rules.`,confirmLabel:'Archive record',danger:true}))return;button.disabled=true;
-      try{await CampusApi.request('locations',{method:'PATCH',body:{id:item.id,active:false}});status('Campus record archived.');notify(`${kind[0].toUpperCase()+kind.slice(1)} archived.`);await refresh();renderAll();
+    target.querySelector('.catalog-list-cards')?.addEventListener('click',async event=>{const button=event.target.closest('[data-action]');if(!button)return;const item=all.find(record=>String(record.id)===button.closest('[data-id]').dataset.id);if(!item)return;if(button.dataset.action==='details'){showDetails(item,kind);return;}if(button.dataset.action==='edit'){openEditor('location',item);return;}if(button.dataset.action==='delete'&&!await window.AdminUI.confirm({title:`Delete ${kind}?`,message:`Delete “${item.name}”? This action cannot be undone. The server will prevent deletion while dependent records remain.`,confirmLabel:'Delete record',danger:true}))return;button.disabled=true;
+      try{await CampusApi.remove('locations',item.id);status('Campus record deleted.');notify(`${kind[0].toUpperCase()+kind.slice(1)} deleted.`);await refresh();renderAll();
       }catch(error){status(error.message);notify(error.message,'error');}finally{button.disabled=false;}
     });
   }
@@ -537,8 +543,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     target.querySelector('[data-category-filter]')?.addEventListener('change',event=>{categoryFilters.room=event.target.value;pageNumbers.room=0;renderRooms();});
     target.querySelector('[data-sort-order]')?.addEventListener('change',event=>{sortOrders.room=event.target.value;pageNumbers.room=0;renderRooms();});
     bindPagination(target,'room',filtered.length);
-    target.querySelector('.catalog-list-cards')?.addEventListener('click',async event=>{const button=event.target.closest('[data-action]');if(!button)return;const item=rooms.find(room=>String(room.id)===button.closest('[data-id]').dataset.id);if(!item)return;if(button.dataset.action==='details'){showDetails(item,'room');return;}if(button.dataset.action==='edit'){openEditor('room',item);return;}if(button.dataset.action==='archive'&&!await window.AdminUI.confirm({title:'Archive room?',message:`Archive room ${item.room_number} — ${item.name}? Related map and route records will not be automatically removed.`,confirmLabel:'Archive room',danger:true}))return;button.disabled=true;
-      try{if(button.dataset.action==='archive'){await CampusApi.request('rooms',{method:'PATCH',body:{id:item.id,active:false}});status('Room archived.');notify('Room archived successfully.');}await refresh();renderAll();
+    target.querySelector('.catalog-list-cards')?.addEventListener('click',async event=>{const button=event.target.closest('[data-action]');if(!button)return;const item=rooms.find(room=>String(room.id)===button.closest('[data-id]').dataset.id);if(!item)return;if(button.dataset.action==='details'){showDetails(item,'room');return;}if(button.dataset.action==='edit'){openEditor('room',item);return;}if(button.dataset.action==='delete'&&!await window.AdminUI.confirm({title:'Delete room?',message:`Delete room ${item.room_number} — ${item.name}? This action cannot be undone.`,confirmLabel:'Delete room',danger:true}))return;button.disabled=true;
+      try{if(button.dataset.action==='delete'){await CampusApi.remove('rooms',item.id);status('Room deleted.');notify('Room deleted successfully.');}await refresh();renderAll();
       }catch(error){status(error.message);notify(error.message,'error');}finally{button.disabled=false;}
     });
   }
@@ -569,9 +575,21 @@ document.addEventListener('DOMContentLoaded', async () => {
           const photoTitle=form===roomForm?'Room or Office Photo':form===facilityForm?'Facility Photo':'Building Photo';
           photoPanel.innerHTML=`<div class="catalog-section-heading"><div><h3>${photoTitle}</h3><p>Upload the main photo visitors will see in the campus directory.</p></div><span class="catalog-count">Optional</span></div><div class="catalog-gallery-upload catalog-add-photo-upload"></div>`;
           photoLabel.before(photoPanel);
-          const photoCaption=document.createElement('label');photoCaption.className='catalog-add-photo-caption';photoCaption.innerHTML='Photo caption (optional)<input type="text" data-add-photo-caption maxlength="255" placeholder="Write a short caption for this photo">';
-          photoPanel.querySelector('.catalog-add-photo-upload').append(photoLabel,photoCaption);
-          photoLabel.classList.add('catalog-add-photo-field');
+          const photoInput=form.elements.photo;
+          const uploadArea=photoPanel.querySelector('.catalog-add-photo-upload');
+          uploadArea.innerHTML='<div><strong>Add photo</strong><p>Select one image and optionally add a caption.</p></div>';
+          photoLabel.innerHTML='<span>Choose photo</span>';
+          photoLabel.append(photoInput);
+          photoLabel.className='catalog-add-photo-field';
+          photoLabel.setAttribute('aria-label','Choose photo file');
+          const photoCaption=document.createElement('label');
+          photoCaption.innerHTML='<span>Caption (optional)</span><input type="text" data-add-photo-caption maxlength="255" placeholder="Describe this photo">';
+          const photoButton=document.createElement('button');
+          photoButton.type='button';
+          photoButton.className='admin-button-primary';
+          photoButton.textContent='Upload photo';
+          photoButton.addEventListener('click',()=>photoInput.click());
+          uploadArea.append(photoLabel,photoCaption,photoButton);
         }
         window.CampusPhotoTools?.bindPreview(form.elements.photo,preview);
         preview.classList.add('catalog-add-photo-preview');
@@ -600,7 +618,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           const setAddPhotoProgress=percent=>{if(photoProgress)photoProgress.hidden=false;if(photoBar)photoBar.value=percent;if(photoValue)photoValue.textContent=percent+'%';if(photoLabel)photoLabel.textContent=percent>=100?'Saving photo details…':'Uploading photo';};
           if(form.elements.photo?.files?.length&&photoProgress)photoProgress.hidden=false;
           const image_path=await upload(form.elements.photo,'photo',setAddPhotoProgress);let payload,resource;
-          if(form===buildingForm){resource='locations';const model_3d_path=await upload(form.elements.model_3d_file,'model');payload={model_3d_path,name:form.elements.name.value.trim(),kind:'building',category_ids:selectedCategoryIds(form),description:optionalText(form,'description'),floor_count:Number(form.elements.floors.value),capacity:form.elements.capacity.value===''?null:Number(form.elements.capacity.value),image_path,...detailPayload(form),accessibility_features:[...form.querySelectorAll('[name="accessibility_features"]:checked')].map(control=>control.value)};}
+          if(form===buildingForm){resource='locations';const model_3d_path=await upload(form.elements.model_3d_file,'model');payload={model_3d_path,name:form.elements.name.value.trim(),kind:'building',category_ids:selectedCategoryIds(form),description:optionalText(form,'description'),floor_count:Number(form.elements.floors.value),capacity:form.elements.capacity.value===''?null:Number(form.elements.capacity.value),image_path,...detailPayload(form),accessibility_features:selectedAccessibilityFeatures(form)};}
           else if(form===facilityForm){resource='locations';const model_3d_path=await upload(form.elements.model_3d_file,'model');payload={model_3d_path,name:form.elements.name.value.trim(),kind:'facility',category_ids:selectedCategoryIds(form),parent_building_id:null,floor_label:null,description:optionalText(form,'description'),floor_count:1,capacity:form.elements.capacity.value===''?null:Number(form.elements.capacity.value),image_path,...detailPayload(form)};}
           else{resource='rooms';payload={name:form.elements.name.value.trim(),building_id:Number(form.elements.buildingId.value),category_ids:selectedCategoryIds(form),room_number:form.elements.room.value.trim(),floor_label:form.elements.floor.value.trim(),floor_number:Number((form.elements.floor.value.match(/\d+/)||[])[0]||0),capacity:form.elements.capacity.value===''?null:Number(form.elements.capacity.value),department_head:optionalText(form,'head'),description:optionalText(form,'description'),function_description:optionalText(form,'function_description'),image_path,...detailPayload(form)};}
           const savedRecord=await CampusApi.save(resource,payload);

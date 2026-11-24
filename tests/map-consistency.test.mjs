@@ -25,6 +25,25 @@ test('map frontend keeps database nodes, legacy junctions, and API loading align
   assert.match(mapPage, /route\.accessible_confirmed/);
 });
 
+test('public map cleanup removes deleted-location nodes and every dependent route edge', () => {
+  assert.match(api, /from\('locations'\)[\s\S]*?\.eq\('active', true\)/);
+  assert.match(api, /like\('node_key', 'location-%'\)/);
+  assert.match(api, /match\(\/\^location-\(/);
+  assert.match(api, /incidentConnectionIds\.has\(Number\(row\.connection_id\)\)/);
+  assert.match(api, /from\('map_connections'\)\.delete\(\)\.in\('id', connectionIds\)/);
+  assert.match(api, /from\('map_nodes'\)\.delete\(\)\.in\('id', staleLocationNodeIds\)/);
+});
+
+test('public map cleanup removes orphaned route geometry before loading graph data', () => {
+  assert.match(api, /await cleanupOrphanedRouteGeometry\(db\)/);
+  assert.match(api, /from\('campus_route_segments'\)/);
+  assert.match(api, /from\('campus_route_points'\)/);
+  assert.match(api, /like\('node_key', 'route-%'\)/);
+  assert.match(api, /update\(\{ route_node_id: null \}\)/);
+  assert.match(api, /from\('map_connections'\)\.delete\(\)/);
+  assert.match(api, /route\.start_marker\?\.id !== route\.destination_marker\?\.id/);
+});
+
 test('Netlify map queries use schema foreign keys and frontend-compatible directory fields', () => {
   // Parent buildings are resolved in JavaScript to avoid depending on the
   // PostgREST self-referencing relationship being present in its schema cache.
@@ -45,7 +64,11 @@ test('Netlify map queries use schema foreign keys and frontend-compatible direct
   assert.ok(mapPage.includes(".sort((a,b)=>Number(a.sequence_no)-Number(b.sequence_no))"));
   // The selected visitor path must use the same saved waypoint sequence as the graph.
   assert.match(mapPage, /let points = \(route\.points \|\| \[\]\)\s*\.filter\(point => point\.node_id && graph\[`n:\$\{point\.node_id\}`\]\)\s*\.sort\(\(a,b\)=>Number\(a\.sequence_no\)-Number\(b\.sequence_no\)\);/);
-  // Keep the faint blue walkway network above the opaque campus map image.
+  // The public map shows the selected route by default; the general walkway
+  // network is optional so old/shared connections do not look like saved routes.
+  assert.match(mapPage, /id="netToggleBox" class=/);
+  assert.doesNotMatch(mapPage, /id="netToggleBox" checked/);
+  // Keep the faint blue walkway network available when visitors enable it.
   assert.ok(mapPage.includes("opacity: 0.28, lineCap: 'round', lineJoin: 'round', interactive: false"));
   assert.ok(!mapPage.includes('networkLayer.eachLayer(l => l.bringToBack())'));
   assert.ok(mapPage.includes('If an administrator published this exact origin/destination pair'));
@@ -75,7 +98,13 @@ test('map and route API pagination loads every record beyond the Supabase row ca
 test('mapping mutations generate and preserve node keys and call the route RPC contract', () => {
   assert.match(mutations, /[\x60]node-\$\{randomUUID\(\)\}[\x60]/);
   assert.match(mutations, /existing\?\.node_key/);
-  assert.match(mutations, /updateById\('map_connections', id, \{ active: false \}/);
+  assert.match(mutations, /deleteCampusRecord\(database, 'map_connection', id\)/);
+  // Deleting a saved route must also remove its own geometry and only orphaned
+  // route-generated map connections, while retaining shared walkway edges.
+  assert.match(mutations, /from\('campus_route_segments'\)\.delete\(\)\.eq\('route_id', id\)/);
+  assert.match(mutations, /from\('campus_route_points'\)\.delete\(\)\.eq\('route_id', id\)/);
+  assert.match(mutations, /startsWith\([\x60]route-\$\{id\}-[\x60]\)/);
+  assert.match(mutations, /shared_walkways_preserved: true/);
   assert.match(mutations, /node_key: [\x60]location-\$\{locationId\}[\x60]/);
   assert.match(mutations, /existingMarker\?\.route_node_id/);
   assert.match(mutations, /route_node_id: nodeId/);

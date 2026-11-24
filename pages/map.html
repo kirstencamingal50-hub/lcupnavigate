@@ -11,7 +11,7 @@
 
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" />
-  <link rel="stylesheet" href="../assets/css/style.css?v=20261123-map-controls-routes-refreshfix" />
+  <link rel="stylesheet" href="../assets/css/style.css?v=20261124-map-photo-slideshow" />
 
   <style>
     html, body {
@@ -66,11 +66,25 @@
 
     /* Keep route search usable on mobile without browser focus-zoom. */
     #fromSearch, #toSearch { font-size:16px !important; }
+    .saved-route-browser summary::-webkit-details-marker { display:none; }
+    .saved-route-browser summary::marker { content:""; }
+    .saved-route-browser-list { max-height:220px; overflow-y:auto; overscroll-behavior:contain; }
+    .saved-route-browser-item { display:flex; width:100%; align-items:center; justify-content:space-between; gap:10px; padding:9px 10px; border-bottom:1px solid rgba(148,163,184,.14); border-radius:8px; color:#e2e8f0; text-align:left; }
+    .saved-route-browser-item:last-child { border-bottom:0; }
+    .saved-route-browser-item:hover,.saved-route-browser-item:focus-visible { background:rgba(59,130,246,.18); outline:none; }
+    .saved-route-browser-item .saved-route-endpoints { min-width:0; overflow-wrap:anywhere; font-size:11px; font-weight:700; line-height:1.4; }
+    .saved-route-browser-item .saved-route-action { flex:none; color:#93c5fd; font-size:10px; font-weight:800; }
     .map-place-accessibility { margin-top:.65rem; padding:.65rem .75rem; border:1px solid rgba(34,197,94,.35); border-radius:12px; background:rgba(34,197,94,.07); }
     .map-place-accessibility h3 { margin:0 0 .35rem; font-size:.72rem; font-weight:800; color:#d1fae5; }
     .map-place-accessibility-status { display:inline-flex; margin:0; padding:.3rem .6rem; border-radius:999px; background:#15803d; color:#fff; font-size:.78rem; font-weight:800; line-height:1.2; }
     .map-place-accessibility ul { margin:.45rem 0 0; padding:0; display:flex; flex-wrap:wrap; gap:.25rem .55rem; list-style:none; font-size:.65rem; }
     .map-place-accessibility ul li { display:flex; align-items:center; gap:.2rem; }
+    .map-place-slideshow { position:relative; width:100%; aspect-ratio:16/10; overflow:hidden; border-radius:14px; background:#0b1220; }
+    .map-place-slideshow .map-place-cover { display:block; width:100%; height:100%; object-fit:cover; }
+    .map-gallery-control { position:absolute; top:50%; transform:translateY(-50%); z-index:2; display:grid; place-items:center; width:34px; height:34px; border:1px solid rgba(255,255,255,.55); border-radius:50%; color:#fff; background:rgba(15,23,42,.78); font-size:22px; line-height:1; }
+    .map-gallery-prev { left:9px; } .map-gallery-next { right:9px; }
+    .map-gallery-count { position:absolute; top:9px; right:9px; z-index:2; padding:4px 9px; border-radius:999px; color:#fff; background:rgba(15,23,42,.78); font-size:10px; font-weight:800; }
+    .map-gallery-caption { position:absolute; right:0; bottom:0; left:0; padding:26px 12px 10px; color:#fff; font-size:11px; background:linear-gradient(transparent,rgba(0,0,0,.76)); }
     @media(max-width:640px){#topbar{top:66px;right:8px;bottom:82px;width:calc(100vw - 16px)}#mapControlsToggle{top:66px;right:8px}}
   </style>
 </head>
@@ -127,10 +141,7 @@
         <div id="routeInfo" class="text-slate-300">Select locations to calculate routes</div>
         <div class="flex items-center gap-2 shrink-0">
           <label class="flex items-center gap-1 text-slate-400 cursor-pointer">
-            <input type="checkbox" id="accessibleRouteOnly" class="rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-0 w-3 h-3"> Accessible only
-          </label>
-          <label class="flex items-center gap-1 text-slate-400 cursor-pointer">
-            <input type="checkbox" id="netToggleBox" checked class="rounded bg-slate-900 border-slate-700 text-blue-600 focus:ring-0 w-3 h-3"> Walkways
+            <input type="checkbox" id="netToggleBox" class="rounded bg-slate-900 border-slate-700 text-blue-600 focus:ring-0 w-3 h-3"> Walkways
           </label>
         </div>
       </div>
@@ -260,21 +271,55 @@
     const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     function openPin(loc) {
       sidebarTitle.textContent = loc.name;
-      const description=[loc.name,loc.category,loc.buildingName,loc.floorLabel||loc.floor,loc.roomNumber,loc.description,loc.functionDescription,loc.departmentName,loc.departmentHead,loc.contactInfo,loc.contactEmail,loc.contactPhone,loc.websiteUrl,loc.serviceHours,loc.accessHours,loc.daysOpen,loc.lunchBreak,loc.services,loc.nearbyLandmarks,loc.accessibilityDetails].filter(Boolean).join('. ');
+      const description=[loc.name,loc.category,loc.buildingName,loc.floorLabel||loc.floor,loc.roomNumber,loc.description,loc.functionDescription,loc.departmentName,loc.departmentHead,loc.contactInfo,loc.contactEmail,loc.contactPhone,loc.websiteUrl,loc.serviceHours,loc.accessHours,loc.daysOpen,loc.lunchBreak,loc.services,loc.nearbyLandmarks].filter(Boolean).join('. ');
       const photos=loc.photos?.length?loc.photos:(loc.image?[{image:loc.image,altText:`Photo of ${loc.name}`,caption:''}]:[]);
-      const accessibility=loc.accessibilityStatus===null||loc.accessibilityStatus===undefined||loc.accessibilityStatus===''?'N/A':([true,1,'1','true','t','yes'].includes(typeof loc.accessibilityStatus==='string'?loc.accessibilityStatus.trim().toLowerCase():loc.accessibilityStatus)?'Accessible':'Not accessible');
+      const accessibility=loc.accessibilityStatus===null||loc.accessibilityStatus===undefined||loc.accessibilityStatus===''?'':([true,1,'1','true','t','yes'].includes(typeof loc.accessibilityStatus==='string'?loc.accessibilityStatus.trim().toLowerCase():loc.accessibilityStatus)?'Accessible':'Not accessible');
+      const accessibilityLabels={wheelchair_entrance:'Wheelchair entrance',wheelchair_accessibility:'Wheelchair entrance',elevator:'Elevator',ramp:'Ramp',accessible_restroom:'Accessible restroom',accessible_parking:'Accessible parking',handrails:'Handrails',tactile_paving:'Tactile paving',braille_signage:'Braille signage',hearing_assistance:'Hearing assistance'};
+      const recordedFeatures=Array.isArray(loc.accessibilityFeatures)?loc.accessibilityFeatures:Array.isArray(loc.accessibility_features)?loc.accessibility_features:[];
+      const featureNames=[...new Set(recordedFeatures.map(feature=>accessibilityLabels[feature]).filter(Boolean))];
       const info=[['Building',loc.buildingName],['Room number',loc.roomNumber],['Room function',loc.functionDescription],['Floors',loc.floor_count],['Capacity',loc.capacity],['Department',loc.departmentName],['Department head',loc.departmentHead],['Contact information',loc.contactInfo],['Floor',loc.floorLabel||loc.floor],['Service hours',loc.serviceHours],['Access hours',loc.accessHours],['Days open',loc.daysOpen],['Lunch break',loc.lunchBreak],['Services',loc.services],['Nearby landmarks',loc.nearbyLandmarks],['Website',loc.websiteUrl]].filter(([,value])=>value!==null&&value!==undefined&&value!=='');
       sidebarContent.innerHTML = `
         <div class="map-place-panel" data-speech-panel>
-          ${photos.length?`<div class="map-place-gallery"><figure><img class="map-place-cover" src="../${escapeHtml(photos[0].image)}" alt="${escapeHtml(photos[0].altText||`Photo of ${loc.name}`)}">${photos[0].caption?`<figcaption class="map-place-caption">${escapeHtml(photos[0].caption)}</figcaption>`:''}</figure>${photos.length>1?`<div class="map-place-thumbnails">${photos.slice(1).map(photo=>`<figure><img src="../${escapeHtml(photo.image)}" alt="${escapeHtml(photo.altText||`Photo of ${loc.name}`)}" loading="lazy">${photo.caption?`<figcaption class="map-place-caption">${escapeHtml(photo.caption)}</figcaption>`:''}</figure>`).join('')}</div>`:''}</div>`:`<div class="map-place-photo-empty"><span>No photo available</span></div>`}
-          <div class="map-place-summary"><span>${escapeHtml(loc.kind==='facility'?'Facility':loc.kind==='room'?'Room':'Building')}</span><span>${escapeHtml(loc.category||'Campus')}</span></div>
-          <p class="map-place-description">${escapeHtml(loc.description||loc.functionDescription||'Description unavailable.')}</p>
+          ${photos.length?`<div class="map-place-gallery map-place-slideshow" data-map-gallery>
+            <img class="map-place-cover" data-gallery-image src="../${escapeHtml(photos[0].image)}" alt="${escapeHtml(photos[0].altText||`Photo of ${loc.name}`)}">
+            ${photos.length>1?`<button type="button" class="map-gallery-control map-gallery-prev" data-gallery-step="-1" aria-label="Previous photo">‹</button><button type="button" class="map-gallery-control map-gallery-next" data-gallery-step="1" aria-label="Next photo">›</button><span class="map-gallery-count" data-gallery-count>1 / ${photos.length}</span>`:''}
+            ${photos[0].caption?`<div class="map-gallery-caption" data-gallery-caption>${escapeHtml(photos[0].caption)}</div>`:''}
+          </div>`:''}
+          <div class="map-place-summary"><span>${escapeHtml(loc.kind==='facility'?'Facility':loc.kind==='room'?'Room':'Building')}</span>${loc.category?`<span>${escapeHtml(loc.category)}</span>`:''}</div>
+          ${loc.description||loc.functionDescription?`<p class="map-place-description">${escapeHtml(loc.description||loc.functionDescription)}</p>`:''}
           ${loc.contactEmail||loc.contactPhone?`<div class="map-place-contact">${loc.contactEmail?`<a href="mailto:${escapeHtml(loc.contactEmail)}"><span class="material-symbols-rounded" aria-hidden="true">mail</span>${escapeHtml(loc.contactEmail)}</a>`:''}${loc.contactPhone?`<a href="tel:${escapeHtml(loc.contactPhone)}"><span class="material-symbols-rounded" aria-hidden="true">call</span>${escapeHtml(loc.contactPhone)}</a>`:''}</div>`:''}
-          <div class="map-place-accessibility" aria-label="Accessibility status"><span class="map-place-accessibility-status">${escapeHtml(accessibility)}</span></div>
+          ${accessibility||featureNames.length?`<div class="map-place-accessibility" aria-label="Accessibility status and recorded features">${accessibility?`<span class="map-place-accessibility-status">${escapeHtml(accessibility)}</span>`:''}${featureNames.length?`<ul aria-label="Recorded accessibility features">${featureNames.map(feature=>`<li>${escapeHtml(feature)}</li>`).join('')}</ul>`:''}</div>`:''}
           ${info.length?`<dl class="map-place-info">${info.map(([label,value])=>`<div><dt>${escapeHtml(label)}</dt><dd>${label==='Website'?`<a href="${escapeHtml(value)}" target="_blank" rel="noopener noreferrer">${escapeHtml(value)}</a>`:escapeHtml(value)}</dd></div>`).join('')}</dl>`:''}
           <div class="map-place-tools"><a href="${loc.kind==='room'?'office.html':'building.html'}?id=${encodeURIComponent(loc.recordId||loc.id)}">Full profile <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></a><div class="flex flex-wrap gap-1"><button type="button" data-speech-action="play" data-speech-text="${escapeHtml(description)}" class="rounded border border-slate-600 px-2 py-1">Play</button><button type="button" data-speech-action="pause" class="rounded border border-slate-600 px-2 py-1">Pause</button><button type="button" data-speech-action="resume" class="rounded border border-slate-600 px-2 py-1">Resume</button><button type="button" data-speech-action="stop" class="rounded border border-slate-600 px-2 py-1">Stop</button></div></div>
           <p data-speech-status role="status" aria-live="polite"></p>
         </div>`;
+      const gallery = sidebarContent.querySelector('[data-map-gallery]');
+      if (gallery && photos.length > 1) {
+        let photoIndex = 0;
+        const showPhoto = () => {
+          const photo = photos[photoIndex];
+          const image = gallery.querySelector('[data-gallery-image]');
+          image.src = '../' + photo.image;
+          image.alt = photo.altText || `Photo of ${loc.name}`;
+          const count = gallery.querySelector('[data-gallery-count]');
+          if (count) count.textContent = `${photoIndex + 1} / ${photos.length}`;
+          const caption = gallery.querySelector('[data-gallery-caption]');
+          if (photo.caption) {
+            if (caption) caption.textContent = photo.caption;
+            else {
+              const nextCaption = document.createElement('div');
+              nextCaption.className = 'map-gallery-caption';
+              nextCaption.dataset.galleryCaption = '';
+              nextCaption.textContent = photo.caption;
+              gallery.appendChild(nextCaption);
+            }
+          } else if (caption) caption.remove();
+        };
+        gallery.querySelectorAll('[data-gallery-step]').forEach(button => button.addEventListener('click', () => {
+          photoIndex = (photoIndex + Number(button.dataset.galleryStep) + photos.length) % photos.length;
+          showPhoto();
+        }));
+      }
       sidebar.classList.remove('translate-x-full');
       sidebar.setAttribute('aria-hidden','false');
       markers.forEach(m => m.getElement()?.classList.toggle('np-on', m._loc === loc));
@@ -395,11 +440,6 @@
     }
     rebuildRouteGraph();
 
-    let mapPreferences = {};
-    try { mapPreferences = JSON.parse(localStorage.getItem('navigatorate.visitor.preferences') || '{}') || {}; } catch {}
-    let accessibleOnly = mapPreferences.routeType === 'accessible';
-    document.getElementById('accessibleRouteOnly').checked = accessibleOnly;
-
     function routeId(loc) { return `loc:${loc.id}:${loc.floor}`; }
 
     function edgeKey(a, b) { return [a, b].sort().join('||'); }
@@ -418,7 +458,6 @@
 
         Object.entries(graph[u].neighbors).forEach(([v, w]) => {
           if (blockedEdges.has(edgeKey(u, v))) return;
-          if (accessibleOnly && !graph[u].accessibleNeighbors[v]) return;
           const alt = dists[u] + w;
           if (alt < dists[v]) { dists[v] = alt; prev[v] = u; }
         });
@@ -464,29 +503,7 @@
     const routeInfo = document.getElementById('routeInfo');
     const routeOptions = document.getElementById('routeOptions');
     const routeNotice = document.getElementById('routeNotice');
-    const findRouteBtn = document.getElementById('findRouteBtn');
-    const clearRouteBtn = document.getElementById('clearRouteBtn');
-
-    fromSelect.add(new Option('Select a start location', ''));
-    toSelect.add(new Option('Select a destination', ''));
-    locations.forEach(loc => {
-      const option = `<option value="${routeId(loc)}">${escapeHtml(loc.name)}${loc.floor ? ` · Floor ${loc.floor}` : ''}</option>`;
-      fromSelect.insertAdjacentHTML('beforeend', option);
-      toSelect.insertAdjacentHTML('beforeend', option);
-    });
-    const locationLabels = new Map();
-    locations.forEach(loc => {
-      const label = `${loc.name}${loc.category ? ` · ${loc.category}` : ''}${loc.floor ? ` · Floor ${loc.floor}` : ''}`;
-      locationLabels.set(label, routeId(loc));
-    });
-    const labelFor = id => [...locationLabels.entries()].find(([, locationId]) => locationId === id)?.[0] || '';
-    fromSearch.value = '';
-    toSearch.value = '';
-
-    let routeLine = null;
-    let routeMarkers = [];
-    let animationFrame = null;
-    let currentRoutes = {};
+    let preferredSavedRouteId = null;
 
     function clearRoute() {
       if (animationFrame) cancelAnimationFrame(animationFrame);
@@ -686,7 +703,7 @@
       try {
         storedMap = await window.CampusApi.get('map');
         savedRoutes = await window.CampusApi.get('routes/available');
-        rebuildRouteGraph();
+            rebuildRouteGraph();
         if (netToggleBox.checked) showWalkways();
       } catch (error) {
         setNotice(error.message || 'Saved routes could not be refreshed.', 'error');
@@ -700,7 +717,6 @@
         .filter(route => route.status === 'active')
         .sort((a,b)=>Number(a.id)-Number(b.id))
         .flatMap(route => {
-          if (accessibleOnly && !isConfirmedAccessible(route.accessibility_status)) return [];
           const direction = getSavedRouteDirection(route, startLocation, endLocation);
           if (!direction) return [];
           let points = (route.points || [])
@@ -753,24 +769,22 @@
       }
 
       if (!Object.keys(available).length) {
-        setNotice(accessibleOnly ? 'No route can be confirmed accessible from the recorded data. Unknown or unverified accessibility is excluded; try standard routing or ask campus staff for assistance.' : 'No route is available between these locations. Check that the locations are connected in the route builder.', 'error');
+        setNotice('No route is available between these locations. Check that the locations are connected in the route builder.', 'error');
         routeInfo.textContent = 'No path found';
         return;
       }
       currentRoutes = available;
       renderRouteOptions();
 
-      const preferredRouteId = savedOptions.length ? Object.keys(available)[0] : (available.shortest ? 'shortest' : Object.keys(available)[0]);
+      const preferredRouteId = preferredSavedRouteId && available[preferredSavedRouteId]
+        ? preferredSavedRouteId
+        : (savedOptions.length ? Object.keys(available)[0] : (available.shortest ? 'shortest' : Object.keys(available)[0]));
+      preferredSavedRouteId = null;
       selectRoute(preferredRouteId);
     }
 
-    findRouteBtn.addEventListener('click', calculateRoutes);
+    findRouteBtn.addEventListener('click', () => { preferredSavedRouteId = null; calculateRoutes(); });
     clearRouteBtn.addEventListener('click', clearRoute);
-
-    document.getElementById('accessibleRouteOnly').addEventListener('change', event => {
-      accessibleOnly = event.currentTarget.checked;
-      if (fromSelect.value && toSelect.value) calculateRoutes();
-    });
 
     const netToggleBox = document.getElementById('netToggleBox');
     // All walkways are shown faintly (transparent blue) so people can see where routes can go.
@@ -831,6 +845,7 @@
       }
     }
 
+    renderSavedRouteList();
     clearRoute();
   </script>
   <script type="module" src="../assets/js/campus-3d-map.js?v=20261118-3d-view-2"></script>

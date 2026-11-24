@@ -25,7 +25,7 @@
         <span class="rounded-full bg-blue-50 px-3 py-1 text-[10px] font-bold text-blue-800">Shared walkway network</span>
       </div>
       <form id="route-builder-form" class="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500 xl:col-span-2">Route name<input name="name" required maxlength="120" placeholder="e.g. Main Gate to Library" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm normal-case" /></label>
+        <input type="hidden" name="name" value="" />
         <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Accessibility information<select name="accessibility_status" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm normal-case"><option value="">Unspecified</option><option value="1">Accessible</option><option value="0">Not accessible</option></select></label>
         <div class="relative min-w-0 text-[10px] font-bold uppercase tracking-wide text-slate-500">
           <label for="route-start-search">Start location</label>
@@ -67,19 +67,29 @@
         <p id="route-builder-status" class="text-xs text-slate-600" role="status" aria-live="polite"></p>
         <div class="flex flex-wrap gap-2"><button type="button" id="route-cancel-edit" hidden class="rounded-lg border border-slate-300 px-4 py-2 text-xs font-bold text-slate-700">Cancel edit</button><button type="button" id="route-save-draft" data-route-status="draft" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">Save Private Draft</button><button type="button" id="route-publish" data-route-status="active" class="rounded-lg bg-blue-700 px-4 py-2 text-xs font-bold text-white hover:bg-blue-800">Publish Route</button></div>
       </div>
-      <div class="mt-6 border-t border-slate-200 pt-5">
-        <div class="mb-3 flex flex-wrap items-center justify-between gap-3"><div><h3 class="text-sm font-bold text-slate-900">Saved routes</h3><p class="mt-1 text-[11px] text-slate-500">Draft and incomplete routes stay private. Only completed routes appear in navigation.</p></div><input id="route-list-filter" type="search" placeholder="Filter routes" class="w-full max-w-xs rounded-lg border border-slate-300 px-3 py-2 text-xs" /></div>
-        <div id="saved-routes-list" class="admin-data-panel p-2 sm:p-4"><p class="p-4 text-center text-xs text-slate-500">Loading saved routes…</p></div>
-      </div>
+      <details id="saved-routes-section" class="mt-6 border-t border-slate-200 pt-5" open>
+        <summary class="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 rounded-lg py-1 text-sm font-bold text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600">
+          <span>Saved routes</span>
+          <span class="flex items-center gap-2 text-[11px] font-semibold text-blue-700"><span>Minimize / Expand</span><span class="material-symbols-rounded" aria-hidden="true">expand_more</span></span>
+        </summary>
+        <div class="mt-3">
+          <div class="mb-3 flex flex-wrap items-center justify-between gap-3"><p class="text-[11px] text-slate-500">Draft and incomplete routes stay private. Only completed routes appear in navigation.</p><input id="route-list-filter" type="search" placeholder="Filter routes" class="w-full max-w-xs rounded-lg border border-slate-300 px-3 py-2 text-xs" /></div>
+          <div id="saved-routes-list" class="admin-data-panel p-2 sm:p-4"><p class="p-4 text-center text-xs text-slate-500">Loading saved routes…</p></div>
+        </div>
+      </details>
     </section>
     <section class="admin-form-panel rounded-2xl p-5 mb-5" aria-labelledby="add-landmark-title">
       <h2 id="add-landmark-title" class="text-sm font-bold">Add Campus Location Marker</h2>
       <p class="mt-1 text-xs text-slate-500">Choose an existing campus location, then click its position on the map. Existing location markers are shown to help you place it.</p>
       <form id="add-landmark-form" class="mt-4 grid max-w-2xl gap-3">
-        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Campus record
-          <select name="location_id" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></select>
-        </label>
-        <label class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Entrance accessibility information<select name="accessibility_status" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm normal-case"><option value="">Unspecified</option><option value="1">Accessible</option><option value="0">Not accessible</option></select></label>
+        <div class="relative">
+          <label for="landmark-location-search" class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Search buildings and facilities</label>
+          <input id="landmark-location-search" type="search" autocomplete="off" placeholder="Type a building or facility name..." role="combobox" aria-autocomplete="list" aria-controls="landmark-location-results" aria-expanded="false" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm normal-case" />
+          <div id="landmark-location-results" role="listbox" class="hidden absolute left-0 right-0 top-full z-30 mt-1 max-h-64 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-xl"></div>
+          <select name="location_id" required class="hidden" aria-hidden="true" tabindex="-1"></select>
+          <p class="mt-1 text-[10px] text-slate-500">Search results appear below as you type. Select a result to view its saved campus information.</p>
+        </div>
+        <section id="landmark-record-preview" hidden class="rounded-xl border border-slate-200 bg-slate-50 p-3" aria-live="polite"></section>
         <div id="landmark-map-picker" role="button" tabindex="0" aria-label="Click the map to choose the landmark location" class="relative w-full max-w-[520px] overflow-hidden rounded-xl border-2 border-slate-300 bg-slate-100 shadow-sm" style="aspect-ratio: 1330 / 1620; cursor: crosshair; touch-action: manipulation;">
           <img id="landmark-map-image" alt="Map for selecting a landmark location" class="absolute inset-0 h-full w-full select-none" draggable="false" style="object-fit: fill;" />
           <div id="landmark-map-pins" class="pointer-events-none absolute inset-0"></div>
@@ -99,8 +109,8 @@
     </section>
     <div id="landmarks-list" class="admin-data-panel p-2 sm:p-4"></div>
   </main>
-  <script src="../../assets/js/admin/manage-map.js"></script>
-  <script src="../../assets/js/admin/route-builder.js?v=20261024-complete-details"></script>
+  <script src="../../assets/js/admin/manage-map.js?v=20261124-search-campus-records"></script>
+  <script src="../../assets/js/admin/route-builder.js?v=20261124-archived-endpoint-validation"></script>
   <script src="../../assets/js/app.js?v=20261118-remove-department-nav"></script>
 </body>
 </html>

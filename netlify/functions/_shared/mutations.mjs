@@ -7,6 +7,26 @@ import { HttpError, optionalText, positiveId, requiredText, success, unwrap } fr
 
 const db = () => getServiceClient();
 
+async function deleteCampusRecord(database, recordType, recordId) {
+  const result = unwrap(await database.rpc('delete_campus_record', {
+    p_record_type: recordType,
+    p_record_id: recordId
+  }));
+  const mediaByBucket = new Map();
+  for (const item of result?.media || []) {
+    if (!item?.bucket || !item?.name) continue;
+    if (!mediaByBucket.has(item.bucket)) mediaByBucket.set(item.bucket, new Set());
+    mediaByBucket.get(item.bucket).add(item.name);
+  }
+  for (const [bucket, names] of mediaByBucket) {
+    const removed = await database.storage.from(bucket).remove([...names]);
+    if (removed.error) {
+      throw new HttpError(503, 'The campus record was deleted, but one or more linked media files could not be removed from storage. Contact the administrator.');
+    }
+  }
+  return { ...result, media_deleted: [...mediaByBucket.values()].reduce((total, names) => total + names.size, 0) };
+}
+
 async function editor(event, minimum = 'editor') {
   return currentUser(event, true, minimum);
 }
@@ -215,60 +235,24 @@ async function locations(event, method, body, query) {
     return success({ id: savedId, name }, id ? 200 : 201);
   }
 
-  if (method === 'PATCH') {
+  if (method === 'PATCH' && Object.prototype.hasOwnProperty.call(body, 'model_3d_path')) {
     const id = positiveId(body.id ?? query.id);
-    if (Object.prototype.hasOwnProperty.call(body, 'model_3d_path')) {
-      const modelPath = storedModelPath(body.model_3d_path);
-      const record = unwrap(await database.from('locations')
-        .select('id,name')
-        .eq('id', id)
-        .maybeSingle());
-      if (!record) throw new HttpError(404, 'Location not found.');
-      await updateById('locations', id, { model_3d_path: modelPath }, 'Location not found.');
-      await audit(user, 'update', 'location', id, { name: record.name, model_3d_path: modelPath });
-      return success({ id, model_3d_path: modelPath });
-    }
-    const active = booleanValue(body.active, 'Archive status');
-    if (active === null) throw new HttpError(400, 'Choose whether the location is active or archived.');
+    const modelPath = storedModelPath(body.model_3d_path);
     const record = unwrap(await database.from('locations')
-      .select('id,kind,parent_building_id')
+      .select('id,name')
       .eq('id', id)
       .maybeSingle());
     if (!record) throw new HttpError(404, 'Location not found.');
-    if (active && record.kind === 'facility' && record.parent_building_id) {
-      const parent = unwrap(await database.from('locations').select('active').eq('id', record.parent_building_id).maybeSingle());
-      if (!parent?.active) throw new HttpError(409, 'Restore the parent building before restoring this facility.');
-    }
-    await updateById('locations', id, { active }, 'Location not found.');
-    await audit(user, active ? 'restore' : 'archive', 'location', id);
-    return success({ id, active });
+    await updateById('locations', id, { model_3d_path: modelPath }, 'Location not found.');
+    await audit(user, 'update', 'location', id, { name: record.name, model_3d_path: modelPath });
+    return success({ id, model_3d_path: modelPath });
   }
 
   if (method === 'DELETE') {
     const id = positiveId(body.id ?? query.id);
-    const record = unwrap(await database.from('locations')
-      .select('id,kind,active')
-      .eq('id', id)
-      .maybeSingle());
-    if (!record) throw new HttpError(404, 'Location not found.');
-    if (record.active) throw new HttpError(409, 'Archive this record before permanently deleting it.');
-
-    const checks = await Promise.all([
-      database.from('rooms').select('id', { count: 'exact', head: true }).eq('building_id', id),
-      database.from('locations').select('id', { count: 'exact', head: true }).eq('parent_building_id', id),
-      database.from('map_markers').select('id', { count: 'exact', head: true }).eq('location_id', id),
-      database.from('facility_photos').select('id', { count: 'exact', head: true }).eq('location_id', id),
-      database.from('floor_plans').select('id', { count: 'exact', head: true }).eq('building_id', id),
-      database.from('announcements').select('id', { count: 'exact', head: true }).eq('location_id', id)
-    ]);
-    for (const result of checks) if (result.error) throw result.error;
-    if (checks.some(result => (result.count || 0) > 0)) {
-      throw new HttpError(409, 'This archived record still has rooms, map markers, photos, or floor plans linked to it. Remove those linked records first.');
-    }
-
-    unwrap(await database.from('locations').delete().eq('id', id).select('id').single());
+    const result = await deleteCampusRecord(database, 'location', id);
     await audit(user, 'delete', 'location', id);
-    return success({ id, deleted: true });
+    return success(result);
   }
 
   throw new HttpError(405, 'Method not allowed.');
@@ -351,33 +335,11 @@ async function rooms(event, method, body, query) {
     return success({ id: savedId }, id ? 200 : 201);
   }
 
-  if (method === 'PATCH') {
-    const id = positiveId(body.id ?? query.id);
-    const active = booleanValue(body.active, 'Archive status');
-    if (active === null) throw new HttpError(400, 'Choose whether the room is active or archived.');
-    const record = unwrap(await database.from('rooms').select('id,building_id').eq('id', id).maybeSingle());
-    if (!record) throw new HttpError(404, 'Room not found.');
-    if (active) {
-      const building = unwrap(await database.from('locations').select('active,kind').eq('id', record.building_id).maybeSingle());
-      if (!building?.active || building.kind !== 'building') throw new HttpError(409, 'Restore the parent building before restoring this room.');
-    }
-    await updateById('rooms', id, { active }, 'Room not found.');
-    await audit(user, active ? 'restore' : 'archive', 'room', id);
-    return success({ id, active });
-  }
-
   if (method === 'DELETE') {
     const id = positiveId(body.id ?? query.id);
-    const record = unwrap(await database.from('rooms').select('id,active,route_node_id').eq('id', id).maybeSingle());
-    if (!record) throw new HttpError(404, 'Room not found.');
-    if (record.active) throw new HttpError(409, 'Archive this room before permanently deleting it.');
-    if (record.route_node_id) throw new HttpError(409, 'This room is linked to a campus route node. Remove or reassign that map connection before permanently deleting the room.');
-    const photos = await database.from('facility_photos').select('id', { count: 'exact', head: true }).eq('room_id', id);
-    if (photos.error) throw photos.error;
-    if (photos.count) throw new HttpError(409, 'Remove this room’s gallery photos before permanently deleting it.');
-    unwrap(await database.from('rooms').delete().eq('id', id).select('id').single());
+    const result = await deleteCampusRecord(database, 'room', id);
     await audit(user, 'delete', 'room', id);
-    return success({ id, deleted: true });
+    return success(result);
   }
 
   throw new HttpError(405, 'Method not allowed.');
@@ -524,24 +486,9 @@ async function mapNodes(event, method, body, query) {
   if (method === 'DELETE') {
     const id = positiveId(body.id ?? query.id);
 
-    const references = await database
-      .from('campus_route_points')
-      .select('route_id, route:campus_routes!campus_route_points_route_id_fkey(status)')
-      .eq('node_id', id);
-
-    const points = unwrap(references) || [];
-
-    if (points.some(point => point.route?.status === 'active')) {
-      throw new HttpError(
-        409,
-        'This node is used by an active route. Edit or deactivate those routes first.'
-      );
-    }
-
-    await updateById('map_nodes', id, { active: false }, 'Walkway node not found.');
-    await audit(user, 'archive', 'map_node', id);
-
-    return success({ id, connections_archived: true });
+    const result = await deleteCampusRecord(database, 'map_node', id);
+    await audit(user, 'delete', 'map_node', id);
+    return success(result);
   }
 
   if (!['POST', 'PUT'].includes(method)) {
@@ -614,23 +561,9 @@ async function mapMarkers(event, method, body, query) {
   if (method === 'DELETE') {
     const id = positiveId(body.id ?? query.id);
 
-    const routes = unwrap(await database
-      .from('campus_routes')
-      .select('id')
-      .eq('status', 'active')
-      .or(`start_marker_id.eq.${id},destination_marker_id.eq.${id},landmark_marker_id.eq.${id}`)) || [];
-
-    if (routes.length) {
-      throw new HttpError(
-        409,
-        'This marker is used by an active route. Edit or deactivate those routes first.'
-      );
-    }
-
-    await updateById('map_markers', id, { active: false }, 'Marker not found.');
-    await audit(user, 'archive', 'map_marker', id);
-
-    return success({ id });
+    const result = await deleteCampusRecord(database, 'map_marker', id);
+    await audit(user, 'delete', 'map_marker', id);
+    return success(result);
   }
 
   if (!['POST', 'PUT'].includes(method)) {
@@ -747,22 +680,9 @@ async function mapConnections(event, method, body, query) {
     : null;
 
   if (method === 'DELETE') {
-    const refs = await database
-      .from('campus_route_segments')
-      .select('route_id')
-      .eq('connection_id', id);
-
-    if (unwrap(refs)?.length) {
-      throw new HttpError(
-        409,
-        'This connection is still referenced by a saved route. Edit those routes first.'
-      );
-    }
-
-    await updateById('map_connections', id, { active: false }, 'Connection not found.');
-    await audit(user, 'archive', 'map_connection', id);
-
-    return success({ id });
+    const result = await deleteCampusRecord(database, 'map_connection', id);
+    await audit(user, 'delete', 'map_connection', id);
+    return success(result);
   }
 
   if (!['POST', 'PUT'].includes(method)) {
@@ -864,18 +784,102 @@ async function routes(event, method, body, query) {
   if (method === 'DELETE') {
     const id = positiveId(body.id ?? query.id);
 
+    const existing = unwrap(await database
+      .from('campus_routes')
+      .select('id')
+      .eq('id', id)
+      .maybeSingle());
+    if (!existing) throw new HttpError(404, 'Saved route not found.');
+
+    // Route geometry is stored separately from the route header. Remove its
+    // ordered points and segment links first so deleted routes cannot leave
+    // stale geometry behind in the public map's walkway layer.
+    const routePoints = unwrap(await database
+      .from('campus_route_points')
+      .select('node_id')
+      .eq('route_id', id)) || [];
+    const generatedNodeIds = [...new Set(routePoints
+      .map(point => Number(point.node_id))
+      .filter(Number.isSafeInteger)
+      .filter(Boolean))];
+
+    // Only remove route-generated nodes and their exclusive connections.
+    // Marker-owned nodes and connections shared by another saved route remain.
+    let ownedNodeIds = [];
+    if (generatedNodeIds.length) {
+      const nodes = unwrap(await database
+        .from('map_nodes')
+        .select('id,node_key')
+        .in('id', generatedNodeIds)) || [];
+      ownedNodeIds = nodes
+        .filter(node => String(node.node_key || '').startsWith(`route-${id}-`))
+        .map(node => Number(node.id));
+    }
+
+    unwrap(await database.from('campus_route_segments').delete().eq('route_id', id));
+    unwrap(await database.from('campus_route_points').delete().eq('route_id', id));
+
+    // A map connection is a shared walkway unless it touches a node generated
+    // specifically for this route. Never remove a manually mapped/shared edge
+    // merely because this was its last saved-route reference.
+    const candidateConnectionIds = new Set();
+    if (ownedNodeIds.length) {
+      const ownedConnections = unwrap(await database
+        .from('map_connections')
+        .select('id,from_node_id,to_node_id')
+        .or(`from_node_id.in.(${ownedNodeIds.join(',')}),to_node_id.in.(${ownedNodeIds.join(',')})`)) || [];
+      ownedConnections.forEach(connection => candidateConnectionIds.add(Number(connection.id)));
+    }
+
+    const connectionIds = [...candidateConnectionIds].filter(Number.isSafeInteger);
+    if (connectionIds.length) {
+      const remainingReferences = unwrap(await database
+        .from('campus_route_segments')
+        .select('connection_id')
+        .in('connection_id', connectionIds)) || [];
+      const referencedIds = new Set(remainingReferences.map(row => Number(row.connection_id)));
+      const orphanConnectionIds = connectionIds.filter(connectionId => !referencedIds.has(connectionId));
+      if (orphanConnectionIds.length) {
+        unwrap(await database.from('map_connections').delete().in('id', orphanConnectionIds));
+      }
+    }
+
     const removed = unwrap(await database
       .from('campus_routes')
       .delete()
       .eq('id', id)
       .select('id')
       .maybeSingle());
-
     if (!removed) throw new HttpError(404, 'Saved route not found.');
+
+    if (ownedNodeIds.length) {
+      const pointReferences = unwrap(await database
+        .from('campus_route_points')
+        .select('node_id')
+        .in('node_id', ownedNodeIds)) || [];
+      const stillUsedByRoutes = new Set(pointReferences.map(row => Number(row.node_id)));
+      const noLongerUsedNodeIds = ownedNodeIds.filter(nodeId => !stillUsedByRoutes.has(nodeId));
+
+      if (noLongerUsedNodeIds.length) {
+        // Endpoint nodes generated for this deleted route may still be cached
+        // on their markers. Reset only pointers no remaining route uses.
+        unwrap(await database.from('map_markers')
+          .update({ route_node_id: null })
+          .in('route_node_id', noLongerUsedNodeIds));
+
+        const remainingConnections = unwrap(await database
+          .from('map_connections')
+          .select('id')
+          .or(`from_node_id.in.(${noLongerUsedNodeIds.join(',')}),to_node_id.in.(${noLongerUsedNodeIds.join(',')})`)) || [];
+        if (!remainingConnections.length) {
+          unwrap(await database.from('map_nodes').delete().in('id', noLongerUsedNodeIds));
+        }
+      }
+    }
 
     await audit(user, 'delete', 'campus_route', id);
 
-    return success({ id, walkways_preserved: true });
+    return success({ id, route_geometry_deleted: true, shared_walkways_preserved: true });
   }
 
   if (method !== 'POST' && method !== 'PUT') {

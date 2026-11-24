@@ -284,6 +284,11 @@ html[data-high-contrast] body:not(.admin-page) :is(.settings-panel,.quick-card,.
 .directory-features { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .7rem; }
 .directory-feature { display: inline-flex; align-items: center; gap: .18rem; padding: .25rem .42rem; border: 1px solid #d5e9dc; border-radius: 999px; color: #24633c; background: #f0faf3; font-size: .59rem; font-weight: 750; }
 .directory-feature .material-symbols-rounded { font-size: .85rem; }
+.directory-features > strong { flex-basis: 100%; color: #53677f; font-size: .65rem; font-weight: 800; }
+.directory-feature-empty { border-color: #dce3eb; color: #68788c; background: #f4f6f8; }
+.directory-model-accessibility { margin-top: .8rem; padding: .85rem 1rem; border: 1px solid #dce5ef; border-radius: 12px; background: #f8fafc; }
+.directory-model-accessibility .directory-features { margin-top: 0; }
+.directory-3d-dialog .directory-feature-empty { display: inline-flex; }
 .directory-card-actions { display: flex; justify-content: space-between; gap: .5rem; padding: .7rem .9rem; border-top: 1px solid #edf1f5; }
 .directory-card-actions a { display: inline-flex; align-items: center; gap: .25rem; color: #1763ae; font-size: .68rem; font-weight: 800; text-decoration: none; }
 .directory-card-actions a .material-symbols-rounded { font-size: 1rem; }

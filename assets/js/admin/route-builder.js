@@ -122,8 +122,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     summary.innerHTML = `<strong class="block text-slate-900">${distance.toFixed(1)} map units</strong><span>Approximate drawn distance. Define the map scale to calculate meters and walking time.</span>`;
   }
 
+  let savedRoutesPage = 1;
+  const SAVED_ROUTES_PAGE_SIZE = 10;
+
   function renderRoutes() {
     const filter = $('route-list-filter').value.trim().toLocaleLowerCase();
+    // Number published paths independently for each unordered endpoint pair.
+    // This keeps A ↔ B and B ↔ A in the same group and ignores duplicate geometry.
+    const activeRouteNumbers = new Map();
+    const routeCountsByPair = new Map();
+    const seenPublishedPaths = new Set();
+    routes.filter(route => route.status === 'active')
+      .sort((a,b) => Number(a.id) - Number(b.id))
+      .forEach(route => {
+        const startId = String(route.start_marker_id ?? route.start_marker?.id ?? '');
+        const endId = String(route.destination_marker_id ?? route.destination_marker?.id ?? '');
+        if (!startId || !endId) return;
+        const pairKey = [startId, endId].sort().join('::');
+        const points = (route.points || []).map(point => `${Math.round(Number(point.x)*10)/10},${Math.round(Number(point.y)*10)/10},${Number(point.floor_number)||0}`);
+        const forward = points.join('|');
+        const reverse = [...points].reverse().join('|');
+        const geometryKey = forward < reverse ? forward : reverse;
+        const uniquePathKey = `${pairKey}::${geometryKey}`;
+        if (points.length >= 2 && seenPublishedPaths.has(uniquePathKey)) return;
+        if (points.length >= 2) seenPublishedPaths.add(uniquePathKey);
+        const nextNumber = (routeCountsByPair.get(pairKey) || 0) + 1;
+        routeCountsByPair.set(pairKey, nextNumber);
+        activeRouteNumbers.set(String(route.id), nextNumber);
+      });
     const matches = routes.filter(route => `${route.name} ${route.start_name} ${route.destination_name} ${route.notes||''} ${route.status}`.toLocaleLowerCase().includes(filter));
     const seenPaths=new Set();
     const rows=matches.filter(route=>{
@@ -133,11 +159,73 @@ document.addEventListener('DOMContentLoaded', async () => {
       if(seenPaths.has(key))return false;
       seenPaths.add(key);return true;
     });
-    $('saved-routes-list').innerHTML = rows.length ? `<div class="overflow-x-auto"><table class="w-full min-w-[760px] text-left text-xs"><thead><tr><th class="p-3">Route</th><th class="p-3">Start → destination</th><th class="p-3">Distance</th><th class="p-3">Accessibility</th><th class="p-3">Status</th><th class="p-3 text-right">Actions</th></tr></thead><tbody>${rows.map(route => {const label=({active:'Completed',inactive:'Inactive',draft:'Draft',incomplete:'Incomplete'})[route.status]||route.status;const badge=route.status==='active'?'bg-emerald-50 text-emerald-800':route.status==='incomplete'?'bg-amber-50 text-amber-800':'bg-slate-100 text-slate-700';return `<tr class="border-t border-slate-100"><td class="p-3"><strong>${esc(route.name)}</strong>${route.notes?`<small class="mt-1 block whitespace-normal break-words text-slate-600">${esc(route.notes)}</small>`:''}<small class="mt-1 block text-slate-500">Updated ${esc(new Date(route.updated_at).toLocaleString())}</small></td><td class="p-3">${esc(route.start_name)} → ${esc(route.destination_name)}${route.landmark_marker_id?`<small class="mt-1 block text-blue-700">Landmark draft · ${esc(route.start_x)}, ${esc(route.start_y)}</small>`:''}</td><td class="p-3">${route.distance_map_units === null ? 'Unavailable' : `${Number(route.distance_map_units).toFixed(1)} map units`}</td><td class="p-3">${route.accessibility_status === null ? 'Unspecified' : Number(route.accessibility_status) ? 'Accessible' : 'Not accessible'}</td><td class="p-3"><span class="rounded-full px-2 py-1 ${badge}">${esc(label)}</span></td><td class="p-3 text-right"><div class="flex justify-end gap-2"><button type="button" data-route-action="edit" data-id="${route.id}" class="font-bold text-blue-700">Edit</button>${route.status==='active'||route.status==='inactive'?`<button type="button" data-route-action="toggle" data-id="${route.id}" class="font-bold text-amber-700">${route.status==='active'?'Deactivate':'Reactivate'}</button>`:''}<button type="button" data-route-action="delete" data-id="${route.id}" class="font-bold text-red-700">Delete</button></div></td></tr>`}).join('')}</tbody></table></div>` : '<p class="p-5 text-center text-xs text-slate-500">No saved routes match this filter.</p>';
+    const pageCount = Math.max(1, Math.ceil(rows.length / SAVED_ROUTES_PAGE_SIZE));
+    savedRoutesPage = Math.min(savedRoutesPage, pageCount);
+    const pageRows = rows.slice((savedRoutesPage - 1) * SAVED_ROUTES_PAGE_SIZE, savedRoutesPage * SAVED_ROUTES_PAGE_SIZE);
+    const table = pageRows.length ? `<div class="overflow-x-auto"><table class="w-full min-w-[680px] text-left text-xs"><thead><tr><th class="p-3">Route</th><th class="p-3">Distance</th><th class="p-3">Accessibility</th><th class="p-3">Status</th><th class="p-3 text-right">Actions</th></tr></thead><tbody>${pageRows.map(route => {const label=({active:'Completed',inactive:'Inactive',draft:'Draft',incomplete:'Incomplete'})[route.status]||route.status;const badge=route.status==='active'?'bg-emerald-50 text-emerald-800':route.status==='incomplete'?'bg-amber-50 text-amber-800':'bg-slate-100 text-slate-700';const pathNumber=activeRouteNumbers.get(String(route.id));const identifier=pathNumber? `Path ${pathNumber}` : 'Unpublished';return `<tr class="border-t border-slate-100"><td class="p-3"><strong class="block text-slate-900">${identifier}</strong><small class="mt-1 block text-slate-600">${esc(route.start_name)} ↔ ${esc(route.destination_name)}</small>${route.notes?`<small class="mt-1 block whitespace-normal break-words text-slate-600">${esc(route.notes)}</small>`:''}${route.landmark_marker_id?`<small class="mt-1 block text-blue-700">Landmark draft · ${esc(route.start_x)}, ${esc(route.start_y)}</small>`:''}<small class="mt-1 block text-slate-500">Updated ${esc(new Date(route.updated_at).toLocaleString())}</small></td><td class="p-3">${route.distance_map_units === null ? 'Unavailable' : `${Number(route.distance_map_units).toFixed(1)} map units`}</td><td class="p-3">${route.accessibility_status === null ? 'Unspecified' : Number(route.accessibility_status) ? 'Accessible' : 'Not accessible'}</td><td class="p-3"><span class="rounded-full px-2 py-1 ${badge}">${esc(label)}</span></td><td class="p-3 text-right"><div class="flex justify-end gap-2"><button type="button" data-route-action="edit" data-id="${route.id}" class="font-bold text-blue-700">Edit</button>${route.status==='active'||route.status==='inactive'?`<button type="button" data-route-action="toggle" data-id="${route.id}" class="font-bold text-amber-700">${route.status==='active'?'Deactivate':'Reactivate'}</button>`:''}<button type="button" data-route-action="delete" data-id="${route.id}" class="font-bold text-red-700">Delete</button></div></td></tr>`}).join('')}</tbody></table></div>` : '<p class="p-5 text-center text-xs text-slate-500">No saved routes match this filter.</p>';
+    const pager = rows.length > SAVED_ROUTES_PAGE_SIZE ? `<div class="flex items-center justify-between gap-3 border-t border-slate-100 px-3 py-3 text-xs"><span class="text-slate-500">Showing ${(savedRoutesPage-1)*SAVED_ROUTES_PAGE_SIZE+1}–${Math.min(savedRoutesPage*SAVED_ROUTES_PAGE_SIZE,rows.length)} of ${rows.length} routes</span><div class="flex items-center gap-2"><button type="button" data-routes-page="prev" ${savedRoutesPage===1?'disabled':''} class="rounded-lg border px-3 py-1.5 font-semibold disabled:opacity-40">Previous</button><span class="text-slate-600">Page ${savedRoutesPage} of ${pageCount}</span><button type="button" data-routes-page="next" ${savedRoutesPage===pageCount?'disabled':''} class="rounded-lg border px-3 py-1.5 font-semibold disabled:opacity-40">Next</button></div></div>` : (rows.length ? `<div class="border-t border-slate-100 px-3 py-2 text-[11px] text-slate-500">Showing ${rows.length} of ${rows.length} routes</div>` : '');
+    $('saved-routes-list').innerHTML = table + pager;
+  }
+
+  function hasTwoValidEndpoints(route) {
+    const startMarker = route.start_marker || null;
+    const destinationMarker = route.destination_marker || null;
+    const startId = route.start_marker_id ?? startMarker?.id;
+    const destinationId = route.destination_marker_id ?? destinationMarker?.id;
+    const linkedLocation = marker => {
+      const value = marker?.location;
+      return Array.isArray(value) ? value[0] || null : value || null;
+    };
+    const startLocation = linkedLocation(startMarker);
+    const destinationLocation = linkedLocation(destinationMarker);
+
+    // A route is invalid when either endpoint points to an archived location,
+    // has no linked location, or its marker is no longer in the active map.
+    // Check both the nested relation and the active marker catalog because
+    // archived marker rows may remain in the database until cleanup is applied.
+    const referencesArchivedLocation =
+      (startMarker && (!startLocation || startLocation.active === false)) ||
+      (destinationMarker && (!destinationLocation || destinationLocation.active === false));
+
+    if (referencesArchivedLocation ||
+        startId === null || startId === undefined || String(startId).trim() === '' ||
+        destinationId === null || destinationId === undefined || String(destinationId).trim() === '' ||
+        String(startId) === String(destinationId)) return false;
+
+    return Boolean(byId(startId) && byId(destinationId));
   }
 
   async function refresh() {
     [mapData,routes] = await Promise.all([CampusApi.get('map/admin'),CampusApi.get('routes')]);
+
+    // Keep only routes with two distinct endpoint markers that still exist on the campus map.
+    const invalidRoutes = routes.filter(route => !hasTwoValidEndpoints(route));
+    if (invalidRoutes.length) {
+      const confirmed = await window.AdminUI.confirm({
+        title: 'Delete incomplete routes?',
+        message: `${invalidRoutes.length} saved route(s) have an archived/missing campus location, a missing map marker, or identical start and destination endpoints. Permanently delete these route records? Routes with two active, different mapped endpoints will be kept.`,
+        confirmLabel: `Delete ${invalidRoutes.length} route(s)`,
+        danger: true
+      });
+      if (confirmed) {
+        const results = await Promise.allSettled(invalidRoutes.map(route => CampusApi.remove('routes', route.id)));
+        const failed = results.filter(result => result.status === 'rejected');
+        if (failed.length) {
+          const failedIds = new Set(results.map((result,index) => result.status === 'rejected' ? String(invalidRoutes[index].id) : null).filter(Boolean));
+          routes = routes.filter(route => !invalidRoutes.some(invalid => String(invalid.id) === String(route.id)) || failedIds.has(String(route.id)));
+          status(`Deleted ${invalidRoutes.length - failed.length} incomplete route(s). ${failed.length} could not be deleted.`);
+          window.AdminUI?.toast(`${failed.length} incomplete route(s) could not be deleted.`, 'error');
+        } else {
+          routes = routes.filter(hasTwoValidEndpoints);
+          status(`Permanently deleted ${invalidRoutes.length} route(s) missing a valid start and final destination.`);
+          window.AdminUI?.toast(`Deleted ${invalidRoutes.length} incomplete route(s).`);
+        }
+      } else {
+        routes = routes.filter(hasTwoValidEndpoints);
+        status(`${invalidRoutes.length} incomplete route(s) were left unchanged and hidden from the saved-routes list.`);
+      }
+    }
+
     fillEndpointSelect(startSelect,startSearch.value,startSelect.value);
     fillEndpointSelect(endSelect,endSearch.value,endSelect.value);
     draw(); renderRoutes();
@@ -229,7 +317,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     draw();
     const marker=byId(id);status(`${marker?.name||'Location'} selected. Choose the other endpoint or add route waypoints.`);
   });
-  $('route-list-filter').addEventListener('input',renderRoutes);
+  $('route-list-filter').addEventListener('input',()=>{savedRoutesPage=1;renderRoutes();});
+  $('saved-routes-list').addEventListener('click',event=>{const button=event.target.closest('[data-routes-page]');if(!button)return;savedRoutesPage+=button.dataset.routesPage==='next'?1:-1;renderRoutes();});
   $('route-undo').addEventListener('click',()=>{if(!undoStack.length)return;redoStack.push(clone(waypoints));waypoints=undoStack.pop();draw();});
   $('route-redo').addEventListener('click',()=>{if(!redoStack.length)return;undoStack.push(clone(waypoints));waypoints=redoStack.pop();draw();});
   $('route-clear').addEventListener('click',()=>{if(!waypoints.length)return;snapshot();waypoints=[];draw();status('Waypoints cleared.');});
@@ -261,7 +350,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const coordinates=pointCoordinates();
     const distance=coordinates.slice(1).reduce((sum,point,index)=>sum+Math.hypot(point[0]-coordinates[index][0],point[1]-coordinates[index][1]),0);
     const actionLabel=routeStatus==='active'?'Publish this route':'Save this private draft';
-    const summary=`${form.elements.name.value.trim()}\n${start.name} → ${end.name}\n${waypoints.length} intermediate point(s), about ${distance.toFixed(1)} map units.\n\nWalking time is unavailable because the map has no defined scale. ${actionLabel}?`;
+    const summary=`${start.name} ↔ ${end.name}\n${waypoints.length} intermediate point(s), about ${distance.toFixed(1)} map units.\n\nWalking time is unavailable because the map has no defined scale. ${actionLabel}?`;
     const publicationNotice=routeStatus==='active'?'\n\nPublished routes are immediately visible to visitors. Confirm the directions are accurate before publishing.':'';
     if(!await window.AdminUI.confirm({title:routeStatus==='active'?'Publish walking route?':'Save private route draft?',message:summary+publicationNotice,confirmLabel:routeStatus==='active'?'Publish route':'Save draft'}))return;
     const buttons=[$('route-save-draft'),$('route-publish')];

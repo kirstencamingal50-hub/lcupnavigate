@@ -19,6 +19,141 @@ async function fetchAllRows(buildQuery, pageSize = 500) {
   }
 }
 
+async function cleanupOrphanedRouteGeometry(database) {
+  // Stable location nodes use location-{location_id}. If a location was
+  // permanently deleted or archived, its node and every edge/route depending
+  // on it must disappear too; otherwise the public Walkways layer still draws
+  // lines to the deleted place even when the route card is gone.
+  const activeLocations = await fetchAllRows(() => database
+    .from('locations')
+    .select('id')
+    .eq('active', true));
+  const activeLocationIds = new Set(activeLocations.map(row => Number(row.id)));
+  const locationNodes = await fetchAllRows(() => database
+    .from('map_nodes')
+    .select('id,node_key')
+    .like('node_key', 'location-%'));
+  const staleLocationNodeIds = locationNodes
+    .filter(node => {
+      const match = String(node.node_key || '').match(/^location-(\d+)$/);
+      return match && !activeLocationIds.has(Number(match[1]));
+    })
+    .map(node => Number(node.id))
+    .filter(Number.isSafeInteger);
+
+  if (staleLocationNodeIds.length) {
+    const [staleMarkers, pointRows, segmentRows, incidentConnections] = await Promise.all([
+      fetchAllRows(() => database.from('map_markers')
+        .select('id,location_id,route_node_id')),
+      fetchAllRows(() => database.from('campus_route_points')
+        .select('route_id,node_id')
+        .in('node_id', staleLocationNodeIds)),
+      fetchAllRows(() => database.from('campus_route_segments')
+        .select('route_id,connection_id')),
+      fetchAllRows(() => database.from('map_connections')
+        .select('id')
+        .or(`from_node_id.in.(${staleLocationNodeIds.join(',')}),to_node_id.in.(${staleLocationNodeIds.join(',')})`))
+    ]);
+
+    const staleMarkerIds = staleMarkers
+      .filter(marker => marker.location_id != null && !activeLocationIds.has(Number(marker.location_id)))
+      .map(marker => Number(marker.id))
+      .filter(Number.isSafeInteger);
+    const incidentConnectionIds = new Set(incidentConnections.map(edge => Number(edge.id)));
+    const affectedRouteIds = new Set(pointRows.map(row => Number(row.route_id)));
+    segmentRows.forEach(row => {
+      if (incidentConnectionIds.has(Number(row.connection_id))) {
+        affectedRouteIds.add(Number(row.route_id));
+      }
+    });
+    if (staleMarkerIds.length) {
+      const endpointRoutes = await fetchAllRows(() => database.from('campus_routes')
+        .select('id')
+        .or(`start_marker_id.in.(${staleMarkerIds.join(',')}),destination_marker_id.in.(${staleMarkerIds.join(',')}),landmark_marker_id.in.(${staleMarkerIds.join(',')})`));
+      endpointRoutes.forEach(route => affectedRouteIds.add(Number(route.id)));
+    }
+
+    // Remove route-owned records first so foreign-key references cannot keep
+    // deleted-place geometry alive.
+    const affectedIds = [...affectedRouteIds].filter(Number.isSafeInteger);
+    if (affectedIds.length) {
+      unwrap(await database.from('campus_route_segments').delete().in('route_id', affectedIds));
+      unwrap(await database.from('campus_route_points').delete().in('route_id', affectedIds));
+      unwrap(await database.from('campus_routes').delete().in('id', affectedIds));
+    }
+    const connectionIds = incidentConnections.map(edge => Number(edge.id)).filter(Number.isSafeInteger);
+    if (connectionIds.length) unwrap(await database.from('map_connections').delete().in('id', connectionIds));
+    if (staleMarkerIds.length) unwrap(await database.from('map_markers').delete().in('id', staleMarkerIds));
+    unwrap(await database.from('map_nodes').delete().in('id', staleLocationNodeIds));
+  }
+
+  const savedRoutes = await fetchAllRows(() => database
+    .from('campus_routes')
+    .select('id'));
+  const routeIds = savedRoutes.map(route => Number(route.id)).filter(Number.isSafeInteger);
+
+  // Earlier route deletions removed the route header but left its child rows.
+  // Clear those orphaned rows before building the public map graph.
+  for (const table of ['campus_route_segments', 'campus_route_points']) {
+    let query = database.from(table).delete();
+    if (routeIds.length) query = query.not('route_id', 'in', `(${routeIds.join(',')})`);
+    unwrap(await query);
+  }
+
+  const routeNodes = await fetchAllRows(() => database
+    .from('map_nodes')
+    .select('id,node_key')
+    .like('node_key', 'route-%'));
+  if (!routeNodes.length) return;
+
+  const pointReferences = await fetchAllRows(() => database.from('campus_route_points')
+    .select('node_id'));
+  const usedNodeIds = new Set(pointReferences.map(row => Number(row.node_id)));
+  const orphanNodeIds = routeNodes
+    .map(node => Number(node.id))
+    .filter(nodeId => Number.isSafeInteger(nodeId) && !usedNodeIds.has(nodeId));
+  if (!orphanNodeIds.length) return;
+
+  // Route endpoint nodes can also be cached on their map markers. Clear only
+  // those cached pointers when no remaining route uses the node.
+  unwrap(await database.from('map_markers')
+    .update({ route_node_id: null })
+    .in('route_node_id', orphanNodeIds));
+
+  const orphanConnections = await fetchAllRows(() => database
+    .from('map_connections')
+    .select('id')
+    .or(`from_node_id.in.(${orphanNodeIds.join(',')}),to_node_id.in.(${orphanNodeIds.join(',')})`));
+  const connectionIds = orphanConnections.map(edge => Number(edge.id)).filter(Number.isSafeInteger);
+  if (connectionIds.length) {
+    const remainingSegments = await fetchAllRows(() => database
+      .from('campus_route_segments')
+      .select('connection_id')
+      .in('connection_id', connectionIds));
+    const usedConnectionIds = new Set(remainingSegments.map(row => Number(row.connection_id)));
+    const removableIds = connectionIds.filter(connectionId => !usedConnectionIds.has(connectionId));
+    if (removableIds.length) {
+      unwrap(await database.from('map_connections').delete().in('id', removableIds));
+    }
+  }
+
+  // All remaining edges were either removed above or are still referenced by
+  // a retained route. Keep a node only while a retained route uses it.
+  const remainingConnections = await fetchAllRows(() => database
+    .from('map_connections')
+    .select('id')
+    .or(`from_node_id.in.(${orphanNodeIds.join(',')}),to_node_id.in.(${orphanNodeIds.join(',')})`));
+  const stillUsedConnectionIds = new Set(remainingConnections.map(edge => Number(edge.id)));
+  const retainedSegmentRows = stillUsedConnectionIds.size
+    ? await fetchAllRows(() => database.from('campus_route_segments')
+        .select('connection_id')
+        .in('connection_id', [...stillUsedConnectionIds]))
+    : [];
+  if (!retainedSegmentRows.length) {
+    unwrap(await database.from('map_nodes').delete().in('id', orphanNodeIds));
+  }
+}
+
 function authRedirectUrl(path = '/pages/admin/login.html') {
   const appUrl = process.env.APP_URL;
   if (!appUrl) throw new HttpError(503, 'Set APP_URL to the deployed HTTPS site URL before using administrator email flows.');
@@ -153,7 +288,7 @@ async function getDirectory() {
       kind: parentBuilding.kind,
       active: parentBuilding.active
     } : null,
-    accessibilityFeatures: row.kind === 'building' && Array.isArray(row.accessibility_features)
+    accessibilityFeatures: Array.isArray(row.accessibility_features)
       ? row.accessibility_features
       : [],
     photos: locationPhotos.get(String(row.id)) || [],
@@ -220,6 +355,7 @@ async function getDirectory() {
 
 async function getMap(admin = false) {
   const db = adminDatabase();
+  await cleanupOrphanedRouteGeometry(db);
 
   const [markers, nodes, rawConnections] = await Promise.all([
     fetchAllRows(() => db.from('map_markers')
@@ -333,7 +469,7 @@ async function getRoutes(availableOnly) {
 
   const routes = await fetchAllRows(() => {
     let query = db.from('campus_routes')
-      .select('*, start_marker:map_markers!campus_routes_start_marker_id_fkey(id,location_id,x,y,location:locations!fk_marker_location(name,active)), destination_marker:map_markers!campus_routes_destination_marker_id_fkey(id,location_id,x,y,location:locations!fk_marker_location(name,active))')
+      .select('*, start_marker:map_markers!campus_routes_start_marker_id_fkey(id,location_id,x,y,active,location:locations!fk_marker_location(name,active)), destination_marker:map_markers!campus_routes_destination_marker_id_fkey(id,location_id,x,y,active,location:locations!fk_marker_location(name,active))')
       .order('updated_at', { ascending: false })
       .order('id', { ascending: false });
 
@@ -351,7 +487,10 @@ async function getRoutes(availableOnly) {
   return routes.filter(route => {
     if (!availableOnly) return true;
 
-    return route.start_marker?.location?.active &&
+    return route.start_marker?.active !== false &&
+      route.destination_marker?.active !== false &&
+      route.start_marker?.id !== route.destination_marker?.id &&
+      route.start_marker?.location?.active &&
       route.destination_marker?.location?.active;
   }).map(route => {
     const points = pointsResult.filter(
@@ -1093,9 +1232,7 @@ async function publicResource(event, resource, method, query) {
       .select('*')
       .order('name');
 
-    if (!user) {
-      request = request.eq('active', true);
-    }
+    request = request.eq('active', true);
 
     return success(
       (unwrap(await request) || []).map(row => ({
@@ -1124,7 +1261,7 @@ async function publicResource(event, resource, method, query) {
 
     return success(
       (unwrap(await request) || [])
-        .filter(row => user || row.building?.active)
+        .filter(row => row.active && row.building?.active)
         .map(row => ({
           ...row,
           image_path: row.image_path ? mediaUrl(row.image_path) : null,

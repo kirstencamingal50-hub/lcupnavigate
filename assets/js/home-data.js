@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
   const announcementDate = item => item.event_start
     ? `Event: ${formatDate(item.event_start)}${item.event_end ? ` – ${formatDate(item.event_end)}` : ''}`
-    : formatDate(item.createdAt) ? `Posted: ${formatDate(item.createdAt)}` : '';
+    : '';
 
   document.getElementById('home-search')?.addEventListener('submit', event => {
     event.preventDefault();
@@ -26,20 +26,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const categoryRoot = document.getElementById('home-category-links');
   const updates = document.getElementById('home-announcements');
-  const homeCategories = [
-    { name: 'Academic', icon: 'school', aliases: ['academic', 'academic building'] },
-    { name: 'Administrative', icon: 'badge', aliases: ['administrative', 'administration', 'administrative building', 'office'] },
-    { name: 'Medical', icon: 'medical_services', aliases: ['medical', 'health and medical', 'health'] },
-    { name: 'Events and Conference', icon: 'event', aliases: ['events and conference', 'event and conference', 'events conference', 'events'] },
-    { name: 'Food and Dining', icon: 'restaurant', aliases: ['food and dining', 'food', 'dining'] },
-    { name: 'Sports and Recreation', icon: 'sports_soccer', aliases: ['sports and recreation', 'recreation and sports', 'sports', 'recreation'] },
-    { name: 'Outdoor', icon: 'park', aliases: ['outdoor', 'outdoor spaces'] }
-  ];
+  const categoryIcon = name => ({academic:'school',administrative:'badge',medical:'medical_services','events and conference':'event','food and dining':'restaurant','sports and recreation':'sports_soccer',outdoor:'park'}[normalize(name)] || 'category');
 
   try {
-    const [directoryResult, announcementResult] = await Promise.allSettled([
+    const [directoryResult, announcementResult, categoryResult] = await Promise.allSettled([
       CampusApi.get('directory'),
-      CampusApi.get('announcements')
+      CampusApi.get('announcements'),
+      CampusApi.get('categories')
     ]);
     const directory = directoryResult.status === 'fulfilled' ? (directoryResult.value || {}) : {};
     const announcementPayload = announcementResult.status === 'fulfilled' ? announcementResult.value : [];
@@ -49,6 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         ? announcementPayload.announcements
         : Array.isArray(announcementPayload?.items) ? announcementPayload.items : [];
     const locations = Array.isArray(directory.locations) ? directory.locations : [];
+    const categories = categoryResult.status === 'fulfilled' && Array.isArray(categoryResult.value) ? categoryResult.value.filter(item => item && item.active !== false && item.name) : [];
     const rooms = Array.isArray(directory.rooms) ? directory.rooms : [];
     const campusPlaces = locations.filter(record =>
       ['building', 'facility'].includes(String(record.kind || '').toLowerCase()) &&
@@ -56,8 +50,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     );
 
     if (categoryRoot) {
-      categoryRoot.innerHTML = homeCategories.map(item => {
-        const aliases = item.aliases.map(normalize);
+      categoryRoot.innerHTML = categories.map(item => {
+        const categoryName = String(item.name);
+        const aliases = [normalize(categoryName)];
         const matches = campusPlaces.filter(place => {
           const actual = (place.category_names?.length ? place.category_names : [place.category]).map(normalize).filter(Boolean);
           return actual.some(category => aliases.some(alias =>
@@ -70,11 +65,11 @@ document.addEventListener('DOMContentLoaded', async () => {
           buildingCount ? `${buildingCount} ${buildingCount === 1 ? 'building' : 'buildings'}` : '',
           facilityCount ? `${facilityCount} ${facilityCount === 1 ? 'facility' : 'facilities'}` : ''
         ].filter(Boolean).join(' · ') || 'No places assigned yet';
-        const href = `pages/directory.html?category=${encodeURIComponent(item.name)}`;
+        const href = `pages/directory.html?category=${encodeURIComponent(categoryName)}`;
         return `<a class="home-category-card" href="${href}">
-          <span class="home-category-icon"><span class="material-symbols-rounded" aria-hidden="true">${item.icon}</span></span>
+          <span class="home-category-icon"><span class="material-symbols-rounded" aria-hidden="true">${categoryIcon(categoryName)}</span></span>
           <span class="home-category-copy">
-            <strong>${esc(item.name)}</strong>
+            <strong>${esc(categoryName)}</strong>
             <small>${esc(countLabel)}</small>
           </span>
           <span class="material-symbols-rounded home-category-arrow" aria-hidden="true">arrow_forward</span>
