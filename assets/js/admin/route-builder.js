@@ -286,7 +286,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function mapPoint(event) {
     const rect = mapElement.getBoundingClientRect();
-    return {x:Math.round(Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width))*W),y:Math.round(Math.max(0,Math.min(1,(event.clientY-rect.top)/rect.height))*H)};
+    const x=(event.clientX-rect.left-rect.width/2)/mapZoom+rect.width/2; const y=(event.clientY-rect.top-rect.height/2)/mapZoom+rect.height/2; return {x:Math.round(Math.max(0,Math.min(1,x/rect.width))*W),y:Math.round(Math.max(0,Math.min(1,y/rect.height))*H)};
   }
 
   function snapToGrid(point) {
@@ -304,6 +304,33 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   syncGridVisibility();
   gridToggle?.addEventListener('change', syncGridVisibility);
+
+  // Zoom the complete editor layer together so map markers, routes, waypoints,
+  // and the alignment grid stay registered to the same campus coordinates.
+  let mapZoom = 1;
+  const zoomTargets = [...mapElement.querySelectorAll(':scope > img,:scope > #route-grid-layer,:scope > svg,:scope > .route-editor-layer')];
+  function applyMapZoom() {
+    zoomTargets.forEach(layer => {
+      layer.style.transform = `scale(${mapZoom})`;
+      layer.style.transformOrigin = '50% 50%';
+    });
+    const readout = $('route-zoom-level');
+    if (readout) readout.textContent = `${Math.round(mapZoom * 100)}%`;
+  }
+  $('route-zoom-in')?.addEventListener('click', () => {
+    mapZoom = Math.min(2.5, Math.round((mapZoom + 0.25) * 100) / 100);
+    applyMapZoom();
+  });
+  $('route-zoom-out')?.addEventListener('click', () => {
+    mapZoom = Math.max(1, Math.round((mapZoom - 0.25) * 100) / 100);
+    applyMapZoom();
+  });
+  $('route-zoom-reset')?.addEventListener('click', () => {
+    mapZoom = 1;
+    applyMapZoom();
+  });
+  applyMapZoom();
+
 
   function addMapPoint(event) {
     if (event.target.closest('.route-waypoint-handle,.route-endpoint,.route-map-location')) return;
