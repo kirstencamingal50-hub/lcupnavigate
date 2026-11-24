@@ -280,10 +280,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     catch(error) { status(error.message); }
   });
 
+  const GRID_SIZE = 50;
+  const gridToggle = $('route-grid-toggle');
+  const snapToggle = $('route-snap-toggle');
+  const gridLayer = $('route-grid-layer');
+
   function mapPoint(event) {
     const rect = mapElement.getBoundingClientRect();
     return {x:Math.round(Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width))*W),y:Math.round(Math.max(0,Math.min(1,(event.clientY-rect.top)/rect.height))*H)};
   }
+
+  function snapToGrid(point) {
+    if (!snapToggle?.checked) return point;
+    return {
+      x: Math.max(0, Math.min(W, Math.round(point.x / GRID_SIZE) * GRID_SIZE)),
+      y: Math.max(0, Math.min(H, Math.round(point.y / GRID_SIZE) * GRID_SIZE))
+    };
+  }
+
+  gridToggle?.addEventListener('change', () => {
+    if (gridLayer) gridLayer.style.display = gridToggle.checked ? '' : 'none';
+  });
 
   function addMapPoint(event) {
     if (event.target.closest('.route-waypoint-handle,.route-endpoint,.route-map-location')) return;
@@ -305,8 +322,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       waypoints.push({node_id:Number(nearest.node.id),x:Number(nearest.node.x),y:Number(nearest.node.y),floor_number:Number(nearest.node.floor_number)||0});
       status(`Added existing shared node “${nearest.node.node_key}”.`);
     } else {
-      waypoints.push({x:point.x,y:point.y,floor_number:0});
-      status('Added a walkway point.');
+      const alignedPoint = snapToGrid(point);
+      waypoints.push({x:alignedPoint.x,y:alignedPoint.y,floor_number:0});
+      status(snapToggle?.checked ? 'Added a walkway point aligned to the 50-unit grid.' : 'Added a walkway point.');
     }
     draw();
   }
@@ -331,7 +349,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   mapElement.addEventListener('pointermove',event=>{
     if(!dragging)return;
     event.preventDefault();event.stopPropagation();
-    const point=mapPoint(event);const current=waypoints[dragging.index];
+    const point=snapToGrid(mapPoint(event));const current=waypoints[dragging.index];
     waypoints[dragging.index]={x:point.x,y:point.y,floor_number:Number(current.floor_number)||0,notes:current.notes||''};
     dragging.handle.style.left=`${point.x/W*100}%`;dragging.handle.style.top=`${point.y/H*100}%`;
     $('route-draft-line').setAttribute('points',pointCoordinates().map(p=>p.join(',')).join(' '));renderDistance();
