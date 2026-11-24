@@ -539,10 +539,10 @@ html[data-theme="dark"] body.admin-page .admin-stat strong,html[data-theme="dark
   pointer-events: none;
   opacity: 1;
   background-image:
-    repeating-linear-gradient(0deg, transparent 0 23px, rgba(0, 74, 67, .72) 23px 24px),
-    repeating-linear-gradient(90deg, transparent 0 23px, rgba(0, 74, 67, .72) 23px 24px),
-    repeating-linear-gradient(0deg, transparent 0 119px, rgba(0, 55, 50, .9) 119px 121px),
-    repeating-linear-gradient(90deg, transparent 0 119px, rgba(0, 55, 50, .9) 119px 121px);
+    repeating-linear-gradient(0deg, transparent 0 23px, rgba(15, 118, 110, .20) 23px 24px),
+    repeating-linear-gradient(90deg, transparent 0 23px, rgba(15, 118, 110, .20) 23px 24px),
+    repeating-linear-gradient(0deg, transparent 0 119px, rgba(15, 78, 70, .34) 119px 121px),
+    repeating-linear-gradient(90deg, transparent 0 119px, rgba(15, 78, 70, .34) 119px 121px);
 }
 .route-editor-grid[hidden] { display: none !important; }
 .route-junction-marker .route-junction-halo {
