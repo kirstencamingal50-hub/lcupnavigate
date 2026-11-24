@@ -168,3 +168,21 @@ test('saved route location endpoints take priority over shared building marker I
 test('room locations retain their parent building route location ID', () => {
   assert.match(mapPage, /routeLocationId:building\.id/);
 });
+
+
+test('admin route editor keeps building marker nodes separate from shared walkway junctions', async () => {
+  const routeBuilder = await read('../assets/js/admin/route-builder.js');
+  assert.match(routeBuilder, /function markerNodeIds\(\)/);
+  assert.match(routeBuilder, /marker\.route_node_id/);
+  assert.match(routeBuilder, /const junctionNodes = mapData\.nodes\.filter\(node =>[\s\S]*?!buildingNodeIds\.has\(String\(node\.id\)\)/);
+  assert.match(routeBuilder, /Shared walkway junction/);
+  assert.match(routeBuilder, /saved route/);
+});
+
+test('new route waypoints snap only to reusable walkway junctions, never building marker nodes', async () => {
+  const routeBuilder = await read('../assets/js/admin/route-builder.js');
+  assert.match(routeBuilder, /const protectedMarkerNodes = markerNodeIds\(\)/);
+  assert.match(routeBuilder, /!protectedMarkerNodes\.has\(String\(node\.id\)\)/);
+  assert.match(routeBuilder, /Number\(node\.floor_number \|\| 0\) === 0/);
+  assert.match(routeBuilder, /nearest\.distance<=Math\.max\(26,26\*W\/mapElement\.clientWidth\)/);
+});
