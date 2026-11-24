@@ -86,10 +86,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     return [[Number(start.x), Number(start.y)], ...waypoints.map(point => [Number(point.x), Number(point.y)]), [Number(end.x), Number(end.y)]];
   }
 
+  function markerNodeIds() {
+    return new Set(mapData.markers
+      .map(marker => marker.route_node_id)
+      .filter(id => id !== null && id !== undefined && String(id) !== '')
+      .map(String));
+  }
+
+  function nodeRouteUsage() {
+    const usage = new Map();
+    const markerNodes = markerNodeIds();
+    routes.forEach(route => {
+      const usedInRoute = new Set((route.points || [])
+        .map(point => point.node_id)
+        .filter(id => id !== null && id !== undefined && !markerNodes.has(String(id)))
+        .map(String));
+      usedInRoute.forEach(id => usage.set(id, (usage.get(id) || 0) + 1));
+    });
+    return usage;
+  }
+
   function draw() {
     const nodeById = new Map(mapData.nodes.map(node => [String(node.id), node]));
     const [start, end] = selectedMarkers();
-    $('route-existing-paths').innerHTML=`<g pointer-events="none" fill="none" stroke="#16a34a" stroke-width="5" stroke-linecap="round" opacity=".72">${mapData.connections.map(edge=>{const from=nodeById.get(String(edge.from_node_id)),to=nodeById.get(String(edge.to_node_id));return from&&to?`<line x1="${Number(from.x)}" y1="${Number(from.y)}" x2="${Number(to.x)}" y2="${Number(to.y)}" />`:'';}).join('')}</g><g pointer-events="none" fill="#15803d" stroke="white" stroke-width="3">${mapData.nodes.map(node=>`<circle cx="${Number(node.x)}" cy="${Number(node.y)}" r="8"><title>${esc(node.node_key)}</title></circle>`).join('')}</g>`;
+    const buildingNodeIds = markerNodeIds();
+    const routeUsage = nodeRouteUsage();
+    const junctionNodes = mapData.nodes.filter(node =>
+      Number(node.active) !== 0 && !buildingNodeIds.has(String(node.id))
+    );
+    const junctionMarkup = junctionNodes.map(node => {
+      const usage = routeUsage.get(String(node.id)) || 0;
+      const radius = usage >= 4 ? 12 : usage >= 2 ? 10 : 7;
+      const fill = usage >= 4 ? '#166534' : usage >= 2 ? '#15803d' : '#86a98d';
+      const opacity = usage ? 1 : 0.55;
+      const description = usage
+        ? `Shared walkway junction · used by ${usage} saved route${usage === 1 ? '' : 's'}`
+        : 'Walkway junction';
+      return `<circle cx="${Number(node.x)}" cy="${Number(node.y)}" r="${radius}" fill="${fill}" opacity="${opacity}"><title>${esc(description)} · ${esc(node.node_key)}</title></circle>`;
+    }).join('');
+    $('route-existing-paths').innerHTML=`<g pointer-events="none" fill="none" stroke="#16a34a" stroke-width="5" stroke-linecap="round" opacity=".58">${mapData.connections.map(edge=>{const from=nodeById.get(String(edge.from_node_id)),to=nodeById.get(String(edge.to_node_id));return from&&to?`<line x1="${Number(from.x)}" y1="${Number(from.y)}" x2="${Number(to.x)}" y2="${Number(to.y)}" />`:'';}).join('')}</g><g pointer-events="none" stroke="white" stroke-width="3">${junctionMarkup}</g>`;
     $('route-editor-endpoints').innerHTML = mapData.markers.map(marker=>{
       const selectedStart=String(marker.id)===String(start?.id), selectedEnd=String(marker.id)===String(end?.id);
       return `<button type="button" class="route-map-location ${selectedStart?'is-start':''} ${selectedEnd?'is-end':''}" data-marker-id="${esc(marker.id)}" style="left:${Number(marker.x)/W*100}%;top:${Number(marker.y)/H*100}%" title="${esc(marker.name)}" aria-label="Select ${esc(marker.name)} as a route endpoint"></button>`;
@@ -255,7 +290,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const [start,end]=selectedMarkers();
     if (!start||!end||start.id===end.id) { status('Choose different start and destination locations before adding path points.'); return; }
     const point=mapPoint(event);
-    const nearest=mapData.nodes.filter(node=>Number(node.active)!==0).map(node=>({node,distance:Math.hypot(Number(node.x)-point.x,Number(node.y)-point.y)})).sort((a,b)=>a.distance-b.distance)[0];
+    // Building/facility marker nodes are endpoint anchors, not walkway junctions.
+    // Keep them separate so a newly drawn intermediate point cannot consume or
+    // alter the node reserved for a campus location marker.
+    const protectedMarkerNodes = markerNodeIds();
+    const nearest=mapData.nodes
+      .filter(node => Number(node.active)!==0 &&
+        !protectedMarkerNodes.has(String(node.id)) &&
+        Number(node.floor_number || 0) === 0)
+      .map(node=>({node,distance:Math.hypot(Number(node.x)-point.x,Number(node.y)-point.y)}))
+      .sort((a,b)=>a.distance-b.distance)[0];
     snapshot();
     if(nearest && nearest.distance<=Math.max(26,26*W/mapElement.clientWidth)) {
       waypoints.push({node_id:Number(nearest.node.id),x:Number(nearest.node.x),y:Number(nearest.node.y),floor_number:Number(nearest.node.floor_number)||0});
