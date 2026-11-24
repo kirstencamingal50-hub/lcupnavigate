@@ -78,11 +78,13 @@
           <ol id="route-waypoint-list" class="mt-3 grid gap-2"></ol>
           <div id="route-distance-preview" class="mt-3 rounded-lg bg-slate-50 p-3 text-xs text-slate-600" aria-live="polite">Choose endpoints and add points to preview the route.</div>
           <div class="mt-3 rounded-lg border border-slate-200 p-3 text-[11px] leading-relaxed text-slate-600">The SVG map has no defined scale. Distance is shown in map units only; walking time is unavailable until a scale is added.</div>
+          <div class="route-save-actions mt-4 border-t border-slate-200 pt-4">
+            <p id="route-builder-status" class="mb-3 text-xs text-slate-600" role="status" aria-live="polite"></p>
+            <button type="button" id="route-publish" data-route-status="active" class="mb-2 w-full rounded-lg bg-blue-700 px-4 py-3 text-sm font-bold text-white hover:bg-blue-800">Publish Route</button>
+            <button type="button" id="route-save-draft" data-route-status="draft" class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50">Save Private Draft</button>
+            <button type="button" id="route-cancel-edit" hidden class="mt-2 w-full rounded-lg border border-slate-300 px-4 py-2 text-xs font-bold text-slate-700">Cancel edit</button>
+          </div>
         </aside>
-      </div>
-      <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <p id="route-builder-status" class="text-xs text-slate-600" role="status" aria-live="polite"></p>
-        <div class="flex flex-wrap gap-2"><button type="button" id="route-cancel-edit" hidden class="rounded-lg border border-slate-300 px-4 py-2 text-xs font-bold text-slate-700">Cancel edit</button><button type="button" id="route-save-draft" data-route-status="draft" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">Save Private Draft</button><button type="button" id="route-publish" data-route-status="active" class="rounded-lg bg-blue-700 px-4 py-2 text-xs font-bold text-white hover:bg-blue-800">Publish Route</button></div>
       </div>
       <details id="saved-routes-section" class="mt-6 border-t border-slate-200 pt-5" open>
         <summary class="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 rounded-lg py-1 text-sm font-bold text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600">
