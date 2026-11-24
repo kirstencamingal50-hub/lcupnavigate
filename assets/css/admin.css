@@ -508,7 +508,7 @@ html[data-theme="dark"] body.admin-page .admin-stat strong,html[data-theme="dark
 	width: 100%;
 }
 .route-builder-layout > div:first-child { min-width: 0; width: 100%; }
-.route-builder-layout > div:first-child .route-editor-map { max-width: none; width: 100%; }
+.route-builder-layout > div:first-child .route-editor-map { max-width: none; }
 .route-builder-layout > aside { width: 100%; }
 .route-builder-layout.is-map-fullscreen {
 	position: fixed;
@@ -524,6 +524,7 @@ html[data-theme="dark"] body.admin-page .admin-stat strong,html[data-theme="dark
 .route-builder-layout.is-map-fullscreen > aside { display: none; }
 body.route-map-lock-scroll { overflow: hidden; }
 
+.landmark-map-picker,
 .route-editor-map {
 	position: relative;
 	isolation: isolate;
@@ -540,6 +541,8 @@ body.route-map-lock-scroll { overflow: hidden; }
 	user-select: none;
 }
 
+.landmark-map-picker > img,
+.landmark-map-picker > #landmark-map-pins,
 .route-editor-map > img,
 .route-editor-map > svg,
 .route-editor-layer {
@@ -549,6 +552,7 @@ body.route-map-lock-scroll { overflow: hidden; }
 	height: 100%;
 }
 
+.landmark-map-picker > img,
 .route-editor-map > img { object-fit: fill; pointer-events: none; transform-origin: 50% 50%; }
 .route-editor-map.is-zoomed { cursor: grab; }
 .route-editor-map.is-panning { cursor: grabbing; }
@@ -616,7 +620,6 @@ body.route-map-lock-scroll { overflow: hidden; }
 
 @media (max-width: 800px) {
 	.route-builder-layout { grid-template-columns: 1fr; }
-	.route-editor-map { max-width: 520px; }
 	.route-waypoint-panel { max-height: 360px; }
 }
 
