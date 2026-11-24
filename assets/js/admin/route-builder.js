@@ -286,7 +286,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function mapPoint(event) {
     const rect = mapElement.getBoundingClientRect();
-    const x=(event.clientX-rect.left-rect.width/2)/mapZoom+rect.width/2; const y=(event.clientY-rect.top-rect.height/2)/mapZoom+rect.height/2; return {x:Math.round(Math.max(0,Math.min(1,x/rect.width))*W),y:Math.round(Math.max(0,Math.min(1,y/rect.height))*H)};
+    const x=(event.clientX-rect.left-rect.width/2-mapPanX)/mapZoom+rect.width/2;
+    const y=(event.clientY-rect.top-rect.height/2-mapPanY)/mapZoom+rect.height/2;
+    return {x:Math.round(Math.max(0,Math.min(1,x/rect.width))*W),y:Math.round(Math.max(0,Math.min(1,y/rect.height))*H)};
   }
 
   function snapToGrid(point) {
@@ -307,15 +309,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Zoom the complete editor layer together so map markers, routes, waypoints,
   // and the alignment grid stay registered to the same campus coordinates.
-  let mapZoom = 1;
+  let mapZoom = 1, mapPanX = 0, mapPanY = 0, panning = null;
   const zoomTargets = [...mapElement.querySelectorAll(':scope > img,:scope > #route-grid-layer,:scope > svg,:scope > .route-editor-layer')];
+  function clampMapPan() {
+    const rect = mapElement.getBoundingClientRect();
+    const limitX = rect.width * (mapZoom - 1) / 2;
+    const limitY = rect.height * (mapZoom - 1) / 2;
+    mapPanX = Math.max(-limitX, Math.min(limitX, mapPanX));
+    mapPanY = Math.max(-limitY, Math.min(limitY, mapPanY));
+  }
   function applyMapZoom() {
+    clampMapPan();
     zoomTargets.forEach(layer => {
-      layer.style.transform = `scale(${mapZoom})`;
+      layer.style.transform = `translate(${mapPanX}px, ${mapPanY}px) scale(${mapZoom})`;
       layer.style.transformOrigin = '50% 50%';
     });
     const readout = $('route-zoom-level');
     if (readout) readout.textContent = `${Math.round(mapZoom * 100)}%`;
+    mapElement.classList.toggle('is-zoomed', mapZoom > 1);
   }
   $('route-zoom-in')?.addEventListener('click', () => {
     mapZoom = Math.min(2.5, Math.round((mapZoom + 0.25) * 100) / 100);
@@ -326,8 +337,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     applyMapZoom();
   });
   $('route-zoom-reset')?.addEventListener('click', () => {
-    mapZoom = 1;
+    mapZoom = 1; mapPanX = 0; mapPanY = 0;
     applyMapZoom();
+  });
+  $('route-map-fullscreen')?.addEventListener('click', () => {
+    const layout = mapElement.closest('.route-builder-layout');
+    const expanded = layout?.classList.toggle('is-map-fullscreen');
+    const button = $('route-map-fullscreen');
+    if (button) button.textContent = expanded ? 'Exit full screen' : 'Full screen';
+    document.body.classList.toggle('route-map-lock-scroll', Boolean(expanded));
+    requestAnimationFrame(applyMapZoom);
+  });
+  window.addEventListener('keydown', event => {
+    if (event.key === 'Escape') {
+      const layout = mapElement.closest('.route-builder-layout');
+      if (layout?.classList.contains('is-map-fullscreen')) {
+        layout.classList.remove('is-map-fullscreen');
+        $('route-map-fullscreen').textContent = 'Full screen';
+        document.body.classList.remove('route-map-lock-scroll');
+        applyMapZoom();
+      }
+    }
   });
   applyMapZoom();
 
@@ -372,11 +402,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   mapElement.addEventListener('dragstart',event=>event.preventDefault());
   mapElement.addEventListener('pointerdown',event=>{
     const handle=event.target.closest('.route-waypoint-handle');
-    if(!handle)return;
-    suppressMapClick=true;
-    movePoint(Number(handle.dataset.pointIndex),event);
+    if(handle){suppressMapClick=true;movePoint(Number(handle.dataset.pointIndex),event);return;}
+    if(mapZoom>1 && !event.target.closest('.route-map-location,.route-endpoint,button,input,textarea')) {
+      suppressMapClick=true;
+      panning={pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,originX:mapPanX,originY:mapPanY};
+      mapElement.classList.add('is-panning');
+      mapElement.setPointerCapture?.(event.pointerId);
+    }
   });
   mapElement.addEventListener('pointermove',event=>{
+    if(panning){
+      event.preventDefault();
+      mapPanX=panning.originX+(event.clientX-panning.startX);
+      mapPanY=panning.originY+(event.clientY-panning.startY);
+      applyMapZoom();
+      return;
+    }
     if(!dragging)return;
     event.preventDefault();event.stopPropagation();
     const point=snapToGrid(mapPoint(event));const current=waypoints[dragging.index];
@@ -385,6 +426,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('route-draft-line').setAttribute('points',pointCoordinates().map(p=>p.join(',')).join(' '));renderDistance();
   });
   const stopDragging=()=>{
+    if(panning){
+      if(mapElement.hasPointerCapture?.(panning.pointerId))mapElement.releasePointerCapture(panning.pointerId);
+      panning=null;mapElement.classList.remove('is-panning');
+      setTimeout(()=>{suppressMapClick=false;},0);
+      return;
+    }
     if(!dragging)return;
     const {handle,pointerId}=dragging;
     if(handle.hasPointerCapture?.(pointerId))handle.releasePointerCapture(pointerId);
