@@ -116,14 +116,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     );
     const junctionMarkup = junctionNodes.map(node => {
       const usage = routeUsage.get(String(node.id)) || 0;
-      const radius = usage >= 4 ? 22 : usage >= 2 ? 18 : 15;
-      const fill = usage >= 4 ? '#064e3b' : usage >= 2 ? '#047857' : '#0f766e';
+      const fill = usage >= 2 ? '#047857' : '#0f766e';
       const description = usage
         ? `Shared walkway junction · used by ${usage} saved route${usage === 1 ? '' : 's'}`
         : 'Walkway junction';
-      return `<g class="route-junction-marker" transform="translate(${Number(node.x)} ${Number(node.y)})"><circle class="route-junction-halo" r="${radius + 7}"/><circle class="route-junction-core" r="${radius}" fill="${fill}"/><title>${esc(description)} · ${esc(node.node_key)}</title></g>`;
+      return `<span class="route-junction-marker ${usage >= 2 ? 'is-shared' : ''}" style="left:${Number(node.x)/W*100}%;top:${Number(node.y)/H*100}%;--junction-fill:${fill}" title="${esc(description)} · ${esc(node.node_key)}" aria-label="${esc(description)}"></span>`;
     }).join('');
-    $('route-existing-paths').innerHTML=`<g pointer-events="none" fill="none" stroke="#16a34a" stroke-width="5" stroke-linecap="round" opacity=".58">${mapData.connections.map(edge=>{const from=nodeById.get(String(edge.from_node_id)),to=nodeById.get(String(edge.to_node_id));return from&&to?`<line x1="${Number(from.x)}" y1="${Number(from.y)}" x2="${Number(to.x)}" y2="${Number(to.y)}" />`:'';}).join('')}</g><g pointer-events="none" stroke="white" stroke-width="3">${junctionMarkup}</g>`;
+    $('route-editor-junctions').innerHTML = junctionMarkup;
+    $('route-existing-paths').innerHTML=`<g pointer-events="none" fill="none" stroke="#16a34a" stroke-width="3.5" stroke-linecap="round" opacity=".42">${mapData.connections.map(edge=>{const from=nodeById.get(String(edge.from_node_id)),to=nodeById.get(String(edge.to_node_id));return from&&to?`<line x1="${Number(from.x)}" y1="${Number(from.y)}" x2="${Number(to.x)}" y2="${Number(to.y)}" />`:'';}).join('')}</g>`;
     $('route-editor-endpoints').innerHTML = mapData.markers.map(marker=>{
       const selectedStart=String(marker.id)===String(start?.id), selectedEnd=String(marker.id)===String(end?.id);
       return `<button type="button" class="route-map-location ${selectedStart?'is-start':''} ${selectedEnd?'is-end':''}" data-marker-id="${esc(marker.id)}" style="left:${Number(marker.x)/W*100}%;top:${Number(marker.y)/H*100}%" title="${esc(marker.name)}" aria-label="Select ${esc(marker.name)} as a route endpoint"></button>`;
