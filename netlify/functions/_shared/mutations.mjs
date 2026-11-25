@@ -279,7 +279,7 @@ async function rooms(event, method, body, query) {
       throw new HttpError(400, 'Select a valid campus building.');
     }
 
-    const number = requiredText(body.room_number, 'Room number', 50);
+    const number = optionalText(body.room_number, 'Room number', 50) || '';
     const categoryIds = await selectedCategoryIds(database, body);
 
     const fields = {
