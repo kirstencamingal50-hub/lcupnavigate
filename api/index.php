@@ -752,7 +752,7 @@ try {
         if ($method === 'GET') ok($pdo->query('SELECT r.*, l.name AS building_name FROM rooms r JOIN locations l ON l.id=r.building_id WHERE r.active=1 ORDER BY l.name,r.floor_number,r.room_number')->fetchAll());
         if ($method === 'POST' || $method === 'PUT') {
             $recordId=$method==='PUT'?positive_id($body['id']??$id):null;
-            $building=positive_id($body['building_id']??0); $name=text_field($body,'name',150,true); $number=text_field($body,'room_number',50,true);
+            $building=positive_id($body['building_id']??0); $name=text_field($body,'name',150,true); $number=text_field($body,'room_number',50) ?? '';
             $buildingCheck=$pdo->prepare("SELECT id FROM locations WHERE id=? AND kind='building' AND active=1"); $buildingCheck->execute([$building]); if (!$buildingCheck->fetch()) fail('Select a valid campus building.');
             $floor=max(0,min(200,(int)($body['floor_number']??0))); $floorLabel=text_field($body,'floor_label',80); $capacity=isset($body['capacity'])&&$body['capacity']!==''?max(0,(int)$body['capacity']):null;
             $description=text_field($body,'description',4000); $fn=text_field($body,'function_description',1000); $head=text_field($body,'department_head',120);$contact=text_field($body,'contact_info',180);$category=isset($body['category_id'])&&$body['category_id']!==''?positive_id($body['category_id']):null; $image=uploaded_image_path($body);
