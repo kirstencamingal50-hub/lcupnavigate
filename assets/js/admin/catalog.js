@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       else{const heading=wrapper.querySelector('.admin-field-label');if(heading)heading.textContent=label;}
     };
     setFieldLabel('name',kind==='room'?'Room name':'Name');
-    setFieldLabel('room','Room number');
+    setFieldLabel('room','Room number (optional)');
     setFieldLabel('buildingId','Building');
     setFieldLabel('floor','Floor level');
     setFieldLabel('description','Description');
@@ -436,7 +436,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }else if(type==='room'){
       document.getElementById('catalog-editor-title').textContent='Edit room or office';
       fields.innerHTML=field('Room name','name',item.name,'text',true,'maxlength="150"')+
-        field('Room number','room_number',item.room_number,'text',true,'maxlength="50"')+
+        field('Room number (optional)','room_number',item.room_number,'text',false,'maxlength="50"')+
         selectField('Building','building_id','<option value="">Select a building</option>'+buildingOptions(item.building_id),item.building_id)+
         multiSelectField('Categories','category_ids',null,selectedCategoryIds)+
         presetField('Floor level','floor_label',floorOptions,item.floor_label||'')+
@@ -482,7 +482,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await CampusApi.save('locations',{model_3d_path:uploadedModel||item.model_3d_object_path||item.model_3d_path||null,name:value('name'),kind:item.kind,category_ids:selectedCategoryIds(form),description:value('description')||null,building_number:item.building_number||null,floor_label:null,floor_count:isBuilding?Number(value('floor_count')||item.floor_count||1):1,parent_building_id:null,capacity:value('capacity')===''?null:Number(value('capacity')),image_path:item.image_object_path||item.image_path||null,department_name:item.department_name||null,contact_email:value('contact_email')||null,contact_phone:value('contact_phone')||null,website_url:item.website_url||null,service_hours:value('service_hours')||null,days_open:value('days_open')||null,lunch_break:value('lunch_break')||null,services:item.services||null,nearby_landmarks:item.nearby_landmarks||null,accessibility_status:value('accessibility_status')===''?null:Number(value('accessibility_status')),accessibility_details:accessibilityFeatures.map(feature=>feature.replaceAll('_',' ')).join('\n')||null,accessibility_features:isBuilding?accessibilityFeatures:[]},item.id);
       }else{
         const floorLabel=value('floor_label');
-        await CampusApi.save('rooms',{name:value('name'),room_number:value('room_number'),route_node_id:item.route_node_id||null,building_id:Number(value('building_id')),category_ids:selectedCategoryIds(form),floor_label:floorLabel||null,floor_number:Number((floorLabel.match(/\d+/)||[])[0]||item.floor_number||0),capacity:value('capacity')===''?null:Number(value('capacity')),description:value('description')||null,function_description:item.function_description||null,department_head:item.department_head||null,image_path:item.image_path||null,department_name:item.department_name||null,contact_email:value('contact_email')||null,contact_phone:value('contact_phone')||null,website_url:item.website_url||null,service_hours:value('service_hours')||null,days_open:value('days_open')||null,lunch_break:value('lunch_break')||null,services:item.services||null,nearby_landmarks:item.nearby_landmarks||null,accessibility_status:value('accessibility_status')===''?null:Number(value('accessibility_status')),accessibility_details:selectedAccessibilityFeatures(form).map(feature=>feature.replaceAll('_',' ')).join('\n')||null},item.id);
+        await CampusApi.save('rooms',{name:value('name'),room_number:value('room_number')||'',route_node_id:item.route_node_id||null,building_id:Number(value('building_id')),category_ids:selectedCategoryIds(form),floor_label:floorLabel||null,floor_number:Number((floorLabel.match(/\d+/)||[])[0]||item.floor_number||0),capacity:value('capacity')===''?null:Number(value('capacity')),description:value('description')||null,function_description:item.function_description||null,department_head:item.department_head||null,image_path:item.image_path||null,department_name:item.department_name||null,contact_email:value('contact_email')||null,contact_phone:value('contact_phone')||null,website_url:item.website_url||null,service_hours:value('service_hours')||null,days_open:value('days_open')||null,lunch_break:value('lunch_break')||null,services:item.services||null,nearby_landmarks:item.nearby_landmarks||null,accessibility_status:value('accessibility_status')===''?null:Number(value('accessibility_status')),accessibility_details:selectedAccessibilityFeatures(form).map(feature=>feature.replaceAll('_',' ')).join('\n')||null},item.id);
       }
       form.dataset.dirty='false';await refresh();renderAll();
       const savedItem=pendingEdit.type==='location'
