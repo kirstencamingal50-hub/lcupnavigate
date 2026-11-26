@@ -29,10 +29,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const categoryIcon = name => ({academic:'school',administrative:'badge',medical:'medical_services','events and conference':'event','food and dining':'restaurant','sports and recreation':'sports_soccer',outdoor:'park'}[normalize(name)] || 'category');
 
   try {
+    const campusApi = window.CampusApi;
+    if (!campusApi || typeof campusApi.get !== 'function') {
+      throw new Error('The campus API did not load. Refresh the page and try again.');
+    }
     const [directoryResult, announcementResult, categoryResult] = await Promise.allSettled([
-      CampusApi.get('directory'),
-      CampusApi.get('announcements'),
-      CampusApi.get('categories')
+      campusApi.get('directory'),
+      campusApi.get('announcements'),
+      campusApi.get('categories')
     ]);
     const directory = directoryResult.status === 'fulfilled' ? (directoryResult.value || {}) : {};
     const announcementPayload = announcementResult.status === 'fulfilled' ? announcementResult.value : [];
