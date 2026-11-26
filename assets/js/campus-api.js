@@ -259,9 +259,22 @@
     if (/^(https?:|data:|blob:)/i.test(path)) return path;
     const mode = await backend();
     if (mode !== 'netlify' || !supabaseConfig?.url) {
-      return path.startsWith('/') ? path : `../${path.replace(/^\.\//, '')}`;
+      return path.startsWith('/') ? path : `../${path.replace(/^\\.\\//, '')}`;
     }
-    let objectPath = path.replace(/^\/+/, '').replace(/^\.\//, '');
+    let objectPath = path.replace(/^\\/+/, '').replace(/^\\.\\//, '');
+    // Netlify's directory API currently returns the legacy PHP media-proxy
+    // URL. Extract its original bucket/object path before building the
+    // Supabase Storage URL, rather than treating the proxy URL as a filename.
+    if (objectPath.startsWith('api/index.php?')) {
+      try {
+        const legacyUrl = new URL(`/${objectPath}`, location.origin);
+        if (legacyUrl.searchParams.get('resource') === 'media') {
+          objectPath = legacyUrl.searchParams.get('path') || '';
+        }
+      } catch {
+        return '';
+      }
+    }
     const publicPrefix = `storage/v1/object/public/${bucket}/`;
     if (objectPath.startsWith(publicPrefix)) return `${supabaseConfig.url}/${objectPath}`;
     if (objectPath.startsWith(`${bucket}/`)) objectPath = objectPath.slice(bucket.length + 1);
@@ -269,7 +282,9 @@
       try { return encodeURIComponent(decodeURIComponent(segment)); }
       catch { return encodeURIComponent(segment); }
     }).join('/');
-    return `${supabaseConfig.url}/storage/v1/object/public/${bucket}/${objectPath}`;
+    return objectPath
+      ? `${supabaseConfig.url}/storage/v1/object/public/${bucket}/${objectPath}`
+      : '';
   }
 
   window.CampusApi = {
