@@ -262,10 +262,13 @@
       return path.startsWith('/') ? path : `../${path.replace(/^\.\//, '')}`;
     }
     let objectPath = path.replace(/^\/+/, '').replace(/^\.\//, '');
-    const publicPrefix = `/storage/v1/object/public/${bucket}/`;
-    if (objectPath.startsWith(publicPrefix)) return `${supabaseConfig.url}${objectPath}`;
+    const publicPrefix = `storage/v1/object/public/${bucket}/`;
+    if (objectPath.startsWith(publicPrefix)) return `${supabaseConfig.url}/${objectPath}`;
     if (objectPath.startsWith(`${bucket}/`)) objectPath = objectPath.slice(bucket.length + 1);
-    objectPath = objectPath.split('/').filter(Boolean).map(segment => encodeURIComponent(decodeURIComponent(segment))).join('/');
+    objectPath = objectPath.split('/').filter(Boolean).map(segment => {
+      try { return encodeURIComponent(decodeURIComponent(segment)); }
+      catch { return encodeURIComponent(segment); }
+    }).join('/');
     return `${supabaseConfig.url}/storage/v1/object/public/${bucket}/${objectPath}`;
   }
 
