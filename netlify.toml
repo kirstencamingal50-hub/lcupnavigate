@@ -20,3 +20,10 @@
   to = "/.netlify/functions/api?resource=admin/bootstrap"
   status = 200
   force = true
+
+[[headers]]
+  for = "/pages/admin/login.html"
+  [headers.values]
+    Cache-Control = "no-store, no-cache, must-revalidate, max-age=0"
+    Pragma = "no-cache"
+    Expires = "0"
