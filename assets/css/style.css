@@ -250,8 +250,8 @@ html[data-high-contrast] body:not(.admin-page) :is(.settings-panel,.quick-card,.
 .directory-intro { margin: 0; color: #5d6e83; font-size: .86rem; }
 .directory-search-wrap > label { display: block; margin: 0 0 .4rem .15rem; color: #31465f; font-size: .69rem; font-weight: 800; }
 .directory-search-control { position: relative; }
-.directory-search-control > .material-symbols-rounded { position: absolute; top: 50%; left: .85rem; color: #71849c; font-size: 1.15rem; transform: translateY(-50%); pointer-events: none; }
-#directory-search { width: 100%; min-height: 48px; padding: .7rem .85rem .7rem 2.6rem; border: 1px solid #ccd9e8; border-radius: 13px; color: #182b44; background: #fff; box-shadow: 0 3px 10px rgba(21,44,77,.04); }
+.directory-search-control > .material-symbols-rounded { position: absolute; z-index: 1; top: 50%; left: .9rem; display: inline-flex; align-items: center; justify-content: center; width: 1.25rem; height: 1.25rem; color: #71849c; font-family: 'Material Symbols Rounded'; font-size: 1.2rem; font-weight: normal; font-style: normal; line-height: 1; letter-spacing: normal; text-transform: none; white-space: nowrap; word-wrap: normal; direction: ltr; font-feature-settings: 'liga'; -webkit-font-feature-settings: 'liga'; -webkit-font-smoothing: antialiased; transform: translateY(-50%); pointer-events: none; }
+#directory-search { display: block; box-sizing: border-box; width: 100%; min-width: 0; min-height: 48px; padding: .7rem .85rem .7rem 2.75rem; border: 1px solid #ccd9e8; border-radius: 13px; color: #182b44; background: #fff; box-shadow: 0 3px 10px rgba(21,44,77,.04); }
 #directory-search:focus, #directory-sort:focus { outline: 3px solid rgba(47,128,204,.22); outline-offset: 1px; border-color: #2b79be; }
 .directory-browser { margin: 1.25rem 0 2rem; padding: 1rem; border: 1px solid #e0e7ef; border-radius: 22px; background: rgba(255,255,255,.78); }
 .directory-toolbar { display: flex; align-items: center; justify-content: space-between; gap: .8rem; margin-bottom: 1rem; }
