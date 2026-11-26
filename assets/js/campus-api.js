@@ -254,6 +254,7 @@
   }
 
   window.CampusApi = {
+    publicStorageUrl,
     request,
     async isNetlify() { return (await backend()) === 'netlify'; },
     async get(resource) { return request(resource); },
