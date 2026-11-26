@@ -28,11 +28,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   const updates = document.getElementById('home-announcements');
   const categoryIcon = name => ({academic:'school',administrative:'badge',medical:'medical_services','events and conference':'event','food and dining':'restaurant','sports and recreation':'sports_soccer',outdoor:'park'}[normalize(name)] || 'category');
 
-  try {
-    const campusApi = window.CampusApi;
-    if (!campusApi || typeof campusApi.get !== 'function') {
-      throw new Error('The campus API did not load. Refresh the page and try again.');
+  async function ensureCampusApi() {
+    if (window.CampusApi && typeof window.CampusApi.get === 'function') return window.CampusApi;
+    // Recover if the shared API script was missed, blocked, or served late.
+    await new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = new URL('assets/js/campus-api.js', document.baseURI).href;
+      script.onload = resolve;
+      script.onerror = () => reject(new Error('The campus API script could not be loaded. Check the page connection and try again.'));
+      document.head.appendChild(script);
+    });
+    if (!window.CampusApi || typeof window.CampusApi.get !== 'function') {
+      throw new Error('The campus API script loaded but did not initialize. Please refresh and try again.');
     }
+    return window.CampusApi;
+  }
+
+  try {
+    const campusApi = await ensureCampusApi();
     const [directoryResult, announcementResult, categoryResult] = await Promise.allSettled([
       campusApi.get('directory'),
       campusApi.get('announcements'),
